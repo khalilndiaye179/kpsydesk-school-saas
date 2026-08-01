@@ -1,0 +1,357 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- Modèles Globaux (Sans RLS) ---
+
+model Tenant {
+  id              String         @id @default(uuid()) @db.Uuid
+  name            String
+  subdomain       String         @unique
+  status          TenantStatus   @default(TRIAL)
+  plan            SaaSPlan       @default(TRIAL_7D)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  // Relations
+  users           TenantUser[]
+  modules         TenantModule[]
+  classes         Class[]
+  students        Student[]
+  teachers        Teacher[]
+  courses         Course[]
+  timetables      Timetable[]
+  attendances     Attendance[]
+}
+
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum SaaSPlan {
+  TRIAL_7D
+  STANDARD
+  PREMIUM
+  ENTERPRISE
+}
+
+model PlatformUser {
+  id              String         @id @default(uuid()) @db.Uuid
+  email           String         @unique
+  passwordHash    String
+  role            PlatformRole   @default(SUPPORT)
+  isTwoFactorEnabled Boolean     @default(false)
+  twoFactorSecret String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+enum PlatformRole {
+  SUPER_ADMIN
+  SUPPORT
+  COMMERCIAL
+  TECH_OPS
+}
+
+model TenantModule {
+  tenantId        String         @db.Uuid
+  moduleKey       String
+  enabled         Boolean        @default(false)
+  updatedBy       String?
+  updatedAt       DateTime       @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, moduleKey])
+}
+
+// --- Module Finance - Comptabilité ---
+
+model TenantExpense {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @db.Uuid
+  type            String         // SALARY, MAINTENANCE, SUPPLIES, OTHER
+  description     String
+  amount          Float
+  date            DateTime       @default(now())
+  recipientId     String?        @db.Uuid // Optionnel, lier à un TenantUser si c'est un salaire
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+// --- Modèles Tenant-Scoped (Avec RLS) ---
+
+model TenantUser {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @db.Uuid
+  email           String
+  passwordHash    String
+  firstName       String?
+  lastName        String?
+  phone           String?
+  title           String?
+  contractType    String?        // CDI, CDD, PRESTATION, FORFAIT
+  baseSalary      Float?
+  hourlyRate      Float?
+  role            TenantRole     @default(TEACHER)
+  status          UserStatus     @default(ACTIVE)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  clockEvents     StaffClockEvent[]
+
+  @@unique([tenantId, email])
+}
+
+enum TenantRole {
+  DIRECTOR
+  CENSOR
+  TEACHER
+  ACCOUNTANT
+  LIBRARIAN
+  DRIVER
+  PARENT
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+// Modèles spécifiques de la Phase 2
+
+model Class {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @db.Uuid
+  name            String
+  code            String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  students        Student[]
+  timetables      Timetable[]
+  courseRequirements ClassCourseRequirement[]
+  attendances     Attendance[]
+
+  @@unique([tenantId, code])
+}
+
+model Student {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @db.Uuid
+  classId         String         @db.Uuid
+  firstName       String
+  lastName        String
+  email           String?
+  birthDate       DateTime
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  class           Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
+  attendances     Attendance[]
+
+  @@unique([tenantId, email])
+}
+
+model Teacher {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @db.Uuid
+  firstName       String
+  lastName        String
+  email           String
+  specialty       String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  timetables      Timetable[]
+  availabilities  TeacherAvailability[]
+  assignedRequirements ClassCourseRequirement[]
+
+  @@unique([tenantId, email])
+}
+
+model Course {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @db.Uuid
+  name            String
+  code            String
+  coefficient     Int            @default(1)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  timetables      Timetable[]
+  requirements    ClassCourseRequirement[]
+
+  @@unique([tenantId, code])
+}
+
+model Timetable {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @db.Uuid
+  classId         String         @db.Uuid
+  teacherId       String         @db.Uuid
+  courseId        String         @db.Uuid
+  dayOfWeek       Int            // 1 (Lundi) à 6 (Samedi)
+  startTime       String         // ex. "08:00"
+  endTime         String         // ex. "10:00"
+  room            String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  class           Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
+  teacher         Teacher        @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+enum AvailabilityPreference {
+  PREFERRED
+  AVAILABLE
+  AVOID
+}
+
+model TeacherAvailability {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @db.Uuid
+  teacherId       String         @db.Uuid
+  dayOfWeek       Int            // 1 (Lundi) à 6 (Samedi)
+  startTime       String         // ex. "08:00"
+  endTime         String         // ex. "10:00"
+  preference      AvailabilityPreference @default(AVAILABLE)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  teacher         Teacher        @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
+model ClassCourseRequirement {
+  id                String         @id @default(uuid()) @db.Uuid
+  tenantId          String         @db.Uuid
+  classId           String         @db.Uuid
+  courseId          String         @db.Uuid
+  weeklyHours       Int
+  requiredRoomType  String?
+  assignedTeacherId String?        @db.Uuid
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  tenant            Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  class             Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
+  course            Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  assignedTeacher   Teacher?       @relation(fields: [assignedTeacherId], references: [id], onDelete: SetNull)
+
+  @@unique([classId, courseId])
+}
+
+model Room {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @db.Uuid
+  name            String
+  capacity        Int            @default(30)
+  type            String         @default("STANDARD") // STANDARD, LABO, GYMNASE
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@unique([tenantId, name])
+}
+
+enum AttendanceType {
+  ABSENCE
+  LATE
+  EXCUSED
+}
+
+model Attendance {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @db.Uuid
+  studentId       String         @db.Uuid
+  classId         String         @db.Uuid
+  date            DateTime       @db.Date
+  type            AttendanceType
+  reason          String?
+  durationMinutes Int?
+  recordedBy      String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student         Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class           Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id              String         @id @default(uuid()) @db.Uuid
+  actorType       ActorType
+  actorId         String         @db.Uuid
+  tenantId        String?        @db.Uuid
+  action          String
+  target          String
+  metadata        Json?
+  createdAt       DateTime       @default(now())
+}
+
+enum ActorType {
+  TENANT_USER
+  PLATFORM_USER
+}
+
+// --- Kiosque & Pointage ---
+
+model TenantSettings {
+  id                      String   @id @default(uuid()) @db.Uuid
+  tenantId                String   @unique @db.Uuid
+  
+  // Kiosque Pointage
+  kioskLatitude           Float?
+  kioskLongitude          Float?
+  kioskToleranceMeters    Int      @default(150)
+  kioskRequirePhoto       Boolean  @default(true)
+  kioskPhotoRetentionDays Int      @default(30)
+  
+  updatedAt               DateTime @updatedAt
+  tenant                  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model StaffClockEvent {
+  id              String     @id @default(uuid()) @db.Uuid
+  tenantId        String     @db.Uuid
+  staffId         String     @db.Uuid
+  
+  eventType       String     // "CLOCK_IN" (Arrivée) ou "CLOCK_OUT" (Départ)
+  timestamp       DateTime   @default(now())
+  
+  // Preuves
+  latitude        Float?
+  longitude       Float?
+  photoPath       String?    // Chemin de stockage sécurisé
+  
+  // Pointage manuel de secours (Admin)
+  isManual        Boolean    @default(false)
+  manualReason    String?
+  recordedBy      String?    @db.Uuid // L'admin qui a forcé le pointage
+  
+  createdAt       DateTime   @default(now())
+  
+  tenant          Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  staff           TenantUser @relation(fields: [staffId], references: [id], onDelete: Cascade)
+}

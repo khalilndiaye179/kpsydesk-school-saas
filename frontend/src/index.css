@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&family=Space+Grotesk:wght@700&display=swap');
+
+:root {
+  /* Palette Dark Mode (Moderne Futuriste - Par défaut) */
+  --bg-sidebar: #090B10;
+  --bg-sidebar-active: #161B2A;
+  --accent: #5B6CFF;
+  --accent-data: #22D3EE;
+  
+  --bg-page: #0B0E17;
+  --bg-card: #121622;
+  
+  --status-positive: #10B981;
+  --status-negative: #EF4444;
+  --status-warning: #F59E0B;
+  
+  --text-primary: #F3F4F6;
+  --text-secondary: #9CA3AF;
+  --border: #1F2937;
+
+  /* Font stacks */
+  --font-title: 'Space Grotesk', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+[data-theme='light'] {
+  /* Palette Light Mode */
+  --bg-sidebar: #0E1220;
+  --bg-sidebar-active: #1B2033;
+  --accent: #5B6CFF;
+  --accent-data: #22D3EE;
+  
+  --bg-page: #F4F5FA;
+  --bg-card: #FFFFFF;
+  
+  --status-positive: #16A34A;
+  --status-negative: #DC2626;
+  --status-warning: #D97706;
+  
+  --text-primary: #12131A;
+  --text-secondary: #6B6E78;
+  --border: #E4E5EC;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Typographies globales */
+h1, h2, h3, h4, h5, h6, .font-title {
+  font-family: var(--font-title);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Animations globales */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(91, 108, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(91, 108, 255, 0.7);
+  }
+}
+
+.glow-active {
+  animation: pulse-glow 2s infinite ease-in-out;
+}
