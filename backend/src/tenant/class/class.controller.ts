@@ -3,7 +3,7 @@ import { ClassService } from './class.service';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { Request } from 'express';
 
-@Controller('api/v1/tenant/classes')
+@Controller('tenant/classes')
 @UseGuards(AuthGuard)
 export class ClassController {
   constructor(private readonly classService: ClassService) {}

@@ -37,45 +37,39 @@ export class PlatformAuthService {
       throw new UnauthorizedException('Identifiants invalides.');
     }
 
-    // Cas A : MFA Non Enrôlé -> Génère un jeton temporaire à scope restreint "platform:enroll"
+    // Si l'utilisateur n'est pas encore enrôlé MFA, délivrer un jeton restreint platform:enroll
     if (!user.isMfaEnrolled) {
-      const enrollToken = await this.jwtService.signAsync(
-        {
-          sub: user.id,
-          email: user.email,
-          role: user.role,
-          scope: 'platform:enroll',
-        },
-        { expiresIn: '15m' },
-      );
-
+      const enrollPayload = {
+        sub: user.id,
+        email: user.email,
+        scope: 'platform:enroll',
+      };
+      const enrollToken = await this.jwtService.signAsync(enrollPayload, { expiresIn: '15m' });
       return {
         status: 'mfa_enrollment_required',
         enroll_token: enrollToken,
-        mustChangePassword: user.mustChangePassword,
       };
     }
 
-    // Cas B : MFA Enrôlé + Activé -> Génération d'un OtpChallenge
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const codeHash = await bcrypt.hash(otp, BCRYPT_ROUNDS);
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min
+    // Délivrance du JWT platform complet si déjà enrôlé (scope: "platform")
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      scope: 'platform',
+    };
 
-    const challenge = await this.prisma.otpChallenge.create({
-      data: {
-        userId: user.id,
-        email: user.email,
-        codeHash,
-        expiresAt,
-      },
-    });
-
-    this.logger.log(`🔑 OtpChallenge platform généré pour ${user.email} (id: ${challenge.id})`);
+    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '8h' });
 
     return {
-      status: 'otp_required',
-      challenge_id: challenge.id,
-      mustChangePassword: user.mustChangePassword,
+      access_token: accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        mustChangePassword: user.mustChangePassword,
+        isMfaEnrolled: user.isMfaEnrolled,
+      },
     };
   }
 

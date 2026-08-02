@@ -186,6 +186,7 @@ export const LoginView: React.FC = () => {
             <PasswordStep 
               onSuccess={handlePasswordSuccess}
               onRequireEnrollment={handleRequireEnrollment}
+              onDirectLogin={handleOtpVerifySuccess}
               role={role}
               setRole={setRole}
             />

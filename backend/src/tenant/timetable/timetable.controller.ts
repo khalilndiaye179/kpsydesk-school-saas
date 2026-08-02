@@ -3,7 +3,7 @@ import { TimetableService } from './timetable.service';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { Request } from 'express';
 
-@Controller('api/v1/tenant/timetables')
+@Controller('tenant/timetables')
 @UseGuards(AuthGuard)
 export class TimetableController {
   constructor(private readonly timetableService: TimetableService) {}

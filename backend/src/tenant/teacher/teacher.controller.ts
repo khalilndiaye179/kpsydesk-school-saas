@@ -3,7 +3,7 @@ import { TeacherService } from './teacher.service';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { Request } from 'express';
 
-@Controller('api/v1/tenant/teachers')
+@Controller('tenant/teachers')
 @UseGuards(AuthGuard)
 export class TeacherController {
   constructor(private readonly teacherService: TeacherService) {}
