@@ -9,6 +9,7 @@ import { CourseModule } from './tenant/course/course.module';
 import { TimetableModule } from './tenant/timetable/timetable.module';
 import { MailModule } from './mail/mail.module';
 import { PublicSignupModule } from './signup/signup.module';
+import { PlatformModule } from './platform/platform.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PublicSignupModule } from './signup/signup.module';
     TimetableModule,
     MailModule,
     PublicSignupModule,
+    PlatformModule,
   ],
   controllers: [],
   providers: [PrismaService],
