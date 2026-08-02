@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shield, Plus, Trash2, Edit2, Check, UserPlus } from 'lucide-react';
 
 interface Collaborator {
   id: string;
   name: string;
   email: string;
+  password?: string;
+  isMfaActive: boolean;
+  mfaSecret?: string;
   permissions: {
     manageTenants: boolean;
     manageBilling: boolean;
@@ -15,22 +18,40 @@ interface Collaborator {
 }
 
 export const SuperAdminCollaboratorsView: React.FC = () => {
-  const [collaborators, setCollaborators] = useState<Collaborator[]>([
-    {
-      id: 'COL-1',
-      name: 'Ibrahima Ndiaye',
-      email: 'admin@kpsydesk.com',
-      permissions: { manageTenants: true, manageBilling: true, viewAudits: true, manageSettings: true },
-      status: 'ACTIVE'
-    },
-    {
-      id: 'COL-2',
-      name: 'Fatou Sow',
-      email: 'compta@kpsydesk.com',
-      permissions: { manageTenants: false, manageBilling: true, viewAudits: true, manageSettings: false },
-      status: 'ACTIVE'
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [showPassword, setShowPassword] = useState<{ [key: string]: boolean }>({});
+
+  useEffect(() => {
+    const saved = localStorage.getItem('kpsydesk_superadmin_collaborators');
+    if (saved) {
+      setCollaborators(JSON.parse(saved));
+    } else {
+      const defaultCollaborators: Collaborator[] = [
+        {
+          id: 'COL-1',
+          name: 'Ibrahima Ndiaye',
+          email: 'admin@kpsydesk.com',
+          password: 'Admin2026!',
+          isMfaActive: true,
+          mfaSecret: 'KPSYSCHOOL-ADMIN-MFA-001',
+          permissions: { manageTenants: true, manageBilling: true, viewAudits: true, manageSettings: true },
+          status: 'ACTIVE'
+        },
+        {
+          id: 'COL-2',
+          name: 'Fatou Sow',
+          email: 'compta@kpsydesk.com',
+          password: 'Fatou2026!',
+          isMfaActive: true,
+          mfaSecret: 'KPSYSCHOOL-FATOU-MFA-002',
+          permissions: { manageTenants: false, manageBilling: true, viewAudits: true, manageSettings: false },
+          status: 'ACTIVE'
+        }
+      ];
+      setCollaborators(defaultCollaborators);
+      localStorage.setItem('kpsydesk_superadmin_collaborators', JSON.stringify(defaultCollaborators));
     }
-  ]);
+  }, []);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   
@@ -38,6 +59,8 @@ export const SuperAdminCollaboratorsView: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isMfaActive, setIsMfaActive] = useState(true);
   const [perms, setPerms] = useState({
     manageTenants: false,
     manageBilling: false,
@@ -45,10 +68,17 @@ export const SuperAdminCollaboratorsView: React.FC = () => {
     manageSettings: false
   });
 
+  const saveCollaborators = (data: Collaborator[]) => {
+    setCollaborators(data);
+    localStorage.setItem('kpsydesk_superadmin_collaborators', JSON.stringify(data));
+  };
+
   const resetForm = () => {
     setEditingId(null);
     setName('');
     setEmail('');
+    setPassword('');
+    setIsMfaActive(true);
     setPerms({ manageTenants: false, manageBilling: false, viewAudits: false, manageSettings: false });
     setIsFormOpen(false);
   };
@@ -57,29 +87,47 @@ export const SuperAdminCollaboratorsView: React.FC = () => {
     setEditingId(col.id);
     setName(col.name);
     setEmail(col.email);
+    setPassword(col.password || '');
+    setIsMfaActive(col.isMfaActive);
     setPerms(col.permissions);
     setIsFormOpen(true);
   };
 
   const handleDelete = (id: string) => {
     if (window.confirm("Suspendre ce collaborateur ?")) {
-      setCollaborators(collaborators.map(c => c.id === id ? { ...c, status: 'SUSPENDED' } : c));
+      const updated = collaborators.map(c => c.id === id ? { ...c, status: 'SUSPENDED' as const } : c);
+      saveCollaborators(updated);
     }
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    let updatedList: Collaborator[];
+
     if (editingId) {
-      setCollaborators(collaborators.map(c => c.id === editingId ? { ...c, name, email, permissions: perms } : c));
+      updatedList = collaborators.map(c => c.id === editingId ? { 
+        ...c, 
+        name, 
+        email, 
+        password: password || c.password || 'Secured2026!', 
+        isMfaActive,
+        permissions: perms 
+      } : c);
     } else {
-      setCollaborators([...collaborators, {
+      const newCol: Collaborator = {
         id: `COL-${Date.now()}`,
         name,
         email,
+        password: password || 'Secured2026!',
+        isMfaActive,
+        mfaSecret: `KPSYSCHOOL-MFA-${Date.now()}`,
         permissions: perms,
         status: 'ACTIVE'
-      }]);
+      };
+      updatedList = [...collaborators, newCol];
     }
+
+    saveCollaborators(updatedList);
     resetForm();
   };
 
@@ -118,6 +166,19 @@ export const SuperAdminCollaboratorsView: React.FC = () => {
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>Adresse Email</label>
                 <input required type="email" value={email} onChange={e => setEmail(e.target.value)} style={{ padding: '12px', borderRadius: '8px', backgroundColor: '#0f172a', border: '1px solid #334155', color: 'white', outline: 'none' }} />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>Mot de passe d'accès Console Admin</label>
+                <input required={!editingId} type="password" placeholder="••••••••••••" value={password} onChange={e => setPassword(e.target.value)} style={{ padding: '12px', borderRadius: '8px', backgroundColor: '#0f172a', border: '1px solid #334155', color: 'white', outline: 'none' }} />
+              </div>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '24px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', backgroundColor: '#0f172a', borderRadius: '8px', border: isMfaActive ? '1px solid #38bdf8' : '1px solid #334155', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={isMfaActive} onChange={e => setIsMfaActive(e.target.checked)} style={{ width: '18px', height: '18px', accentColor: '#38bdf8' }} />
+                  <span style={{ color: 'white', fontSize: '0.95rem', fontWeight: 600 }}>Activer la Double Authentification MFA (QR Code OTP)</span>
+                </label>
               </div>
             </div>
 
@@ -161,6 +222,7 @@ export const SuperAdminCollaboratorsView: React.FC = () => {
           <thead>
             <tr style={{ borderBottom: '1px solid #334155', color: '#94a3b8' }}>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 500 }}>Collaborateur</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 500 }}>Sécurité (Mot de Passe & MFA)</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 500 }}>Accès</th>
               <th style={{ padding: '12px', textAlign: 'center', fontWeight: 500 }}>Statut</th>
               <th style={{ padding: '12px', textAlign: 'right', fontWeight: 500 }}>Actions</th>
@@ -177,6 +239,33 @@ export const SuperAdminCollaboratorsView: React.FC = () => {
                     <div>
                       <p style={{ margin: '0 0 4px 0', color: 'white', fontWeight: 600 }}>{c.name}</p>
                       <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.85rem' }}>{c.email}</p>
+                    </div>
+                  </div>
+                </td>
+                <td style={{ padding: '16px 12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: '#cbd5e1', fontSize: '0.85rem', fontFamily: 'monospace' }}>
+                        {showPassword[c.id] ? (c.password || '••••••••••••') : '••••••••••••'}
+                      </span>
+                      <button 
+                        type="button" 
+                        onClick={() => setShowPassword({ ...showPassword, [c.id]: !showPassword[c.id] })}
+                        style={{ background: 'none', border: 'none', color: '#38bdf8', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
+                      >
+                        {showPassword[c.id] ? 'Masquer' : 'Afficher'}
+                      </button>
+                    </div>
+                    <div>
+                      {c.isMfaActive ? (
+                        <span style={{ padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Shield size={12} /> MFA OTP Actif
+                        </span>
+                      ) : (
+                        <span style={{ padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600 }}>
+                          MFA Inactif
+                        </span>
+                      )}
                     </div>
                   </div>
                 </td>
