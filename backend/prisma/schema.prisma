@@ -385,7 +385,7 @@ model Invitation {
   createdAt   DateTime  @default(now())
 }
 
-model AuditLog {
+model SecurityAuditLog {
   id        String   @id @default(uuid()) @db.Uuid
   action    String
   email     String?
