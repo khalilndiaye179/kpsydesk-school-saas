@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Trash2, User, MapPin, Phone, Mail, Calendar as CalendarIcon, Printer, BadgeInfo, FileText } from 'lucide-react';
+import { UserPlus, Trash2, FileSpreadsheet, User, MapPin, Phone, Mail, Calendar as CalendarIcon, Printer, BadgeInfo, FileText } from 'lucide-react';
 import { api } from '../../lib/api';
 
 interface StudentData {

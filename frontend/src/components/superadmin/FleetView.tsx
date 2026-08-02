@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Plus, Server, Activity, ShieldAlert } from 'lucide-react';
+import { Building2, Plus, Server, Activity, ShieldAlert, Power } from 'lucide-react';
 import { CardKPI } from '../shared/CardKPI';
 
 interface TenantData {

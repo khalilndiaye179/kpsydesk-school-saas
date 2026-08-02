@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, BookOpen } from 'lucide-react';
+import { Save, UserCheck, BookOpen, AlertCircle } from 'lucide-react';
 
 interface Grade {
   studentId: string;
