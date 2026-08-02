@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Param } from '@nestjs/common';
 import { StudentService } from './student.service';
 import { AuthGuard } from '../../common/guards/auth.guard';
-import { Request } from 'express';
+import { TenantId } from '../../common/decorators/tenant-id.decorator';
 
 @Controller('api/v1/tenant/students')
 @UseGuards(AuthGuard)
@@ -14,8 +14,7 @@ export class StudentController {
   }
 
   @Post()
-  create(@Body() createStudentDto: any, @Req() request: Request) {
-    const tenantId = (request as any).user.tenantId;
+  create(@Body() createStudentDto: Record<string, unknown>, @TenantId() tenantId: string) {
     return this.studentService.create(createStudentDto, tenantId);
   }
 

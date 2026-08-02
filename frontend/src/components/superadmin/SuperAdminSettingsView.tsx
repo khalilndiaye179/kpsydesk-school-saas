@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { Save, Server, Mail, CreditCard, Shield, Globe, AlertTriangle, Layers, Edit2, Trash2, Plus } from 'lucide-react';
+import { formatAmount } from '../../lib/format';
+import { Modal } from '../shared/Modal';
+import { readPricingPlans } from '../../lib/pricing';
+import { STORAGE_KEYS, writeStored } from '../../lib/storage';
 
 interface SuperAdminSettingsViewProps {
   initialTab?: 'GENERAL' | 'SMTP' | 'PAYMENT' | 'SECURITY' | 'PLANS';
@@ -23,31 +27,10 @@ export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ 
     { id: 'PREMIUM', name: 'Premium / Enterprise', price: 75000, activeQuota: 100, maxStudents: 99999, annualDiscount: 15, description: 'La suite complète avec serveur dédié.', features: ['Gestion Scolaire de base', 'Module Financier', 'Kiosque Pointage', 'Espace RH', 'Multi-campus'], tags: 'Enterprise, Illimité', recommended: false }
   ];
 
-  const [pricingPlans, setPricingPlans] = useState<any[]>(() => {
-    const saved = localStorage.getItem('kpsydesk_pricing_plans');
-    if (saved) {
-      try {
-        let parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Migration automatique des anciens tarifs 50k, 150k, 350k -> 25k, 45k, 75k
-          parsed = parsed.map((p: any) => ({
-            ...p,
-            price: p.price === 50000 ? 25000 : (p.price === 150000 ? 45000 : (p.price === 350000 ? 75000 : p.price)),
-            maxStudents: p.maxStudents === 500 ? 350 : p.maxStudents
-          }));
-          localStorage.setItem('kpsydesk_pricing_plans', JSON.stringify(parsed));
-          return parsed;
-        }
-      } catch (e) {
-        // Fallback en cas d'erreur de parsing
-      }
-    }
-    localStorage.setItem('kpsydesk_pricing_plans', JSON.stringify(defaultPlans));
-    return defaultPlans;
-  });
+  const [pricingPlans, setPricingPlans] = useState<any[]>(() => readPricingPlans(defaultPlans));
 
   React.useEffect(() => {
-    localStorage.setItem('kpsydesk_pricing_plans', JSON.stringify(pricingPlans));
+    writeStored(STORAGE_KEYS.pricingPlans, pricingPlans);
   }, [pricingPlans]);
 
   const [editingPlan, setEditingPlan] = useState<any | null>(null);
@@ -275,7 +258,7 @@ export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ 
                         {plan.recommended && <span style={{ padding: '4px 8px', backgroundColor: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>RECOMMANDÉ</span>}
                       </div>
                       <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.9rem' }}>
-                        <strong style={{ color: 'white' }}>{plan.price.toLocaleString('fr-FR')} F / mois</strong> — Max Élèves : {plan.maxStudents === 99999 ? 'Illimité' : plan.maxStudents}
+                        <strong style={{ color: 'white' }}>{formatAmount(plan.price)} / mois</strong> — Max Élèves : {plan.maxStudents === 99999 ? 'Illimité' : plan.maxStudents}
                       </p>
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
@@ -297,8 +280,7 @@ export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ 
 
       {/* Modale d'édition de plan */}
       {editingPlan && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
-          <div style={{ backgroundColor: '#18181b', borderRadius: '12px', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid #27272a', padding: '32px' }}>
+        <Modal variant="dark" maxWidth="700px" showCloseButton={false} overlayStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.85)', zIndex: 9999 }} contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '12px' }}>
             <h3 style={{ margin: '0 0 24px 0', color: 'white', fontSize: '1.4rem' }}>{editingPlan.id.startsWith('PLAN_') ? 'Créer un Plan' : `Modifier le plan : ${editingPlan.name}`}</h3>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
@@ -367,8 +349,7 @@ export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ 
                 Enregistrer
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
     </div>

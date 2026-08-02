@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, ShieldCheck, ToggleLeft, ToggleRight, Search } from 'lucide-react';
+import { readStoredOrSeed, writeStored } from '../../lib/storage';
+
+const TENANT_MODULES_KEY = 'kpsydesk_tenant_modules';
 
 interface TenantModule {
   tenantId: string;
@@ -18,11 +21,7 @@ export const ModuleActivationView: React.FC = () => {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    const savedConfig = localStorage.getItem('kpsydesk_tenant_modules');
-    if (savedConfig) {
-      setTenantModules(JSON.parse(savedConfig));
-    } else {
-      const defaultConfig: TenantModule[] = [
+    const defaultConfig: TenantModule[] = [
         { 
           tenantId: '1', 
           tenantName: "Lycée d'Excellence Birago Diop", 
@@ -39,9 +38,7 @@ export const ModuleActivationView: React.FC = () => {
           modules: { offlineMode: false, parentPortal: false, proCertificates: true, aiScheduling: false, complianceExport: true } 
         }
       ];
-      setTenantModules(defaultConfig);
-      localStorage.setItem('kpsydesk_tenant_modules', JSON.stringify(defaultConfig));
-    }
+    setTenantModules(readStoredOrSeed(TENANT_MODULES_KEY, defaultConfig));
   }, []);
 
   const toggleModule = (tenantId: string, moduleKey: keyof TenantModule['modules']) => {
@@ -55,7 +52,7 @@ export const ModuleActivationView: React.FC = () => {
       return tm;
     });
     setTenantModules(updated);
-    localStorage.setItem('kpsydesk_tenant_modules', JSON.stringify(updated));
+    writeStored(TENANT_MODULES_KEY, updated);
   };
 
   const filteredTenants = tenantModules.filter(tm => tm.tenantName.toLowerCase().includes(search.toLowerCase()));

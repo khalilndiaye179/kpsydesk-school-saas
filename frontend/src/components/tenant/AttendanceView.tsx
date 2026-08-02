@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Users, Clock, AlertTriangle, CheckCircle, Search, Save, Filter, X } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api, fetchWithLocalFallback } from '../../lib/api';
+import { formatDate } from '../../lib/format';
+import { STORAGE_KEYS, readStored, writeStored } from '../../lib/storage';
 
 type AttendanceType = 'PRESENT' | 'ABSENCE' | 'LATE' | 'EXCUSED';
 
@@ -46,34 +48,16 @@ export const AttendanceView: React.FC = () => {
   }, [selectedClass]);
 
   const fetchInitialData = async () => {
-    try {
-      const clsRes = await api.get('/tenant/classes');
-      setClasses(clsRes.data);
-      if (clsRes.data.length > 0) setSelectedClass(clsRes.data[0].id);
-    } catch (err) {
-      const saved = localStorage.getItem('kpsydesk_classes');
-      if (saved) {
-        const p = JSON.parse(saved);
-        setClasses(p);
-        if (p.length > 0) setSelectedClass(p[0].id);
-      }
-    }
+    const loadedClasses = await fetchWithLocalFallback<{ id: string; name: string }[]>(
+      '/tenant/classes',
+      STORAGE_KEYS.classes,
+      [],
+    );
+    setClasses(loadedClasses);
+    if (loadedClasses.length > 0) setSelectedClass(loadedClasses[0].id);
 
-    try {
-      const attRes = await api.get('/tenant/attendances');
-      setAttendances(attRes.data);
-    } catch (err) {
-      const saved = localStorage.getItem('kpsydesk_attendances');
-      if (saved) setAttendances(JSON.parse(saved));
-    }
-
-    try {
-      const stdRes = await api.get('/tenant/students');
-      setAllStudents(stdRes.data);
-    } catch (err) {
-      const saved = localStorage.getItem('kpsydesk_students');
-      if (saved) setAllStudents(JSON.parse(saved));
-    }
+    setAttendances(await fetchWithLocalFallback<AttendanceRecord[]>('/tenant/attendances', STORAGE_KEYS.attendances, []));
+    setAllStudents(await fetchWithLocalFallback<StudentData[]>('/tenant/students', STORAGE_KEYS.students, []));
   };
 
   const fetchStudents = async (classId: string) => {
@@ -81,17 +65,14 @@ export const AttendanceView: React.FC = () => {
       const res = await api.get(`/tenant/students?classId=${classId}`);
       setStudents(res.data);
     } catch (err) {
-      const saved = localStorage.getItem('kpsydesk_students');
-      if (saved) {
-        const allStudents: StudentData[] = JSON.parse(saved);
-        setStudents(allStudents.filter(s => s.classId === classId));
-      }
+      const allStudents = readStored<StudentData[]>(STORAGE_KEYS.students, []);
+      setStudents(allStudents.filter(s => s.classId === classId));
     }
   };
 
   const saveAttendances = (newRecords: AttendanceRecord[]) => {
     setAttendances(newRecords);
-    localStorage.setItem('kpsydesk_attendances', JSON.stringify(newRecords));
+    writeStored(STORAGE_KEYS.attendances, newRecords);
   };
 
   const handleStatusChange = (studentId: string, newType: AttendanceType) => {
@@ -320,7 +301,7 @@ export const AttendanceView: React.FC = () => {
 
                   return (
                     <tr key={record.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '12px', color: 'var(--text-primary)' }}>{new Date(record.date).toLocaleDateString()}</td>
+                      <td style={{ padding: '12px', color: 'var(--text-primary)' }}>{formatDate(record.date)}</td>
                       <td style={{ padding: '12px', color: 'var(--text-primary)' }}>
                         <div style={{ fontWeight: 600 }}>{studentName}</div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>

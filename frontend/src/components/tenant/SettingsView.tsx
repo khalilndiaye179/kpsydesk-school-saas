@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Save, Image as ImageIcon, Building, MapPin, Phone, Mail, FileCheck, Navigation } from 'lucide-react';
+import { STORAGE_KEYS, readStored, writeStored } from '../../lib/storage';
 
 declare global {
   interface Window {
@@ -43,10 +44,7 @@ export const SettingsView: React.FC = () => {
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('kpsydesk_school_settings');
-    if (saved) {
-      setSettings(JSON.parse(saved));
-    }
+    setSettings(prev => readStored(STORAGE_KEYS.schoolSettings, prev));
   }, []);
 
   const mapRef = useRef<HTMLDivElement>(null);
@@ -126,7 +124,7 @@ export const SettingsView: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('kpsydesk_school_settings', JSON.stringify(settings));
+    writeStored(STORAGE_KEYS.schoolSettings, settings);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };

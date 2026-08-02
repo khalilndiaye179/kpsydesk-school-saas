@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, FileSpreadsheet, Layers, Edit, Users, X } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api, fetchWithLocalFallback } from '../../lib/api';
+import { STORAGE_KEYS, readStored, writeStored } from '../../lib/storage';
+import { Modal } from '../shared/Modal';
 
 interface ClassData {
   id: string;
@@ -34,43 +36,30 @@ export const StructureView: React.FC = () => {
   }, []);
 
   const fetchStudents = async () => {
-    try {
-      const response = await api.get('/tenant/students');
-      setStudents(response.data);
-    } catch (err) {
-      const savedStudents = localStorage.getItem('kpsydesk_students');
-      if (savedStudents) setStudents(JSON.parse(savedStudents));
-    }
+    setStudents(await fetchWithLocalFallback<any[]>('/tenant/students', STORAGE_KEYS.students, []));
   };
 
   const fetchClasses = async () => {
-    try {
-      const response = await api.get('/tenant/classes');
-      const apiClasses = response.data.map((c: any) => ({
-        id: c.id,
-        name: c.name,
-        code: c.code,
-        studentCount: c._count?.students || 0
-      }));
-      setClasses(apiClasses);
-      localStorage.setItem('kpsydesk_classes', JSON.stringify(apiClasses));
-    } catch (err) {
-      console.error('Erreur API classes:', err);
-      // Fallback local
-      const saved = localStorage.getItem('kpsydesk_classes');
-      if (saved) {
-        setClasses(JSON.parse(saved));
-      } else {
-        // Données de démo initiales
-        const defaultClasses = [
-          { id: '1', name: 'Classe de 6ème A', code: '6EME-A', studentCount: 28 },
-          { id: '2', name: 'Classe de 3ème B', code: '3EME-B', studentCount: 24 },
-          { id: '3', name: 'Terminale S1', code: 'TERM-S1', studentCount: 30 }
-        ];
-        setClasses(defaultClasses);
-        localStorage.setItem('kpsydesk_classes', JSON.stringify(defaultClasses));
-      }
-    }
+    // Données de démo initiales si ni l'API ni le cache local ne répondent
+    const defaultClasses: ClassData[] = [
+      { id: '1', name: 'Classe de 6ème A', code: '6EME-A', studentCount: 28 },
+      { id: '2', name: 'Classe de 3ème B', code: '3EME-B', studentCount: 24 },
+      { id: '3', name: 'Terminale S1', code: 'TERM-S1', studentCount: 30 }
+    ];
+
+    setClasses(
+      await fetchWithLocalFallback<ClassData[]>(
+        '/tenant/classes',
+        STORAGE_KEYS.classes,
+        defaultClasses,
+        (data) => data.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          code: c.code,
+          studentCount: c._count?.students || 0
+        })),
+      ),
+    );
   };
 
   const handleAddClass = async (e: React.FormEvent) => {
@@ -85,16 +74,14 @@ export const StructureView: React.FC = () => {
         console.error('Erreur modif:', err);
         const updatedClasses = classes.map(c => c.id === editingId ? { ...c, name, code: code.toUpperCase() } : c);
         setClasses(updatedClasses);
-        localStorage.setItem('kpsydesk_classes', JSON.stringify(updatedClasses));
-        
+        writeStored(STORAGE_KEYS.classes, updatedClasses);
+
         // Mettre à jour les élèves en local
-        const savedStudents = localStorage.getItem('kpsydesk_students');
-        if (savedStudents) {
-           let parsed = JSON.parse(savedStudents);
-           parsed = parsed.map((s:any) => s.classId === editingId ? { ...s, className: name } : s);
-           localStorage.setItem('kpsydesk_students', JSON.stringify(parsed));
-           setStudents(parsed);
-        }
+        const updatedStudents = readStored<any[]>(STORAGE_KEYS.students, []).map(
+          (s: any) => s.classId === editingId ? { ...s, className: name } : s,
+        );
+        writeStored(STORAGE_KEYS.students, updatedStudents);
+        setStudents(updatedStudents);
       }
       setEditingId(null);
     } else {
@@ -106,7 +93,7 @@ export const StructureView: React.FC = () => {
         const newClass = { id: `local-cls-${Date.now()}`, name, code: code.toUpperCase(), studentCount: 0 };
         const updated = [...classes, newClass];
         setClasses(updated);
-        localStorage.setItem('kpsydesk_classes', JSON.stringify(updated));
+        writeStored(STORAGE_KEYS.classes, updated);
       }
     }
     setName('');
@@ -127,7 +114,7 @@ export const StructureView: React.FC = () => {
       } catch (err) {
         const updated = classes.filter(c => c.id !== id);
         setClasses(updated);
-        localStorage.setItem('kpsydesk_classes', JSON.stringify(updated));
+        writeStored(STORAGE_KEYS.classes, updated);
       }
     }
   };
@@ -316,17 +303,12 @@ export const StructureView: React.FC = () => {
 
       {/* Modale pour voir les élèves d'une classe */}
       {viewingClassId && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '16px', width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ margin: 0, fontFamily: 'var(--font-title)', fontSize: '1.2rem', color: 'var(--text-primary)' }}>
-                Élèves de la classe {classes.find(c => c.id === viewingClassId)?.name}
-              </h2>
-              <button onClick={() => setViewingClassId(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                <X size={24} />
-              </button>
-            </div>
-            
+        <Modal
+          title={`Élèves de la classe ${classes.find(c => c.id === viewingClassId)?.name}`}
+          maxWidth="600px"
+          onClose={() => setViewingClassId(null)}
+          contentStyle={{ padding: '24px', borderRadius: '16px', maxHeight: '80vh', border: '1px solid var(--border)' }}
+        >
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {students.filter(s => s.classId === viewingClassId).length === 0 ? (
                 <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', padding: '20px 0' }}>Aucun élève dans cette classe.</div>
@@ -339,8 +321,7 @@ export const StructureView: React.FC = () => {
                 ))
               )}
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

@@ -1,6 +1,9 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { tenantLocalStorage } from './common/tenancy/tenant.middleware';
+
+/** Client Prisma utilisable aussi bien hors transaction que dans une transaction tenant. */
+export type TenantTransactionClient = PrismaClient | Prisma.TransactionClient;
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -16,7 +19,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * Wrapper pour exécuter toutes les requêtes métier sous une transaction PostgreSQL
    * appliquant le tenant_id avec SET LOCAL.
    */
-  async runWithTenantContext<T>(callback: (tx: any) => Promise<T>): Promise<T> {
+  async runWithTenantContext<T>(
+    callback: (tx: TenantTransactionClient) => Promise<T>,
+  ): Promise<T> {
     const tenantId = tenantLocalStorage.getStore();
 
     if (!tenantId) {

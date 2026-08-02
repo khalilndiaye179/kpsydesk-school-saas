@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { CreditCard, CheckCircle2, ShieldCheck, Zap, AlertCircle, Smartphone, Clock } from 'lucide-react';
 import { useSubscriptionPricing } from '../../hooks/useSubscriptionPricing';
+import { formatAmount, formatDate } from '../../lib/format';
+import { readPricingPlans } from '../../lib/pricing';
+import { Modal } from '../shared/Modal';
 
 export const TenantBillingView: React.FC = () => {
   const [currentPlan, setCurrentPlan] = useState('ESSAI');
@@ -12,19 +15,7 @@ export const TenantBillingView: React.FC = () => {
 
   React.useEffect(() => {
     const loadPlans = () => {
-      const saved = localStorage.getItem('kpsydesk_pricing_plans');
-      if (saved) {
-        let parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          parsed = parsed.map((p: any) => ({
-            ...p,
-            price: p.price === 50000 ? 25000 : (p.price === 150000 ? 45000 : (p.price === 350000 ? 75000 : p.price)),
-            maxStudents: p.maxStudents === 500 ? 350 : p.maxStudents
-          }));
-          setPlans(parsed);
-        }
-      } else {
-        setPlans([
+      setPlans(readPricingPlans([
           {
             id: 'STANDARD',
             name: 'Plan Standard',
@@ -61,8 +52,7 @@ export const TenantBillingView: React.FC = () => {
             tags: 'Pro, Haute Performance',
             recommended: false
           }
-        ]);
-      }
+      ]));
     };
 
     loadPlans();
@@ -97,7 +87,7 @@ export const TenantBillingView: React.FC = () => {
     isPriceChanged 
   } = useSubscriptionPricing('samba_diouf');
 
-  const formattedRenewalDate = new Date(nextRenewalDate).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const formattedRenewalDate = formatDate(nextRenewalDate);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', textAlign: 'left', paddingBottom: '40px' }}>
@@ -138,7 +128,7 @@ export const TenantBillingView: React.FC = () => {
           <div style={{ textAlign: 'right' }}>
             <p style={{ margin: '0 0 4px 0', color: '#64748b', fontSize: '0.9rem' }}>Votre tarif actuel (jusqu'au {formattedRenewalDate}) :</p>
             <strong style={{ color: '#2563eb', fontSize: '1.6rem', fontWeight: 800 }}>
-              {currentPlan === 'ESSAI' ? '0 FCFA' : `${currentLockedPrice.toLocaleString('fr-FR')} FCFA / mois`}
+              {currentPlan === 'ESSAI' ? '0 FCFA' : `${formatAmount(currentLockedPrice, 'FCFA')} / mois`}
             </strong>
           </div>
         </div>
@@ -154,7 +144,7 @@ export const TenantBillingView: React.FC = () => {
               </div>
             </div>
             <span style={{ padding: '6px 14px', backgroundColor: '#2563eb', color: 'white', borderRadius: '20px', fontWeight: 700, fontSize: '0.95rem' }}>
-              {livePlanPrice.toLocaleString('fr-FR')} FCFA / mois
+              {formatAmount(livePlanPrice, 'FCFA')} / mois
             </span>
           </div>
         )}
@@ -180,7 +170,7 @@ export const TenantBillingView: React.FC = () => {
                 )}
                 
                 <h4 style={{ margin: '0 0 16px 0', color: planColor, fontSize: '1.2rem' }}>{plan.name}</h4>
-                <h2 style={{ margin: '0 0 8px 0', color: '#1e293b', fontSize: '2rem', fontFamily: 'var(--font-data)' }}>{(plan.price || 0).toLocaleString('fr-FR')} F / mois</h2>
+                <h2 style={{ margin: '0 0 8px 0', color: '#1e293b', fontSize: '2rem', fontFamily: 'var(--font-data)' }}>{formatAmount(plan.price)} / mois</h2>
                 <p style={{ color: '#64748b', margin: '0 0 24px 0', fontSize: '0.9rem' }}>{plan.description || 'Facturé annuellement ou mensuellement.'}</p>
                 
                 <ul style={{ padding: 0, margin: '0 0 32px 0', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
@@ -247,14 +237,12 @@ export const TenantBillingView: React.FC = () => {
 
       {/* Modale de Paiement Mobile Money */}
       {paymentModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '24px', width: '100%', maxWidth: '500px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-            <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '1.4rem', color: '#1e293b' }}>Paiement Sécurisé</h3>
-              <button onClick={() => setPaymentModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#94a3b8', cursor: 'pointer' }}>&times;</button>
-            </div>
-            
-            <div style={{ padding: '32px' }}>
+        <Modal
+          title="Paiement Sécurisé"
+          onClose={() => setPaymentModalOpen(false)}
+          contentStyle={{ backgroundColor: 'white' }}
+        >
+            <div>
               <p style={{ margin: '0 0 16px 0', color: '#64748b', fontSize: '1rem', lineHeight: '1.5' }}>
                 Sélectionnez votre moyen de paiement pour souscrire au forfait <strong>{plans.find(p => p.id === selectedPlanForPayment)?.name}</strong>.
               </p>
@@ -271,13 +259,13 @@ export const TenantBillingView: React.FC = () => {
                     style={{ width: '80px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '1rem' }} 
                   />
                   <span style={{ color: '#64748b', fontSize: '0.95rem' }}>
-                    x {(plans.find(p => p.id === selectedPlanForPayment)?.price || 0).toLocaleString('fr-FR')} F
+                    x {formatAmount(plans.find(p => p.id === selectedPlanForPayment)?.price)}
                   </span>
                 </div>
                 <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontWeight: 600, color: '#1e293b' }}>Total à payer :</span>
                   <span style={{ fontWeight: 800, color: '#2563eb', fontSize: '1.2rem' }}>
-                    {((plans.find(p => p.id === selectedPlanForPayment)?.price || 0) * subscriptionMonths).toLocaleString('fr-FR')} F
+                    {formatAmount((plans.find(p => p.id === selectedPlanForPayment)?.price || 0) * subscriptionMonths)}
                   </span>
                 </div>
               </div>
@@ -316,8 +304,7 @@ export const TenantBillingView: React.FC = () => {
                 <ShieldCheck size={16} /> Transaction protégée par chiffrement 256-bit
               </div>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
     </div>

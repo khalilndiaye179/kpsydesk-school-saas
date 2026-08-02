@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Save, UserCheck, BookOpen, AlertCircle } from 'lucide-react';
+import { STORAGE_KEYS, classSubjectsKey, readStored, writeStored } from '../../lib/storage';
 
 interface Grade {
   studentId: string;
@@ -50,12 +51,9 @@ export const EvaluationsView: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedClasses = localStorage.getItem('kpsydesk_classes');
-    if (savedClasses) setClasses(JSON.parse(savedClasses));
-    const savedStudents = localStorage.getItem('kpsydesk_students');
-    if (savedStudents) setStudents(JSON.parse(savedStudents));
-    const savedEvals = localStorage.getItem('kpsydesk_evaluations');
-    if (savedEvals) setEvaluations(JSON.parse(savedEvals));
+    setClasses(readStored(STORAGE_KEYS.classes, []));
+    setStudents(readStored(STORAGE_KEYS.students, []));
+    setEvaluations(readStored(STORAGE_KEYS.evaluations, []));
   }, []);
 
   const filteredStudents = selectedClassId 
@@ -119,9 +117,9 @@ export const EvaluationsView: React.FC = () => {
     if (!currentCoefs['LV2']) currentCoefs['LV2'] = 1;
 
     // Charger les matières actives de la classe
-    const savedClassSubjects = localStorage.getItem(`kpsydesk_class_subjects_${selectedStudent.classId}`);
+    const savedClassSubjects = readStored<Record<string, boolean> | null>(classSubjectsKey(selectedStudent.classId), null);
     if (savedClassSubjects) {
-      setActiveSubjects(JSON.parse(savedClassSubjects));
+      setActiveSubjects(savedClassSubjects);
     } else {
       const defaultActive: Record<string, boolean> = {};
       DEFAULT_SUBJECTS.forEach(s => defaultActive[s] = true);
@@ -160,7 +158,7 @@ export const EvaluationsView: React.FC = () => {
 
   const applySubjectsToClass = () => {
     if (!selectedStudent) return;
-    localStorage.setItem(`kpsydesk_class_subjects_${selectedStudent.classId}`, JSON.stringify(activeSubjects));
+    writeStored(classSubjectsKey(selectedStudent.classId), activeSubjects);
     setSaveStatus("Configuration des matières appliquée à toute la classe !");
     setTimeout(() => setSaveStatus(null), 3000);
   };
@@ -260,7 +258,7 @@ export const EvaluationsView: React.FC = () => {
     }
 
     setEvaluations(updatedEvaluations);
-    localStorage.setItem('kpsydesk_evaluations', JSON.stringify(updatedEvaluations));
+    writeStored(STORAGE_KEYS.evaluations, updatedEvaluations);
     
     setSaveStatus("Notes & Coefficients enregistrés !");
     setTimeout(() => setSaveStatus(null), 3000);

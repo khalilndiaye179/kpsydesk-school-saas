@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, Shield, Mail, Key, AlertTriangle, Edit2, Trash2, Briefcase, Clock, Camera } from 'lucide-react';
 import { api } from '../../lib/api';
+import { formatAmount, formatDateTime } from '../../lib/format';
+import { TENANT_KEY_PREFIXES, readStored, tenantScopedKey, writeStored } from '../../lib/storage';
+import { Modal } from '../shared/Modal';
 
 type TenantRole = 'DIRECTOR' | 'CENSOR' | 'TEACHER' | 'ACCOUNTANT' | 'LIBRARIAN' | 'DRIVER' | 'PARENT' | 'STUDENT';
 type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
@@ -46,33 +49,24 @@ export const HRView: React.FC = () => {
   }, []);
 
   const fetchStaff = async () => {
-    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '39b8b0e8-1111-4444-a1a1-9b1979b00001';
-    const USERS_STORAGE_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
-    const CLOCK_STORAGE_KEY = `kpsydesk_clock_events_${activeTenantId}`;
+    const USERS_STORAGE_KEY = tenantScopedKey(TENANT_KEY_PREFIXES.users);
+    const CLOCK_STORAGE_KEY = tenantScopedKey(TENANT_KEY_PREFIXES.clockEvents);
 
     try {
       const res = await api.get('/tenant/users');
       setStaff(res.data);
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(res.data));
+      writeStored(USERS_STORAGE_KEY, res.data);
     } catch (err) {
-      const saved = localStorage.getItem(USERS_STORAGE_KEY);
-      if (saved) {
-        // Purge automatique des 3 utilisateurs de test (Amadou DIOP, Awa FALL, Ousmane SOW)
-        let users: StaffUser[] = JSON.parse(saved);
-        users = users.filter(u => !['directeur@kpsydesk.com', 'censeur@kpsydesk.com', 'compta@kpsydesk.com'].includes(u.email));
-        setStaff(users);
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-      } else {
-        setStaff([]);
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([]));
-      }
+      // Purge automatique des 3 utilisateurs de test (Amadou DIOP, Awa FALL, Ousmane SOW)
+      const users = readStored<StaffUser[]>(USERS_STORAGE_KEY, []).filter(
+        u => !['directeur@kpsydesk.com', 'censeur@kpsydesk.com', 'compta@kpsydesk.com'].includes(u.email),
+      );
+      setStaff(users);
+      writeStored(USERS_STORAGE_KEY, users);
     }
 
     // Charger les pointages isolés par tenant
-    const savedEvents = localStorage.getItem(CLOCK_STORAGE_KEY);
-    if (savedEvents) {
-      setClockEvents(JSON.parse(savedEvents));
-    }
+    setClockEvents(readStored<any[]>(CLOCK_STORAGE_KEY, []));
   };
 
   const generatePassword = () => {
@@ -119,9 +113,7 @@ export const HRView: React.FC = () => {
       // On sauvegarde juste en local
       const updated = [newUser, ...staff];
       setStaff(updated);
-      const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '39b8b0e8-1111-4444-a1a1-9b1979b00001';
-      const USERS_STORAGE_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+      writeStored(tenantScopedKey(TENANT_KEY_PREFIXES.users), updated);
     } catch (error) {
       console.error(error);
     }
@@ -245,8 +237,8 @@ export const HRView: React.FC = () => {
                     <div style={{ fontSize: '0.85rem' }}>{u.title || 'Non défini'}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>
                       Contrat : {u.contractType || 'Non défini'} 
-                      {u.baseSalary ? ` - ${u.baseSalary.toLocaleString()} F/mois` : ''}
-                      {u.hourlyRate ? ` - ${u.hourlyRate.toLocaleString()} F/heure` : ''}
+                      {u.baseSalary ? ` - ${formatAmount(u.baseSalary)}/mois` : ''}
+                      {u.hourlyRate ? ` - ${formatAmount(u.hourlyRate)}/heure` : ''}
                     </div>
                   </td>
                   <td style={{ padding: '16px' }}>
@@ -301,7 +293,7 @@ export const HRView: React.FC = () => {
                     {evt.eventType === 'CLOCK_IN' ? 'ARRIVÉE' : 'DÉPART'}
                   </span>
                 </td>
-                <td style={{ padding: '16px' }}>{new Date(evt.timestamp).toLocaleString('fr-FR')}</td>
+                <td style={{ padding: '16px' }}>{formatDateTime(evt.timestamp)}</td>
                 <td style={{ padding: '16px' }}>
                   {evt.photoDataUrl ? (
                     <button onClick={() => setSelectedPhoto(evt.photoDataUrl)} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -327,22 +319,28 @@ export const HRView: React.FC = () => {
 
       {/* Modale de photo */}
       {selectedPhoto && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-          <div style={{ backgroundColor: 'white', padding: '16px', borderRadius: '16px', position: 'relative', maxWidth: '600px', width: '100%' }}>
-            <button onClick={() => setSelectedPhoto(null)} style={{ position: 'absolute', top: '16px', right: '16px', padding: '8px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Fermer</button>
-            <img src={selectedPhoto} alt="Preuve de pointage" style={{ width: '100%', borderRadius: '8px', display: 'block' }} />
-            <p style={{ marginTop: '16px', fontSize: '0.9rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-              Cette consultation a été journalisée pour des raisons de sécurité et de conformité RGPD.
-            </p>
-          </div>
-        </div>
+        <Modal
+          maxWidth="600px"
+          showCloseButton={false}
+          overlayStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'none', zIndex: 1100 }}
+          contentStyle={{ backgroundColor: 'white', padding: '16px', borderRadius: '16px', position: 'relative' }}
+        >
+          <button onClick={() => setSelectedPhoto(null)} style={{ position: 'absolute', top: '16px', right: '16px', padding: '8px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Fermer</button>
+          <img src={selectedPhoto} alt="Preuve de pointage" style={{ width: '100%', borderRadius: '8px', display: 'block' }} />
+          <p style={{ marginTop: '16px', fontSize: '0.9rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+            Cette consultation a été journalisée pour des raisons de sécurité et de conformité RGPD.
+          </p>
+        </Modal>
       )}
 
       {/* Modale de création */}
       {showModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '24px', width: '600px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ margin: '0 0 24px 0', fontFamily: 'var(--font-title)', fontSize: '1.4rem' }}>Créer un nouvel utilisateur</h3>
+        <Modal
+          title="Créer un nouvel utilisateur"
+          maxWidth="600px"
+          onClose={() => setShowModal(false)}
+          contentStyle={{ backgroundColor: 'white' }}
+        >
             
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
@@ -428,9 +426,7 @@ export const HRView: React.FC = () => {
                 <button type="submit" style={{ flex: 1, padding: '14px', backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}>Créer l'Utilisateur</button>
               </div>
             </form>
-
-          </div>
-        </div>
+        </Modal>
       )}
 
     </div>

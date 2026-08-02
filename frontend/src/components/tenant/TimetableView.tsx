@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, Plus, Trash2 } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api, fetchWithLocalFallback } from '../../lib/api';
+import { STORAGE_KEYS, availabilitiesKey, readStored, writeStored } from '../../lib/storage';
 
 interface TimetableEntry {
   id: string;
@@ -35,79 +36,45 @@ export const TimetableView: React.FC = () => {
 
   const fetchData = async () => {
     // 1. Charger les classes
-    try {
-      const classRes = await api.get('/tenant/classes');
-      setAvailableClasses(classRes.data);
-      if (classRes.data.length > 0) setClassId(classRes.data[0].id);
-    } catch (err) {
-      const savedClasses = localStorage.getItem('kpsydesk_classes');
-      if (savedClasses) {
-        const parsedClasses = JSON.parse(savedClasses);
-        setAvailableClasses(parsedClasses);
-        if (parsedClasses.length > 0) setClassId(parsedClasses[0].id);
-      }
-    }
+    const classes = await fetchWithLocalFallback<{ id: string; name: string }[]>('/tenant/classes', STORAGE_KEYS.classes, []);
+    setAvailableClasses(classes);
+    if (classes.length > 0) setClassId(classes[0].id);
 
     // 1b. Charger les professeurs
-    try {
-      const teacherRes = await api.get('/tenant/teachers');
-      setAvailableTeachers(teacherRes.data);
-      if (teacherRes.data.length > 0) setTeacher(teacherRes.data[0].id);
-    } catch (err) {
-      const savedTeachers = localStorage.getItem('kpsydesk_teachers');
-      if (savedTeachers) {
-        const parsedTeachers = JSON.parse(savedTeachers);
-        setAvailableTeachers(parsedTeachers);
-        if (parsedTeachers.length > 0) setTeacher(parsedTeachers[0].id);
-      }
-    }
+    const teachers = await fetchWithLocalFallback<any[]>('/tenant/teachers', STORAGE_KEYS.teachers, []);
+    setAvailableTeachers(teachers);
+    if (teachers.length > 0) setTeacher(teachers[0].id);
 
-    // 1c. Charger les matières
-    try {
-      const courseRes = await api.get('/tenant/courses');
-      setAvailableCourses(courseRes.data);
-      if (courseRes.data.length > 0) setSubject(courseRes.data[0].id);
-    } catch (err) {
-      const savedCourses = localStorage.getItem('kpsydesk_courses');
-      if (savedCourses) {
-        const parsedCourses = JSON.parse(savedCourses);
-        setAvailableCourses(parsedCourses);
-        if (parsedCourses.length > 0) setSubject(parsedCourses[0].id);
-      } else {
-        // Fallback de base si aucune matière n'est trouvée (facultatif mais utile pour la démo)
-        const mockCourses = [{ id: 'c-1', name: 'Mathématiques' }, { id: 'c-2', name: 'Français' }];
-        setAvailableCourses(mockCourses);
-        setSubject(mockCourses[0].id);
-      }
-    }
+    // 1c. Charger les matières (avec un jeu de démo si rien n'est disponible)
+    const courses = await fetchWithLocalFallback<any[]>('/tenant/courses', STORAGE_KEYS.courses, [
+      { id: 'c-1', name: 'Mathématiques' },
+      { id: 'c-2', name: 'Français' },
+    ]);
+    setAvailableCourses(courses);
+    if (courses.length > 0) setSubject(courses[0].id);
 
     // 2. Charger le planning
-    try {
-      const timeRes = await api.get('/tenant/timetables');
-      const apiEntries = timeRes.data.map((t: any) => ({
-        id: t.id,
-        classId: t.classId,
-        className: t.class?.name || 'Inconnue',
-        day: days[t.dayOfWeek - 1] || 'Lundi',
-        startTime: t.startTime,
-        endTime: t.endTime,
-        subject: t.course?.name || 'Inconnue',
-        teacher: t.teacher?.lastName || 'Inconnu'
-      }));
-      setEntries(apiEntries);
-      localStorage.setItem('kpsydesk_timetable', JSON.stringify(apiEntries));
-    } catch (err) {
-      const savedEntries = localStorage.getItem('kpsydesk_timetable');
-      if (savedEntries) {
-        setEntries(JSON.parse(savedEntries));
-      } else {
-        const defaultEntries = [
-          { id: '1', classId: '1', className: 'Classe de 6ème A', day: 'Lundi', startTime: '08:00', endTime: '10:00', subject: 'Mathématiques', teacher: 'M. Ndiaye' }
-        ];
-        setEntries(defaultEntries);
-        localStorage.setItem('kpsydesk_timetable', JSON.stringify(defaultEntries));
-      }
-    }
+    const defaultEntries: TimetableEntry[] = [
+      { id: '1', classId: '1', className: 'Classe de 6ème A', day: 'Lundi', startTime: '08:00', endTime: '10:00', subject: 'Mathématiques', teacher: 'M. Ndiaye' }
+    ];
+
+    setEntries(
+      await fetchWithLocalFallback<TimetableEntry[]>(
+        '/tenant/timetables',
+        STORAGE_KEYS.timetable,
+        defaultEntries,
+        (data) => data.map((t: any) => ({
+          id: t.id,
+          classId: t.classId,
+          className: t.class?.name || 'Inconnue',
+          day: days[t.dayOfWeek - 1] || 'Lundi',
+          startTime: t.startTime,
+          endTime: t.endTime,
+          subject: t.course?.name || 'Inconnue',
+          teacher: t.teacher?.lastName || 'Inconnu'
+        })),
+      ),
+    );
   };
 
   const handleAddEntry = async (e: React.FormEvent) => {
@@ -149,10 +116,7 @@ export const TimetableView: React.FC = () => {
     // Vérification par rapport aux disponibilités déclarées par l'enseignant
     let teacherAvailabilities: any[] = [];
     try {
-      const savedAvail = localStorage.getItem(`kpsydesk_availabilities_${teacher}`);
-      if (savedAvail) {
-        teacherAvailabilities = JSON.parse(savedAvail);
-      }
+      teacherAvailabilities = readStored<any[]>(availabilitiesKey(teacher), []);
     } catch (e) {}
 
     if (teacherAvailabilities.length === 0) {
@@ -225,7 +189,7 @@ export const TimetableView: React.FC = () => {
       };
       const updated = [...entries, newEntry];
       setEntries(updated);
-      localStorage.setItem('kpsydesk_timetable', JSON.stringify(updated));
+      writeStored(STORAGE_KEYS.timetable, updated);
     }
     
     // Pas de reset, ou on peut garder les mêmes valeurs pour enchaîner la saisie
@@ -235,7 +199,7 @@ export const TimetableView: React.FC = () => {
     if (window.confirm('Supprimer ce cours ?')) {
       const updated = entries.filter(e => e.id !== id);
       setEntries(updated);
-      localStorage.setItem('kpsydesk_timetable', JSON.stringify(updated));
+      writeStored(STORAGE_KEYS.timetable, updated);
     }
   };
 

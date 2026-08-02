@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { Modal } from '../shared/Modal';
 import { Building2, Plus, Search, MoreVertical, ShieldAlert, CheckCircle2, XCircle, Eye, FileBadge, RefreshCcw, Trash2, Tag } from 'lucide-react';
 import { api } from '../../lib/api';
+import { readStoredOrSeed, writeStored } from '../../lib/storage';
+
+const SUPERADMIN_TENANTS_KEY = 'kpsydesk_superadmin_tenants';
 
 interface TenantData {
   id: string;
@@ -36,18 +40,11 @@ export const TenantsManager: React.FC = () => {
       setTenants(response.data);
     } catch (err) {
       console.warn('Erreur API /admin/tenants (Attendue en Phase 5), fallback local');
-      const saved = localStorage.getItem('kpsydesk_superadmin_tenants');
-      if (saved) {
-        setTenants(JSON.parse(saved));
-      } else {
-        const defaultTenants: TenantData[] = [
-          { id: '1', name: 'Lycée d\'Excellence', domain: 'excellence.kpsydesk.com', plan: 'Premium', status: 'ACTIVE', createdAt: '2023-01-15', studentsCount: 450 },
-          { id: '2', name: 'Collège Saint-Louis', domain: 'stlouis.kpsydesk.com', plan: 'Pro', status: 'ACTIVE', createdAt: '2023-03-22', studentsCount: 320 },
-          { id: '3', name: 'Groupe Scolaire Les Pédagogues', domain: 'pedagogues.kpsydesk.com', plan: 'Basic', status: 'SUSPENDED', createdAt: '2023-05-10', studentsCount: 150 },
-        ];
-        setTenants(defaultTenants);
-        localStorage.setItem('kpsydesk_superadmin_tenants', JSON.stringify(defaultTenants));
-      }
+      setTenants(readStoredOrSeed<TenantData[]>(SUPERADMIN_TENANTS_KEY, [
+        { id: '1', name: 'Lycée d\'Excellence', domain: 'excellence.kpsydesk.com', plan: 'Premium', status: 'ACTIVE', createdAt: '2023-01-15', studentsCount: 450 },
+        { id: '2', name: 'Collège Saint-Louis', domain: 'stlouis.kpsydesk.com', plan: 'Pro', status: 'ACTIVE', createdAt: '2023-03-22', studentsCount: 320 },
+        { id: '3', name: 'Groupe Scolaire Les Pédagogues', domain: 'pedagogues.kpsydesk.com', plan: 'Basic', status: 'SUSPENDED', createdAt: '2023-05-10', studentsCount: 150 },
+      ]));
     }
   };
 
@@ -71,7 +68,7 @@ export const TenantsManager: React.FC = () => {
       };
       const updated = [newTenant, ...tenants];
       setTenants(updated);
-      localStorage.setItem('kpsydesk_superadmin_tenants', JSON.stringify(updated));
+      writeStored(SUPERADMIN_TENANTS_KEY, updated);
     }
 
     setShowModal(false);
@@ -87,7 +84,7 @@ export const TenantsManager: React.FC = () => {
       return t;
     });
     setTenants(updated);
-    localStorage.setItem('kpsydesk_superadmin_tenants', JSON.stringify(updated));
+    writeStored(SUPERADMIN_TENANTS_KEY, updated);
   };
 
   const handlePurge = (e: React.FormEvent) => {
@@ -95,7 +92,7 @@ export const TenantsManager: React.FC = () => {
     if (purgeInput === 'PURGE' && actionModal.tenant) {
       const updated = tenants.filter(t => t.id !== actionModal.tenant!.id);
       setTenants(updated);
-      localStorage.setItem('kpsydesk_superadmin_tenants', JSON.stringify(updated));
+      writeStored(SUPERADMIN_TENANTS_KEY, updated);
       setActionModal({ type: '', tenant: null });
       setPurgeInput('');
     } else {
@@ -243,10 +240,7 @@ export const TenantsManager: React.FC = () => {
 
       {/* Modal Ajout */}
       {showModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-          <div style={{ backgroundColor: '#1e293b', padding: '32px', borderRadius: '16px', border: '1px solid #334155', width: '450px', color: 'white' }}>
-            <h3 style={{ margin: '0 0 24px 0', fontFamily: 'var(--font-title)', fontSize: '1.4rem' }}>Nouvelle École</h3>
-            
+        <Modal variant="dark" maxWidth="450px" title="Nouvelle École" onClose={() => setShowModal(false)} contentStyle={{ borderRadius: '16px' }}>
             <form onSubmit={handleAddTenant} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ fontSize: '0.9rem', color: '#94a3b8' }}>Nom de l'établissement</label>
@@ -288,14 +282,12 @@ export const TenantsManager: React.FC = () => {
                 <button type="submit" style={{ flex: 1, padding: '12px', backgroundColor: '#38bdf8', color: '#0f172a', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Créer l'école</button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Action Modals */}
       {actionModal.type === 'fiche' && actionModal.tenant && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: '#1e293b', padding: '32px', borderRadius: '16px', border: '1px solid #334155', width: '450px', color: 'white' }}>
+        <Modal variant="dark" maxWidth="450px" showCloseButton={false} contentStyle={{ borderRadius: '16px', border: '1px solid #334155' }}>
             <h3 style={{ margin: '0 0 24px 0', fontSize: '1.4rem' }}>Fiche de l'Établissement</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', color: '#cbd5e1' }}>
               <p><strong>Nom :</strong> {actionModal.tenant.name}</p>
@@ -305,13 +297,11 @@ export const TenantsManager: React.FC = () => {
               <p><strong>Date d'inscription :</strong> {actionModal.tenant.createdAt}</p>
             </div>
             <button onClick={() => setActionModal({ type: '', tenant: null })} style={{ width: '100%', marginTop: '24px', padding: '12px', backgroundColor: '#334155', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Fermer</button>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {actionModal.type === 'licence' && actionModal.tenant && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: '#1e293b', padding: '32px', borderRadius: '16px', border: '1px solid #f59e0b', width: '450px', color: 'white' }}>
+        <Modal variant="dark" maxWidth="450px" showCloseButton={false} contentStyle={{ borderRadius: '16px', border: '1px solid #f59e0b' }}>
             <h3 style={{ margin: '0 0 24px 0', fontSize: '1.4rem', color: '#f59e0b' }}>Licence Logicielle</h3>
             <div style={{ padding: '16px', backgroundColor: '#0f172a', borderRadius: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
               <p style={{ margin: '0 0 8px 0' }}>LICENCE: KPSY-{actionModal.tenant.id}-2024</p>
@@ -319,13 +309,11 @@ export const TenantsManager: React.FC = () => {
               <p style={{ margin: '0' }}>STATUS: VALID</p>
             </div>
             <button onClick={() => setActionModal({ type: '', tenant: null })} style={{ width: '100%', marginTop: '24px', padding: '12px', backgroundColor: '#334155', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Fermer</button>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {actionModal.type === 'plan' && actionModal.tenant && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: '#1e293b', padding: '32px', borderRadius: '16px', border: '1px solid #38bdf8', width: '450px', color: 'white' }}>
+        <Modal variant="dark" maxWidth="450px" showCloseButton={false} contentStyle={{ borderRadius: '16px', border: '1px solid #38bdf8' }}>
             <h3 style={{ margin: '0 0 16px 0', fontSize: '1.4rem' }}>Affecter un Plan</h3>
             <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '24px' }}>Forcer manuellement un plan pour {actionModal.tenant.name}.</p>
             <select style={{ width: '100%', padding: '12px', borderRadius: '8px', backgroundColor: '#0f172a', border: '1px solid #334155', color: 'white', outline: 'none' }}>
@@ -337,26 +325,22 @@ export const TenantsManager: React.FC = () => {
               <button onClick={() => setActionModal({ type: '', tenant: null })} style={{ flex: 1, padding: '12px', backgroundColor: '#334155', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>Annuler</button>
               <button onClick={() => { alert('Plan affecté manuellement.'); setActionModal({ type: '', tenant: null }); }} style={{ flex: 1, padding: '12px', backgroundColor: '#38bdf8', border: 'none', borderRadius: '8px', color: '#0f172a', cursor: 'pointer', fontWeight: 600 }}>Appliquer</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {actionModal.type === 'reset' && actionModal.tenant && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: '#1e293b', padding: '32px', borderRadius: '16px', border: '1px solid #8b5cf6', width: '450px', color: 'white' }}>
+        <Modal variant="dark" maxWidth="450px" showCloseButton={false} contentStyle={{ borderRadius: '16px', border: '1px solid #8b5cf6' }}>
             <h3 style={{ margin: '0 0 16px 0', fontSize: '1.4rem' }}>Reset Manuel des accès</h3>
             <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '24px', lineHeight: '1.5' }}>Générer de nouveaux identifiants administrateur temporaires pour {actionModal.tenant.name} et les envoyer par SMS/Email.</p>
             <div style={{ display: 'flex', gap: '12px' }}>
               <button onClick={() => setActionModal({ type: '', tenant: null })} style={{ flex: 1, padding: '12px', backgroundColor: '#334155', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>Annuler</button>
               <button onClick={() => { alert('Nouveaux accès envoyés à l\'administrateur du locataire.'); setActionModal({ type: '', tenant: null }); }} style={{ flex: 1, padding: '12px', backgroundColor: '#8b5cf6', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', fontWeight: 600 }}>Générer et Envoyer</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {actionModal.type === 'purge' && actionModal.tenant && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: '#1e293b', padding: '32px', borderRadius: '16px', border: '2px solid #ef4444', width: '450px', color: 'white' }}>
+        <Modal variant="dark" maxWidth="450px" showCloseButton={false} contentStyle={{ borderRadius: '16px', border: '2px solid #ef4444' }}>
             <h3 style={{ margin: '0 0 16px 0', fontSize: '1.4rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <ShieldAlert /> Zone Dangereuse
             </h3>
@@ -378,8 +362,7 @@ export const TenantsManager: React.FC = () => {
                 <button type="submit" disabled={purgeInput !== 'PURGE'} style={{ flex: 1, padding: '12px', backgroundColor: purgeInput === 'PURGE' ? '#ef4444' : 'rgba(239, 68, 68, 0.5)', border: 'none', borderRadius: '8px', color: 'white', cursor: purgeInput === 'PURGE' ? 'pointer' : 'not-allowed', fontWeight: 600 }}>Confirmer la Purge</button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
     </div>

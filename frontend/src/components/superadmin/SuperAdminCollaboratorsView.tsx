@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Plus, Trash2, Edit2, Check, UserPlus } from 'lucide-react';
+import { readStoredOrSeed, writeStored } from '../../lib/storage';
+
+const COLLABORATORS_KEY = 'kpsydesk_superadmin_collaborators';
 
 interface Collaborator {
   id: string;
@@ -22,11 +25,7 @@ export const SuperAdminCollaboratorsView: React.FC = () => {
   const [showPassword, setShowPassword] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
-    const saved = localStorage.getItem('kpsydesk_superadmin_collaborators');
-    if (saved) {
-      setCollaborators(JSON.parse(saved));
-    } else {
-      const defaultCollaborators: Collaborator[] = [
+    const defaultCollaborators: Collaborator[] = [
         {
           id: 'COL-1',
           name: 'Ibrahima Ndiaye',
@@ -48,9 +47,7 @@ export const SuperAdminCollaboratorsView: React.FC = () => {
           status: 'ACTIVE'
         }
       ];
-      setCollaborators(defaultCollaborators);
-      localStorage.setItem('kpsydesk_superadmin_collaborators', JSON.stringify(defaultCollaborators));
-    }
+    setCollaborators(readStoredOrSeed(COLLABORATORS_KEY, defaultCollaborators));
   }, []);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -70,7 +67,7 @@ export const SuperAdminCollaboratorsView: React.FC = () => {
 
   const saveCollaborators = (data: Collaborator[]) => {
     setCollaborators(data);
-    localStorage.setItem('kpsydesk_superadmin_collaborators', JSON.stringify(data));
+    writeStored(COLLABORATORS_KEY, data);
   };
 
   const resetForm = () => {

@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, CreditCard, Download, Search } from 'lucide-react';
+import { formatAmount } from '../../lib/format';
+import { readStored, writeStored } from '../../lib/storage';
+
+const SAAS_INVOICES_KEY = 'kpsydesk_saas_invoices';
 
 interface Invoice {
   id: string;
@@ -20,28 +24,22 @@ export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGat
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const savedInvoices = localStorage.getItem('kpsydesk_saas_invoices');
-    if (savedInvoices) {
-      let parsed = JSON.parse(savedInvoices);
-      // Rétrocompatibilité : remplacer les anciens INV- par FAC-
-      parsed = parsed.map((inv: any) => ({
-        ...inv,
-        id: inv.id.replace('INV-', 'FAC-')
-      }));
-      setInvoices(parsed);
-      calculateMRR(parsed);
-      localStorage.setItem('kpsydesk_saas_invoices', JSON.stringify(parsed));
-    } else {
-      const defaultInvoices: Invoice[] = [
-        { id: 'FAC-001', tenantName: "Lycée d'Excellence Birago Diop", amount: 150000, date: '2023-10-01', status: 'PAID', plan: 'ENTERPRISE' },
-        { id: 'FAC-002', tenantName: "Institut Supérieur de Management", amount: 150000, date: '2023-10-05', status: 'OVERDUE', plan: 'ENTERPRISE' },
-        { id: 'FAC-003', tenantName: "Groupe Scolaire Les Pédagogues", amount: 0, date: '2023-10-10', status: 'PENDING', plan: 'PRO (Essai)' },
-        { id: 'FAC-004', tenantName: "Collège Saint-Louis", amount: 50000, date: '2023-10-12', status: 'PAID', plan: 'PRO' },
-      ];
-      setInvoices(defaultInvoices);
-      localStorage.setItem('kpsydesk_saas_invoices', JSON.stringify(defaultInvoices));
-      calculateMRR(defaultInvoices);
-    }
+    const defaultInvoices: Invoice[] = [
+      { id: 'FAC-001', tenantName: "Lycée d'Excellence Birago Diop", amount: 150000, date: '2023-10-01', status: 'PAID', plan: 'ENTERPRISE' },
+      { id: 'FAC-002', tenantName: "Institut Supérieur de Management", amount: 150000, date: '2023-10-05', status: 'OVERDUE', plan: 'ENTERPRISE' },
+      { id: 'FAC-003', tenantName: "Groupe Scolaire Les Pédagogues", amount: 0, date: '2023-10-10', status: 'PENDING', plan: 'PRO (Essai)' },
+      { id: 'FAC-004', tenantName: "Collège Saint-Louis", amount: 50000, date: '2023-10-12', status: 'PAID', plan: 'PRO' },
+    ];
+
+    // Rétrocompatibilité : remplacer les anciens INV- par FAC-
+    const loaded = readStored<Invoice[]>(SAAS_INVOICES_KEY, defaultInvoices).map((inv) => ({
+      ...inv,
+      id: inv.id.replace('INV-', 'FAC-'),
+    }));
+
+    setInvoices(loaded);
+    calculateMRR(loaded);
+    writeStored(SAAS_INVOICES_KEY, loaded);
   }, []);
 
   const calculateMRR = (invs: Invoice[]) => {
@@ -81,8 +79,8 @@ export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGat
       {/* KPI Financiers */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
         {[
-          { title: 'MRR (Revenu Mensuel)', value: `${mrr.toLocaleString('fr-FR')} FCFA`, trend: '+12%', icon: TrendingUp, color: '#10b981' },
-          { title: 'ARR Estimé', value: `${(mrr * 12).toLocaleString('fr-FR')} FCFA`, trend: '+12%', icon: DollarSign, color: '#38bdf8' },
+          { title: 'MRR (Revenu Mensuel)', value: formatAmount(mrr, 'FCFA'), trend: '+12%', icon: TrendingUp, color: '#10b981' },
+          { title: 'ARR Estimé', value: formatAmount(mrr * 12, 'FCFA'), trend: '+12%', icon: DollarSign, color: '#38bdf8' },
           { title: 'Impayés', value: '150 000 FCFA', trend: '-2%', icon: TrendingDown, color: '#ef4444' },
           { title: 'Comptes en Essai', value: '1', trend: '+1', icon: Clock, color: '#f59e0b' },
         ].map((kpi, i) => (
@@ -138,7 +136,7 @@ export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGat
                     <td style={{ padding: '16px 12px', fontFamily: 'var(--font-data)', fontWeight: 600, color: 'white' }}>{inv.id}</td>
                     <td style={{ padding: '16px 12px', fontWeight: 500, color: '#cbd5e1' }}>{inv.tenantName}</td>
                     <td style={{ padding: '16px 12px', color: '#94a3b8' }}>{inv.plan}</td>
-                    <td style={{ padding: '16px 12px', textAlign: 'right', fontFamily: 'var(--font-data)', fontWeight: 600, color: 'white' }}>{inv.amount.toLocaleString('fr-FR')} F</td>
+                    <td style={{ padding: '16px 12px', textAlign: 'right', fontFamily: 'var(--font-data)', fontWeight: 600, color: 'white' }}>{formatAmount(inv.amount)}</td>
                     <td style={{ padding: '16px 12px', textAlign: 'center' }}>{getStatusBadge(inv.status)}</td>
                     <td style={{ padding: '16px 12px', textAlign: 'right' }}>
                       <button 

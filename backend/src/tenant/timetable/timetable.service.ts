@@ -1,34 +1,30 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma.service';
+import { Injectable } from '@nestjs/common';
+import { PrismaService, TenantTransactionClient } from '../../prisma.service';
+import {
+  TenantCrudService,
+  TenantModelDelegate,
+} from '../../common/tenancy/tenant-crud.service';
+
+type TimetableRecord = Awaited<ReturnType<PrismaService['timetable']['findFirstOrThrow']>>;
 
 @Injectable()
-export class TimetableService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async findAll() {
-    return this.prisma.runWithTenantContext(async (tx) => {
-      return tx.timetable.findMany({
-        orderBy: [
-          { dayOfWeek: 'asc' },
-          { startTime: 'asc' }
-        ],
-        include: {
-          class: true,
-          course: true,
-          teacher: true
-        }
-      });
-    });
+export class TimetableService extends TenantCrudService<TimetableRecord> {
+  constructor(prisma: PrismaService) {
+    super(prisma);
   }
 
-  async create(data: any, tenantId: string) {
-    return this.prisma.runWithTenantContext(async (tx) => {
-      return tx.timetable.create({
-        data: {
-          ...data,
-          tenantId: tenantId,
-        }
-      });
-    });
+  protected getDelegate(tx: TenantTransactionClient): TenantModelDelegate<TimetableRecord> {
+    return tx.timetable as unknown as TenantModelDelegate<TimetableRecord>;
+  }
+
+  protected get findManyArgs() {
+    return {
+      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+      include: { class: true, course: true, teacher: true },
+    };
+  }
+
+  protected get notFoundMessage() {
+    return 'Créneau non trouvé';
   }
 }

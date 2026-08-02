@@ -1,26 +1,27 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma.service';
+import { Injectable } from '@nestjs/common';
+import { PrismaService, TenantTransactionClient } from '../../prisma.service';
+import {
+  TenantCrudService,
+  TenantModelDelegate,
+} from '../../common/tenancy/tenant-crud.service';
+
+type CourseRecord = Awaited<ReturnType<PrismaService['course']['findFirstOrThrow']>>;
 
 @Injectable()
-export class CourseService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async findAll() {
-    return this.prisma.runWithTenantContext(async (tx) => {
-      return tx.course.findMany({
-        orderBy: { name: 'asc' }
-      });
-    });
+export class CourseService extends TenantCrudService<CourseRecord> {
+  constructor(prisma: PrismaService) {
+    super(prisma);
   }
 
-  async create(data: any, tenantId: string) {
-    return this.prisma.runWithTenantContext(async (tx) => {
-      return tx.course.create({
-        data: {
-          ...data,
-          tenantId: tenantId,
-        }
-      });
-    });
+  protected getDelegate(tx: TenantTransactionClient): TenantModelDelegate<CourseRecord> {
+    return tx.course as unknown as TenantModelDelegate<CourseRecord>;
+  }
+
+  protected get findManyArgs() {
+    return { orderBy: { name: 'asc' } };
+  }
+
+  protected get notFoundMessage() {
+    return 'Matière non trouvée';
   }
 }

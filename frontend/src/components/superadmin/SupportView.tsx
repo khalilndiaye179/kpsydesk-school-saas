@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { MessagesSquare, Clock, AlertCircle, LogIn } from 'lucide-react';
 import { CardKPI } from '../shared/CardKPI';
+import { readStoredOrSeed } from '../../lib/storage';
+
+const SUPPORT_TICKETS_KEY = 'kpsydesk_support_tickets';
 
 interface Ticket {
   id: string;
@@ -16,18 +19,12 @@ export const SupportView: React.FC = () => {
   const [impersonatedTenant, setImpersonatedTenant] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedTickets = localStorage.getItem('kpsydesk_support_tickets');
-    if (savedTickets) {
-      setTickets(JSON.parse(savedTickets));
-    } else {
-      const defaultTickets: Ticket[] = [
+    const defaultTickets: Ticket[] = [
         { id: 'TK-1042', tenantName: "Lycée d'Excellence Birago Diop", subject: 'Problème de synchronisation des emplois du temps', status: 'OPEN', priority: 'HIGH', createdAt: '2023-10-15 08:30' },
         { id: 'TK-1043', tenantName: "Institut Supérieur de Management", subject: 'Configuration du module Export Légal', status: 'IN_PROGRESS', priority: 'MEDIUM', createdAt: '2023-10-14 14:15' },
         { id: 'TK-1040', tenantName: "Groupe Scolaire Les Pédagogues", subject: 'Erreur lors de la facturation cantine', status: 'RESOLVED', priority: 'LOW', createdAt: '2023-10-10 10:00' },
       ];
-      setTickets(defaultTickets);
-      localStorage.setItem('kpsydesk_support_tickets', JSON.stringify(defaultTickets));
-    }
+    setTickets(readStoredOrSeed(SUPPORT_TICKETS_KEY, defaultTickets));
   }, []);
 
   const handleImpersonate = (tenantName: string) => {

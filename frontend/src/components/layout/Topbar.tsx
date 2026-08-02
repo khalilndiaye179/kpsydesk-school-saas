@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Search, User, Moon, Sun } from 'lucide-react';
+import { STORAGE_KEYS } from '../../lib/storage';
 
 interface TopbarProps {
   title: string;
@@ -20,7 +21,7 @@ export const Topbar: React.FC<TopbarProps> = ({
 
   useEffect(() => {
     // Vérifier s'il y a un thème sauvegardé ou par défaut 'dark'
-    const savedTheme = localStorage.getItem('kpsydesk_theme') as 'dark' | 'light';
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.theme) as 'dark' | 'light';
     if (savedTheme) {
       setTheme(savedTheme);
       document.documentElement.setAttribute('data-theme', savedTheme);
@@ -32,7 +33,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    localStorage.setItem('kpsydesk_theme', newTheme);
+    localStorage.setItem(STORAGE_KEYS.theme, newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 

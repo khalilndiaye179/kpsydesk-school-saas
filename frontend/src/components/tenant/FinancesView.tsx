@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, Search, Filter, Plus, FileText, CheckCircle, Clock, AlertCircle, Briefcase, FileMinus } from 'lucide-react';
 import { api } from '../../lib/api';
+import { formatAmount, formatMonthYear } from '../../lib/format';
+import { TENANT_KEY_PREFIXES, getActiveTenantId, readStored, tenantScopedKey, writeStored } from '../../lib/storage';
+import { Modal } from '../shared/Modal';
 
 interface Payment {
   id: string;
@@ -68,41 +71,28 @@ export const FinancesView: React.FC = () => {
     fetchData();
   }, []);
 
-  const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '39b8b0e8-1111-4444-a1a1-9b1979b00001';
-  const PAYMENTS_KEY = `kpsydesk_tenant_payments_${activeTenantId}`;
-  const EXPENSES_KEY = `kpsydesk_tenant_expenses_${activeTenantId}`;
-  const USERS_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
+  const activeTenantId = getActiveTenantId();
+  const PAYMENTS_KEY = tenantScopedKey(TENANT_KEY_PREFIXES.payments, activeTenantId);
+  const EXPENSES_KEY = tenantScopedKey(TENANT_KEY_PREFIXES.expenses, activeTenantId);
+  const USERS_KEY = tenantScopedKey(TENANT_KEY_PREFIXES.users, activeTenantId);
 
   const fetchData = async () => {
-    // Paiements Scolarité
-    const savedPayments = localStorage.getItem(PAYMENTS_KEY);
-    if (savedPayments) {
-      setPayments(JSON.parse(savedPayments));
-    }
+    setPayments(readStored<Payment[]>(PAYMENTS_KEY, []));
+    setExpenses(readStored<Expense[]>(EXPENSES_KEY, []));
 
-    // Dépenses
-    const savedExpenses = localStorage.getItem(EXPENSES_KEY);
-    if (savedExpenses) {
-      setExpenses(JSON.parse(savedExpenses));
-    }
-
-    // Employés
-    const savedUsers = localStorage.getItem(USERS_KEY);
-    if (savedUsers) {
-      const users: Staff[] = JSON.parse(savedUsers);
-      setStaff(users.filter(u => !['STUDENT', 'PARENT'].includes(u.role)));
-    }
+    const users = readStored<Staff[]>(USERS_KEY, []);
+    setStaff(users.filter(u => !['STUDENT', 'PARENT'].includes(u.role)));
   };
 
   // --- Sauvegardes ---
   const savePayments = (p: Payment[]) => {
     setPayments(p);
-    localStorage.setItem(PAYMENTS_KEY, JSON.stringify(p));
+    writeStored(PAYMENTS_KEY, p);
   };
   
   const saveExpenses = (e: Expense[]) => {
     setExpenses(e);
-    localStorage.setItem(EXPENSES_KEY, JSON.stringify(e));
+    writeStored(EXPENSES_KEY, e);
   };
 
   // --- Handlers ---
@@ -143,7 +133,7 @@ export const FinancesView: React.FC = () => {
     if (!selectedStaffId || !salaryAmount) return;
     const employee = staff.find(s => s.id === selectedStaffId);
     
-    let desc = `Salaire ${new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' })} - ${employee?.firstName} ${employee?.lastName}`;
+    let desc = `Salaire ${formatMonthYear()} - ${employee?.firstName} ${employee?.lastName}`;
     if (hoursWorked) {
       desc += ` (${hoursWorked} heures effectuées)`;
     }
@@ -199,7 +189,7 @@ export const FinancesView: React.FC = () => {
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Trésorerie Nette</div>
           <div style={{ fontSize: '1.5rem', fontWeight: 800, color: (totalRecettes - totalSalaires - totalCharges) >= 0 ? '#10b981' : '#ef4444' }}>
-            {(totalRecettes - totalSalaires - totalCharges).toLocaleString()} F
+            {formatAmount(totalRecettes - totalSalaires - totalCharges)}
           </div>
         </div>
       </div>
@@ -251,7 +241,7 @@ export const FinancesView: React.FC = () => {
                   <td style={{ padding: '16px', fontWeight: 600 }}>{p.id}</td>
                   <td style={{ padding: '16px' }}>{p.studentName || 'Inconnu'} <br/><span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)'}}>{p.studentMatricule}</span></td>
                   <td style={{ padding: '16px' }}>{p.date}</td>
-                  <td style={{ padding: '16px', fontWeight: 600 }}>{p.amount.toLocaleString()} F</td>
+                  <td style={{ padding: '16px', fontWeight: 600 }}>{formatAmount(p.amount)}</td>
                   <td style={{ padding: '16px' }}>
                     <span style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600 }}>Payé</span>
                   </td>
@@ -286,7 +276,7 @@ export const FinancesView: React.FC = () => {
                   <td style={{ padding: '16px', fontWeight: 600 }}>{e.id}</td>
                   <td style={{ padding: '16px' }}>{e.description}</td>
                   <td style={{ padding: '16px' }}>{e.date}</td>
-                  <td style={{ padding: '16px', fontWeight: 600, color: '#ef4444' }}>- {e.amount.toLocaleString()} F</td>
+                  <td style={{ padding: '16px', fontWeight: 600, color: '#ef4444' }}>- {formatAmount(e.amount)}</td>
                 </tr>
               ))}
             </tbody>
@@ -322,7 +312,7 @@ export const FinancesView: React.FC = () => {
                   </td>
                   <td style={{ padding: '16px' }}>{e.description}</td>
                   <td style={{ padding: '16px' }}>{e.date}</td>
-                  <td style={{ padding: '16px', fontWeight: 600, color: '#ef4444' }}>- {e.amount.toLocaleString()} F</td>
+                  <td style={{ padding: '16px', fontWeight: 600, color: '#ef4444' }}>- {formatAmount(e.amount)}</td>
                 </tr>
               ))}
             </tbody>
@@ -332,9 +322,7 @@ export const FinancesView: React.FC = () => {
 
       {/* Modale - Paiement Scolarité */}
       {showPaymentModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '400px' }}>
-            <h3 style={{ margin: '0 0 24px 0' }}>Encaisser la scolarité</h3>
+        <Modal title="Encaisser la scolarité" maxWidth="400px" onClose={() => setShowPaymentModal(false)} contentStyle={{ backgroundColor: 'white' }}>
             <select value={newPayment.studentId} onChange={e => setNewPayment({...newPayment, studentId: e.target.value})} style={{ width: '100%', padding: '12px', marginBottom: '16px', borderRadius: '8px', border: '1px solid var(--border)' }}>
               <option value="">-- Sélectionner l'élève --</option>
               {mockStudents.map(s => <option key={s.id} value={s.id}>{s.firstName} {s.lastName}</option>)}
@@ -344,15 +332,12 @@ export const FinancesView: React.FC = () => {
               <button onClick={() => setShowPaymentModal(false)} style={{ flex: 1, padding: '12px', border: '1px solid var(--border)', background: 'transparent', borderRadius: '12px', cursor: 'pointer' }}>Annuler</button>
               <button onClick={handleAddPayment} style={{ flex: 1, padding: '12px', background: '#0f172a', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer' }}>Valider</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modale - Dépenses */}
       {showExpenseModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '400px' }}>
-            <h3 style={{ margin: '0 0 24px 0' }}>Saisir une Dépense / Charge</h3>
+        <Modal title="Saisir une Dépense / Charge" maxWidth="400px" onClose={() => setShowExpenseModal(false)} contentStyle={{ backgroundColor: 'white' }}>
             <select value={newExpense.type} onChange={e => setNewExpense({...newExpense, type: e.target.value})} style={{ width: '100%', padding: '12px', marginBottom: '16px', borderRadius: '8px', border: '1px solid var(--border)' }}>
               <option value="MAINTENANCE">Maintenance & Réparations</option>
               <option value="SUPPLIES">Fournitures & Matériel</option>
@@ -365,16 +350,12 @@ export const FinancesView: React.FC = () => {
               <button onClick={() => setShowExpenseModal(false)} style={{ flex: 1, padding: '12px', border: '1px solid var(--border)', background: 'transparent', borderRadius: '12px', cursor: 'pointer' }}>Annuler</button>
               <button onClick={handleAddExpense} style={{ flex: 1, padding: '12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer' }}>Enregistrer</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modale - Salaires */}
       {showSalaryModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '400px' }}>
-            <h3 style={{ margin: '0 0 24px 0' }}>Verser un Salaire / Honoraire</h3>
-            
+        <Modal title="Verser un Salaire / Honoraire" maxWidth="400px" onClose={() => { setShowSalaryModal(false); setSelectedStaffId(''); setHoursWorked(''); }} contentStyle={{ backgroundColor: 'white' }}>
             <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Sélectionner le collaborateur :</label>
             <select value={selectedStaffId} onChange={e => setSelectedStaffId(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '16px', borderRadius: '8px', border: '1px solid var(--border)' }}>
               <option value="">-- Choisir --</option>
@@ -399,8 +380,7 @@ export const FinancesView: React.FC = () => {
               <button onClick={() => {setShowSalaryModal(false); setSelectedStaffId(''); setHoursWorked('');}} style={{ flex: 1, padding: '12px', border: '1px solid var(--border)', background: 'transparent', borderRadius: '12px', cursor: 'pointer' }}>Annuler</button>
               <button onClick={handlePaySalary} style={{ flex: 1, padding: '12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer' }}>Verser</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
     </div>

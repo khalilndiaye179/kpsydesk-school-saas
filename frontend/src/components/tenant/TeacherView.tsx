@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit, Save, CheckCircle, AlertTriangle, Star, X, User } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api, fetchWithLocalFallback } from '../../lib/api';
+import { STORAGE_KEYS, availabilitiesKey, readStored, writeStored } from '../../lib/storage';
+
+/** Cache local des emplois du temps bruts (format API). */
+const RAW_TIMETABLES_KEY = 'kpsydesk_timetables';
 
 // Définitions
 const DAYS = [
@@ -57,31 +61,15 @@ export const TeacherView: React.FC = () => {
   }, []);
 
   const fetchTeachers = async () => {
-    try {
-      const response = await api.get('/tenant/teachers');
-      setTeachers(response.data);
-    } catch (err) {
-      const saved = localStorage.getItem('kpsydesk_teachers');
-      if (saved) {
-        setTeachers(JSON.parse(saved));
-      } else {
-        const mock = [
-          { id: 't-1', firstName: 'Moussa', lastName: 'Diop', email: 'moussa@ecole.com', phone: '771234567', specialty: 'Mathématiques' }
-        ];
-        setTeachers(mock);
-        localStorage.setItem('kpsydesk_teachers', JSON.stringify(mock));
-      }
-    }
+    setTeachers(
+      await fetchWithLocalFallback<TeacherData[]>('/tenant/teachers', STORAGE_KEYS.teachers, [
+        { id: 't-1', firstName: 'Moussa', lastName: 'Diop', email: 'moussa@ecole.com', phone: '771234567', specialty: 'Mathématiques' }
+      ]),
+    );
   };
 
   const fetchTimetables = async () => {
-    try {
-      const response = await api.get('/tenant/timetables');
-      setTimetables(response.data);
-    } catch (err) {
-      const saved = localStorage.getItem('kpsydesk_timetables');
-      if (saved) setTimetables(JSON.parse(saved));
-    }
+    setTimetables(await fetchWithLocalFallback<any[]>('/tenant/timetables', RAW_TIMETABLES_KEY, []));
   };
 
   const loadAvailabilities = async (teacherId: string) => {
@@ -89,9 +77,7 @@ export const TeacherView: React.FC = () => {
       const response = await api.get(`/tenant/availabilities/${teacherId}`);
       setAvailabilities(response.data);
     } catch (err) {
-      const saved = localStorage.getItem(`kpsydesk_availabilities_${teacherId}`);
-      if (saved) setAvailabilities(JSON.parse(saved));
-      else setAvailabilities([]);
+      setAvailabilities(readStored<any[]>(availabilitiesKey(teacherId), []));
     }
   };
 
@@ -121,7 +107,7 @@ export const TeacherView: React.FC = () => {
     } catch (err) {
       const updated = teachers.filter(t => t.id !== id);
       setTeachers(updated);
-      localStorage.setItem('kpsydesk_teachers', JSON.stringify(updated));
+      writeStored(STORAGE_KEYS.teachers, updated);
     }
   };
 
@@ -137,7 +123,7 @@ export const TeacherView: React.FC = () => {
       } catch (err) {
         const updated = teachers.map(t => t.id === editingId ? { ...t, ...payload } : t);
         setTeachers(updated);
-        localStorage.setItem('kpsydesk_teachers', JSON.stringify(updated));
+        writeStored(STORAGE_KEYS.teachers, updated);
       }
     } else {
       try {
@@ -148,7 +134,7 @@ export const TeacherView: React.FC = () => {
         const newT: TeacherData = { id: savedId, ...payload };
         const updated = [...teachers, newT];
         setTeachers(updated);
-        localStorage.setItem('kpsydesk_teachers', JSON.stringify(updated));
+        writeStored(STORAGE_KEYS.teachers, updated);
       }
     }
 
@@ -157,7 +143,7 @@ export const TeacherView: React.FC = () => {
       try {
         await api.post(`/tenant/availabilities/${savedId}`, { availabilities });
       } catch (err) {
-        localStorage.setItem(`kpsydesk_availabilities_${savedId}`, JSON.stringify(availabilities));
+        writeStored(availabilitiesKey(savedId), availabilities);
       }
     }
 

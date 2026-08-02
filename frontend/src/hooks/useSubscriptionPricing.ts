@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { readPricingPlans } from '../lib/pricing';
+import { readStored, writeStored } from '../lib/storage';
 
 export interface TenantSubscriptionInfo {
   id: string;
@@ -22,21 +24,13 @@ export interface UseSubscriptionPricingResult {
 
 export const useSubscriptionPricing = (tenantId: string = 'samba_diouf'): UseSubscriptionPricingResult => {
   const STORAGE_SUB_KEY = `kpsydesk_tenant_sub_${tenantId}`;
-  const STORAGE_PLANS_KEY = 'kpsydesk_pricing_plans';
 
   // 1. Charger les plans publiés live
   const [livePlans, setLivePlans] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchLivePlans = () => {
-      const savedPlans = localStorage.getItem(STORAGE_PLANS_KEY);
-      if (savedPlans) {
-        try {
-          setLivePlans(JSON.parse(savedPlans));
-        } catch (e) {
-          console.error(e);
-        }
-      }
+      setLivePlans(readPricingPlans());
     };
 
     fetchLivePlans();
@@ -46,17 +40,10 @@ export const useSubscriptionPricing = (tenantId: string = 'samba_diouf'): UseSub
 
   // 2. Charger ou initialiser la souscription avec prix verrouillé
   const [subscription, setSubscription] = useState<TenantSubscriptionInfo>(() => {
-    const savedSub = localStorage.getItem(STORAGE_SUB_KEY);
-    if (savedSub) {
-      try {
-        const parsed = JSON.parse(savedSub);
-        // Garantir que prixVerrouille n'est jamais NULL ou 0
-        if (parsed && parsed.prixVerrouille && parsed.prixVerrouille > 0) {
-          return parsed;
-        }
-      } catch (e) {
-        console.error(e);
-      }
+    const parsed = readStored<TenantSubscriptionInfo | null>(STORAGE_SUB_KEY, null);
+    // Garantir que prixVerrouille n'est jamais NULL ou 0
+    if (parsed && parsed.prixVerrouille && parsed.prixVerrouille > 0) {
+      return parsed;
     }
 
     // Déterminer le tarif live initial pour le nouveau tenant (Fallback dynamique)
@@ -73,13 +60,13 @@ export const useSubscriptionPricing = (tenantId: string = 'samba_diouf'): UseSub
       statut: 'ACTIF'
     };
 
-    localStorage.setItem(STORAGE_SUB_KEY, JSON.stringify(defaultSub));
+    writeStored(STORAGE_SUB_KEY, defaultSub);
     return defaultSub;
   });
 
   // Sauvegarder toute modification de souscription
   useEffect(() => {
-    localStorage.setItem(STORAGE_SUB_KEY, JSON.stringify(subscription));
+    writeStored(STORAGE_SUB_KEY, subscription);
   }, [subscription, STORAGE_SUB_KEY]);
 
   // Trouver le plan live correspondant

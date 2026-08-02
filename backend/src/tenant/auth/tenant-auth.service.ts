@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
+import { compareSecret } from '../../common/auth/credentials.util';
 
 @Injectable()
 export class TenantAuthService {
@@ -22,7 +22,7 @@ export class TenantAuthService {
       throw new UnauthorizedException('Identifiants invalides');
     }
 
-    const isMatch = await bcrypt.compare(pass, user.passwordHash);
+    const isMatch = await compareSecret(pass, user.passwordHash);
     if (!isMatch) {
       throw new UnauthorizedException('Identifiants invalides');
     }

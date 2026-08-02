@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bus, Map, MapPin, Users, Plus, Shield, CheckCircle, AlertTriangle, Clock, Trash2, Edit2, Eye } from 'lucide-react';
 import { api } from '../../lib/api';
+import { readStored, readStoredOrSeed, writeStored } from '../../lib/storage';
 import { useAuth } from '../../auth/AuthContext';
 
 interface Zone {
@@ -46,6 +47,13 @@ interface Driver {
   email: string;
 }
 
+const STUDENTS_KEY = 'kpsydesk_students';
+const USERS_KEY = 'kpsydesk_tenant_users';
+const ZONES_KEY = 'kpsydesk_transport_zones';
+const BUSES_KEY = 'kpsydesk_transport_buses';
+const ROUTES_KEY = 'kpsydesk_transport_routes';
+const ASSIGNS_KEY = 'kpsydesk_transport_assigns';
+
 export const TransportView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'ZONES' | 'FLEET' | 'ASSIGNMENTS'>('DASHBOARD');
 
@@ -67,51 +75,34 @@ export const TransportView: React.FC = () => {
 
   const fetchData = async () => {
     // Élèves
-    const savedStudents = localStorage.getItem('kpsydesk_students');
-    if (savedStudents) setStudents(JSON.parse(savedStudents));
+    setStudents(readStored<Student[]>(STUDENTS_KEY, []));
 
     // Chauffeurs (Depuis les utilisateurs HR)
-    const savedUsers = localStorage.getItem('kpsydesk_tenant_users');
-    if (savedUsers) {
-      const parsedUsers = JSON.parse(savedUsers);
-      const drvs = parsedUsers.filter((u: any) => u.role === 'DRIVER');
-      setDrivers(drvs);
-    }
+    const savedUsers = readStored<(Driver & { role?: string })[]>(USERS_KEY, []);
+    setDrivers(savedUsers.filter((u) => u.role === 'DRIVER'));
 
     // Transport Data (Mock ou LocalStorage)
-    const sZones = localStorage.getItem('kpsydesk_transport_zones');
-    if (sZones) setZones(JSON.parse(sZones));
-    else {
-      const defZones = [{ id: 'z1', name: 'Dakar Plateau' }, { id: 'z2', name: 'Almadies / Ngor' }];
-      setZones(defZones);
-      localStorage.setItem('kpsydesk_transport_zones', JSON.stringify(defZones));
-    }
+    setZones(readStoredOrSeed<Zone[]>(ZONES_KEY, [
+      { id: 'z1', name: 'Dakar Plateau' },
+      { id: 'z2', name: 'Almadies / Ngor' },
+    ]));
 
-    const sBuses = localStorage.getItem('kpsydesk_transport_buses');
-    if (sBuses) setBuses(JSON.parse(sBuses));
-    else {
-      const defBuses: TransportBus[] = [{ id: 'b1', plateNumber: 'DK-1234-A', capacity: 30, driverId: '', status: 'ACTIVE' }];
-      setBuses(defBuses);
-      localStorage.setItem('kpsydesk_transport_buses', JSON.stringify(defBuses));
-    }
+    setBuses(readStoredOrSeed<TransportBus[]>(BUSES_KEY, [
+      { id: 'b1', plateNumber: 'DK-1234-A', capacity: 30, driverId: '', status: 'ACTIVE' },
+    ]));
 
-    const sRoutes = localStorage.getItem('kpsydesk_transport_routes');
-    if (sRoutes) setRoutes(JSON.parse(sRoutes));
-    else {
-      const defRoutes: Route[] = [{ id: 'r1', name: 'Ligne 1 - Corniche', zoneId: 'z1', busId: 'b1', departureTime: '06:30', returnTime: '15:30' }];
-      setRoutes(defRoutes);
-      localStorage.setItem('kpsydesk_transport_routes', JSON.stringify(defRoutes));
-    }
+    setRoutes(readStoredOrSeed<Route[]>(ROUTES_KEY, [
+      { id: 'r1', name: 'Ligne 1 - Corniche', zoneId: 'z1', busId: 'b1', departureTime: '06:30', returnTime: '15:30' },
+    ]));
 
-    const sAssigns = localStorage.getItem('kpsydesk_transport_assigns');
-    if (sAssigns) setAssignments(JSON.parse(sAssigns));
+    setAssignments(readStored<Assignment[]>(ASSIGNS_KEY, []));
   };
 
   // Sauvegardes
-  const saveZones = (z: Zone[]) => { setZones(z); localStorage.setItem('kpsydesk_transport_zones', JSON.stringify(z)); };
-  const saveBuses = (b: TransportBus[]) => { setBuses(b); localStorage.setItem('kpsydesk_transport_buses', JSON.stringify(b)); };
-  const saveRoutes = (r: Route[]) => { setRoutes(r); localStorage.setItem('kpsydesk_transport_routes', JSON.stringify(r)); };
-  const saveAssigns = (a: Assignment[]) => { setAssignments(a); localStorage.setItem('kpsydesk_transport_assigns', JSON.stringify(a)); };
+  const saveZones = (z: Zone[]) => { setZones(z); writeStored(ZONES_KEY, z); };
+  const saveBuses = (b: TransportBus[]) => { setBuses(b); writeStored(BUSES_KEY, b); };
+  const saveRoutes = (r: Route[]) => { setRoutes(r); writeStored(ROUTES_KEY, r); };
+  const saveAssigns = (a: Assignment[]) => { setAssignments(a); writeStored(ASSIGNS_KEY, a); };
 
   // Handlers pour Modales (Simplifiés via prompts pour la démo, ou directement inline)
   const addZone = () => {

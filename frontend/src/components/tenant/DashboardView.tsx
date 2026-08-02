@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, TrendingUp, CheckCircle, GraduationCap, DollarSign, Calendar, Activity, Briefcase } from 'lucide-react';
+import { formatAmount } from '../../lib/format';
+import { TENANT_KEY_PREFIXES, getActiveTenantId, readStored, tenantScopedKey } from '../../lib/storage';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -58,11 +60,7 @@ export const DashboardView: React.FC = () => {
 
   useEffect(() => {
     // Load Students
-    const sStudents = localStorage.getItem('kpsydesk_students');
-    let students: Student[] = [];
-    if (sStudents) {
-      students = JSON.parse(sStudents);
-    }
+    const students = readStored<Student[]>('kpsydesk_students', []);
     const dist: Record<string, number> = {};
     students.forEach(s => {
       const cls = s.className || 'Non assigné';
@@ -70,14 +68,10 @@ export const DashboardView: React.FC = () => {
     });
     setClassDistribution(dist);
 
-    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '39b8b0e8-1111-4444-a1a1-9b1979b00001';
+    const activeTenantId = getActiveTenantId();
 
     // Load Payments isolés
-    const sPayments = localStorage.getItem(`kpsydesk_tenant_payments_${activeTenantId}`);
-    let payments: Payment[] = [];
-    if (sPayments) {
-      payments = JSON.parse(sPayments);
-    }
+    const payments = readStored<Payment[]>(tenantScopedKey(TENANT_KEY_PREFIXES.payments, activeTenantId), []);
     
     // Sort and get recent payments
     const sortedPayments = [...payments].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -96,12 +90,8 @@ export const DashboardView: React.FC = () => {
     setMonthlyRevenue(revArray);
 
     // Load Staff isolé
-    const sUsers = localStorage.getItem(`kpsydesk_tenant_users_${activeTenantId}`);
-    let staffCount = 0;
-    if (sUsers) {
-      const users: Staff[] = JSON.parse(sUsers);
-      staffCount = users.filter(u => !['STUDENT', 'PARENT'].includes(u.role)).length;
-    }
+    const users = readStored<Staff[]>(tenantScopedKey(TENANT_KEY_PREFIXES.users, activeTenantId), []);
+    const staffCount = users.filter(u => !['STUDENT', 'PARENT'].includes(u.role)).length;
 
     setStats({
       totalStudents: students.length,
@@ -184,7 +174,7 @@ export const DashboardView: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
         <KpiCard 
           title="Chiffre d'Affaires" 
-          value={`${stats.totalRevenue.toLocaleString()} F`} 
+          value={formatAmount(stats.totalRevenue)} 
           icon={<DollarSign size={20} color="#38bdf8" />} 
           trend="+12.5%" 
           colorClass="bg-blue-100" 
@@ -262,7 +252,7 @@ export const DashboardView: React.FC = () => {
             {recentPayments.map(p => (
               <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
                 <td style={{ padding: '12px', fontWeight: 600 }}>{p.id}</td>
-                <td style={{ padding: '12px', fontWeight: 600 }}>{p.amount.toLocaleString()} F</td>
+                <td style={{ padding: '12px', fontWeight: 600 }}>{formatAmount(p.amount)}</td>
                 <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>{p.date}</td>
                 <td style={{ padding: '12px' }}>
                   <span style={{ backgroundColor: p.status === 'PAID' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)', color: p.status === 'PAID' ? '#10b981' : '#f59e0b', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600 }}>

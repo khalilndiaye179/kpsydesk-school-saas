@@ -8,11 +8,15 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { MailService } from '../mail/mail.service';
-import * as bcrypt from 'bcryptjs';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import {
+  OTP_MAX_ATTEMPTS,
+  compareSecret,
+  expiresInMinutes,
+  generateOtpCode,
+  hashSecret,
+} from '../common/auth/credentials.util';
 
-const BCRYPT_ROUNDS = 12;
-const OTP_MAX_ATTEMPTS = 5;
 const OTP_TTL_MINUTES = 15;
 const VALID_PLANS = ['TRIAL_7D', 'STANDARD', 'PREMIUM', 'PRO', 'ENTERPRISE'];
 const VALID_BILLING_CYCLES = ['MONTHLY', 'ANNUAL'];
@@ -102,16 +106,16 @@ export class PublicSignupService {
     }
 
     // 7. Génération de l'OTP (6 chiffres)
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = generateOtpCode();
 
     // 8. Hachage du mot de passe et de l'OTP (bcrypt cost=12)
     const [passwordHash, otpCodeHash] = await Promise.all([
-      bcrypt.hash(dto.password, BCRYPT_ROUNDS),
-      bcrypt.hash(otp, BCRYPT_ROUNDS),
+      hashSecret(dto.password),
+      hashSecret(otp),
     ]);
 
     // 9. Expiration dans 15 minutes
-    const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
+    const expiresAt = expiresInMinutes(OTP_TTL_MINUTES);
 
     // 10. Upsert PendingSignup (gère les nouvelles tentatives pour le même email)
     const pending = await this.prisma.pendingSignup.upsert({
@@ -204,7 +208,7 @@ export class PublicSignupService {
     }
 
     // 5. Vérifier le code OTP
-    const isOtpValid = await bcrypt.compare(dto.otpCode, pending.otpCodeHash);
+    const isOtpValid = await compareSecret(dto.otpCode, pending.otpCodeHash);
     if (!isOtpValid) {
       // Incrémenter le compteur d'échecs
       await this.prisma.pendingSignup.update({

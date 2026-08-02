@@ -2,6 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Building2, Plus, Server, Activity, ShieldAlert, Power, RefreshCw, AlertCircle } from 'lucide-react';
 import { CardKPI } from '../shared/CardKPI';
 import { api } from '../../lib/api';
+import { Modal } from '../shared/Modal';
+import { formatAmount, formatDate, formatNumber } from '../../lib/format';
+import { readPricingPlans } from '../../lib/pricing';
+import { removeStored } from '../../lib/storage';
+
+const NEW_SIGNUP_ALERT_KEY = 'kpsydesk_new_signup_created';
 
 interface TenantData {
   id: string;
@@ -33,29 +39,18 @@ export const FleetView: React.FC = () => {
 
   // 1. Charger les plans publiés depuis localStorage
   useEffect(() => {
-    const savedPlans = localStorage.getItem('kpsydesk_pricing_plans');
-    if (savedPlans) {
-      try {
-        const plans = JSON.parse(savedPlans);
-        setPublishedPlans(plans);
-        if (plans.length > 0 && !plans.find((p: any) => p.id === newPlanId)) {
-          setNewPlanId(plans[0].id);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    } else {
-      const defaultPlans = [
-        { id: 'BASIC', name: 'Starter (Basic)', price: 25000 },
-        { id: 'PRO', name: 'Professionnel', price: 45000 },
-        { id: 'PREMIUM', name: 'Premium / Enterprise', price: 75000 }
-      ];
-      setPublishedPlans(defaultPlans);
+    const plans = readPricingPlans([
+      { id: 'BASIC', name: 'Starter (Basic)', price: 25000 },
+      { id: 'PRO', name: 'Professionnel', price: 45000 },
+      { id: 'PREMIUM', name: 'Premium / Enterprise', price: 75000 }
+    ]);
+    setPublishedPlans(plans);
+    if (plans.length > 0 && !plans.find((p: any) => p.id === newPlanId)) {
+      setNewPlanId(plans[0].id);
     }
 
     // Vérification d'une notification de nouveau tenant créé via le portail d'inscription
-    const signupAlert = localStorage.getItem('kpsydesk_new_signup_created');
-    if (signupAlert) {
+    if (localStorage.getItem(NEW_SIGNUP_ALERT_KEY)) {
       setNewSignupAlert(true);
     }
   }, []);
@@ -70,7 +65,7 @@ export const FleetView: React.FC = () => {
       });
       setTenants(res.data);
       // Effacer la notification après rechargement
-      localStorage.removeItem('kpsydesk_new_signup_created');
+      removeStored(NEW_SIGNUP_ALERT_KEY);
       setNewSignupAlert(false);
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'Erreur de chargement des tenants.';
@@ -167,7 +162,7 @@ export const FleetView: React.FC = () => {
       {/* KPI */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
         <CardKPI label="Total Établissements" value={tenants.length.toString()} icon={<Building2 size={24} />} trend="Source : BDD" isPositive={true} />
-        <CardKPI label="Élèves gérés" value={tenants.reduce((acc, curr) => acc + curr.studentsCount, 0).toLocaleString('fr-FR')} icon={<Activity size={24} />} trend="Données réelles" isPositive={true} />
+        <CardKPI label="Élèves gérés" value={formatNumber(tenants.reduce((acc, curr) => acc + curr.studentsCount, 0))} icon={<Activity size={24} />} trend="Données réelles" isPositive={true} />
         <CardKPI label="Tenants Suspendus" value={tenants.filter(t => t.status === 'SUSPENDED').length.toString()} icon={<ShieldAlert size={24} />} trend="Live" isPositive={true} />
         <CardKPI label="Santé Serveur" value="99.9%" icon={<Server size={24} />} trend="Optimal" isPositive={true} />
       </div>
@@ -243,7 +238,7 @@ export const FleetView: React.FC = () => {
                   <td style={{ padding: '16px 12px', fontFamily: 'var(--font-data)', fontWeight: 600 }}>{t.plan}</td>
                   <td style={{ padding: '16px 12px' }}>{getStatusBadge(t.status)}</td>
                   <td style={{ padding: '16px 12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    {new Date(t.createdAt).toLocaleDateString('fr-FR')}
+                    {formatDate(t.createdAt)}
                   </td>
                   <td style={{ padding: '16px 12px', textAlign: 'right' }}>
                     <button
@@ -263,9 +258,7 @@ export const FleetView: React.FC = () => {
 
       {/* Modal Ajout */}
       {showAddModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', width: '400px' }}>
-            <h3 style={{ marginBottom: '20px', fontFamily: 'var(--font-title)' }}>Nouveau Tenant</h3>
+        <Modal maxWidth="400px" title="Nouveau Tenant" onClose={() => setShowAddModal(false)} contentStyle={{ borderRadius: '16px', backgroundColor: 'white' }}>
             <form onSubmit={handleAddTenant} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <input placeholder="Nom de l'établissement" value={newName} onChange={e => setNewName(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }} />
               <input type="email" placeholder="Email du contact" value={newEmail} onChange={e => setNewEmail(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }} />
@@ -283,7 +276,7 @@ export const FleetView: React.FC = () => {
                 <select value={newPlanId} onChange={e => setNewPlanId(e.target.value)} style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}>
                   {publishedPlans.map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.name || p.nom} — {(p.price || p.prix || 0).toLocaleString('fr-FR')} FCFA / mois
+                      {p.name || p.nom} — {formatAmount(p.price || p.prix, 'FCFA')} / mois
                     </option>
                   ))}
                 </select>
@@ -294,8 +287,7 @@ export const FleetView: React.FC = () => {
                 <button type="submit" style={{ flex: 1, padding: '10px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Créer</button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
     </div>

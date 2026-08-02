@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Send, MessageSquare, Smartphone, Clock, Users, Calendar } from 'lucide-react';
 import { CardKPI } from '../shared/CardKPI';
+import { formatDateTime } from '../../lib/format';
+import { STORAGE_KEYS, readStored, readStoredOrSeed, writeStored } from '../../lib/storage';
+
+const COMMUNICATION_LOGS_KEY = 'kpsydesk_communication_logs';
 
 interface MessageLog {
   id: string;
@@ -24,20 +28,13 @@ export const CommunicationView: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
-    const savedClasses = localStorage.getItem('kpsydesk_classes');
-    if (savedClasses) setClasses(JSON.parse(savedClasses));
+    setClasses(readStored(STORAGE_KEYS.classes, []));
 
-    const savedLogs = localStorage.getItem('kpsydesk_communication_logs');
-    if (savedLogs) {
-      setMessages(JSON.parse(savedLogs));
-    } else {
-      const defaultLogs: MessageLog[] = [
-        { id: 'MSG-001', type: 'SMS', recipientGroup: 'Parents (6ème A)', subject: 'Retard exceptionnel', content: 'Le professeur de Mathématiques sera absent ce jour.', sentAt: '2023-10-15 07:30', status: 'SENT' },
-        { id: 'MSG-002', type: 'EMAIL', recipientGroup: 'Tous les parents', subject: 'Convocation Réunion Parents-Professeurs', content: 'Chers parents, la réunion annuelle aura lieu ce vendredi...', sentAt: '2023-10-10 14:00', status: 'SENT' }
-      ];
-      setMessages(defaultLogs);
-      localStorage.setItem('kpsydesk_communication_logs', JSON.stringify(defaultLogs));
-    }
+    const defaultLogs: MessageLog[] = [
+      { id: 'MSG-001', type: 'SMS', recipientGroup: 'Parents (6ème A)', subject: 'Retard exceptionnel', content: 'Le professeur de Mathématiques sera absent ce jour.', sentAt: '2023-10-15 07:30', status: 'SENT' },
+      { id: 'MSG-002', type: 'EMAIL', recipientGroup: 'Tous les parents', subject: 'Convocation Réunion Parents-Professeurs', content: 'Chers parents, la réunion annuelle aura lieu ce vendredi...', sentAt: '2023-10-10 14:00', status: 'SENT' }
+    ];
+    setMessages(readStoredOrSeed(COMMUNICATION_LOGS_KEY, defaultLogs));
   }, []);
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -56,13 +53,13 @@ export const CommunicationView: React.FC = () => {
         recipientGroup: clsName,
         subject: msgType === 'EMAIL' ? subject : 'N/A (SMS)',
         content,
-        sentAt: new Date().toLocaleString('fr-FR'),
+        sentAt: formatDateTime(new Date()),
         status: 'SENT'
       };
 
       const updated = [newLog, ...messages];
       setMessages(updated);
-      localStorage.setItem('kpsydesk_communication_logs', JSON.stringify(updated));
+      writeStored(COMMUNICATION_LOGS_KEY, updated);
       
       setSubject('');
       setContent('');

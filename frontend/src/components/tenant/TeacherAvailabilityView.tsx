@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Save, CheckCircle, AlertTriangle, Star, X } from 'lucide-react';
 import { api } from '../../lib/api';
+import { STORAGE_KEYS, availabilitiesKey, readStored, writeStored } from '../../lib/storage';
 
 // Définitions
 const DAYS = [
@@ -54,19 +55,12 @@ export const TeacherAvailabilityView: React.FC = () => {
       setTeachers(response.data);
       if (response.data.length > 0) setSelectedTeacherId(response.data[0].id);
     } catch (err) {
-      const saved = localStorage.getItem('kpsydesk_teachers');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setTeachers(parsed);
-        if (parsed.length > 0) setSelectedTeacherId(parsed[0].id);
-      } else {
-        const mockTeachers = [
-          { id: 't-1', firstName: 'Moussa', lastName: 'Diop', specialty: 'Mathématiques' },
-          { id: 't-2', firstName: 'Fatou', lastName: 'Sow', specialty: 'Français' }
-        ];
-        setTeachers(mockTeachers);
-        setSelectedTeacherId(mockTeachers[0].id);
-      }
+      const parsed = readStored(STORAGE_KEYS.teachers, [
+        { id: 't-1', firstName: 'Moussa', lastName: 'Diop', specialty: 'Mathématiques' },
+        { id: 't-2', firstName: 'Fatou', lastName: 'Sow', specialty: 'Français' }
+      ]);
+      setTeachers(parsed);
+      if (parsed.length > 0) setSelectedTeacherId(parsed[0].id);
     }
   };
 
@@ -75,12 +69,7 @@ export const TeacherAvailabilityView: React.FC = () => {
       const response = await api.get(`/tenant/availabilities/${teacherId}`);
       setAvailabilities(response.data);
     } catch (err) {
-      const saved = localStorage.getItem(`kpsydesk_availabilities_${teacherId}`);
-      if (saved) {
-        setAvailabilities(JSON.parse(saved));
-      } else {
-        setAvailabilities([]);
-      }
+      setAvailabilities(readStored<any[]>(availabilitiesKey(teacherId), []));
     }
   };
 
@@ -105,7 +94,7 @@ export const TeacherAvailabilityView: React.FC = () => {
       await api.post(`/tenant/availabilities/${selectedTeacherId}`, { availabilities });
       alert('Disponibilités sauvegardées !');
     } catch (err) {
-      localStorage.setItem(`kpsydesk_availabilities_${selectedTeacherId}`, JSON.stringify(availabilities));
+      writeStored(availabilitiesKey(selectedTeacherId), availabilities);
       alert('Disponibilités sauvegardées localement !');
     }
   };

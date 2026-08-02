@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FileText, Download, Printer, Award, Star, UserCheck } from 'lucide-react';
-import { api } from '../../lib/api';
+import { fetchWithLocalFallback } from '../../lib/api';
+import { STORAGE_KEYS, readStored } from '../../lib/storage';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 
@@ -39,49 +40,32 @@ export const ReportCardsView: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-    const savedSettings = localStorage.getItem('kpsydesk_school_settings');
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
-    }
+    setSettings(prev => readStored(STORAGE_KEYS.schoolSettings, prev));
   }, []);
 
   const fetchData = async () => {
     // 1. Charger les étudiants
-    try {
-      const stdRes = await api.get('/tenant/students');
-      const apiStudents = stdRes.data.map((s: any) => ({
-        id: s.id,
-        matricule: s.matricule,
-        firstName: s.firstName,
-        lastName: s.lastName,
-        classId: s.classId,
-        className: s.class?.name || 'Inconnue'
-      }));
-      setStudents(apiStudents);
-      localStorage.setItem('kpsydesk_students', JSON.stringify(apiStudents));
-    } catch (err) {
-      const savedStudents = localStorage.getItem('kpsydesk_students');
-      if (savedStudents) setStudents(JSON.parse(savedStudents));
-    }
+    setStudents(
+      await fetchWithLocalFallback<any[]>(
+        '/tenant/students',
+        STORAGE_KEYS.students,
+        [],
+        (data) => data.map((s: any) => ({
+          id: s.id,
+          matricule: s.matricule,
+          firstName: s.firstName,
+          lastName: s.lastName,
+          classId: s.classId,
+          className: s.class?.name || 'Inconnue'
+        })),
+      ),
+    );
 
     // 2. Charger les évaluations
-    try {
-      const evalRes = await api.get('/tenant/evaluations');
-      setEvaluations(evalRes.data);
-      localStorage.setItem('kpsydesk_evaluations', JSON.stringify(evalRes.data));
-    } catch (err) {
-      const savedEvals = localStorage.getItem('kpsydesk_evaluations');
-      if (savedEvals) setEvaluations(JSON.parse(savedEvals));
-    }
+    setEvaluations(await fetchWithLocalFallback<any[]>('/tenant/evaluations', STORAGE_KEYS.evaluations, []));
 
     // 3. Charger les absences
-    try {
-      const attRes = await api.get('/tenant/attendances');
-      setAttendances(attRes.data);
-    } catch (err) {
-      const savedAtt = localStorage.getItem('kpsydesk_attendances');
-      if (savedAtt) setAttendances(JSON.parse(savedAtt));
-    }
+    setAttendances(await fetchWithLocalFallback<any[]>('/tenant/attendances', STORAGE_KEYS.attendances, []));
   };
 
   const selectedStudent = students.find(s => s.id === selectedStudentId);

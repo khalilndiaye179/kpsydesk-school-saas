@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DollarSign, TrendingDown, FileText, FileSpreadsheet, Plus, Download, Printer, Filter, Building2, CreditCard } from 'lucide-react';
 import { CardKPI } from '../shared/CardKPI';
+import { formatAmount } from '../../lib/format';
 
 interface Transaction {
   id: string;
@@ -89,7 +90,7 @@ export const SuperAdminFinancesView: React.FC = () => {
           </div>
           <div>
             <p style={{ margin: '0 0 8px 0', color: '#94a3b8', fontSize: '0.9rem' }}>Chiffre d'Affaires (Encaissé)</p>
-            <h3 style={{ margin: 0, fontSize: '1.8rem', color: 'white', fontFamily: 'var(--font-data)' }}>{totalIncome.toLocaleString('fr-FR')} F</h3>
+            <h3 style={{ margin: 0, fontSize: '1.8rem', color: 'white', fontFamily: 'var(--font-data)' }}>{formatAmount(totalIncome)}</h3>
           </div>
         </div>
 
@@ -99,7 +100,7 @@ export const SuperAdminFinancesView: React.FC = () => {
           </div>
           <div>
             <p style={{ margin: '0 0 8px 0', color: '#94a3b8', fontSize: '0.9rem' }}>Total Charges & Dépenses</p>
-            <h3 style={{ margin: 0, fontSize: '1.8rem', color: 'white', fontFamily: 'var(--font-data)' }}>{totalExpense.toLocaleString('fr-FR')} F</h3>
+            <h3 style={{ margin: 0, fontSize: '1.8rem', color: 'white', fontFamily: 'var(--font-data)' }}>{formatAmount(totalExpense)}</h3>
           </div>
         </div>
 
@@ -109,7 +110,7 @@ export const SuperAdminFinancesView: React.FC = () => {
           </div>
           <div>
             <p style={{ margin: '0 0 8px 0', color: '#94a3b8', fontSize: '0.9rem' }}>Résultat Net (Trésorerie)</p>
-            <h3 style={{ margin: 0, fontSize: '1.8rem', color: balance >= 0 ? '#10b981' : '#ef4444', fontFamily: 'var(--font-data)' }}>{balance.toLocaleString('fr-FR')} F</h3>
+            <h3 style={{ margin: 0, fontSize: '1.8rem', color: balance >= 0 ? '#10b981' : '#ef4444', fontFamily: 'var(--font-data)' }}>{formatAmount(balance)}</h3>
           </div>
         </div>
       </div>
@@ -168,7 +169,7 @@ export const SuperAdminFinancesView: React.FC = () => {
                       }}>{t.status}</span>
                     </td>
                     <td style={{ padding: '16px 12px', textAlign: 'right', fontFamily: 'var(--font-data)', fontWeight: 600, color: t.type === 'INCOME' ? '#10b981' : '#ef4444' }}>
-                      {t.type === 'INCOME' ? '+' : '-'}{t.amount.toLocaleString('fr-FR')} F
+                      {t.type === 'INCOME' ? '+' : '-'}{formatAmount(t.amount)}
                     </td>
                   </tr>
                 ))}
@@ -204,7 +205,7 @@ export const SuperAdminFinancesView: React.FC = () => {
                         backgroundColor: getStatusColor(q.status).bg, color: getStatusColor(q.status).color 
                       }}>{q.status}</span>
                     </td>
-                    <td style={{ padding: '16px 12px', textAlign: 'right', fontFamily: 'var(--font-data)', fontWeight: 600, color: 'white' }}>{q.amount.toLocaleString('fr-FR')} F</td>
+                    <td style={{ padding: '16px 12px', textAlign: 'right', fontFamily: 'var(--font-data)', fontWeight: 600, color: 'white' }}>{formatAmount(q.amount)}</td>
                     <td style={{ padding: '16px 12px', textAlign: 'right' }}>
                       <button style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', padding: '4px' }}><Printer size={18} /></button>
                       <button style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', padding: '4px' }}><Download size={18} /></button>

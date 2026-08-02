@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Building2, TrendingUp, Activity, BarChart3, DollarSign, Wallet, LineChart, Server, Globe2, MousePointerClick, ShieldCheck, AlertCircle, MapPin, CreditCard, Target, UserMinus, ShieldAlert, ArrowRight } from 'lucide-react';
 import { api } from '../../lib/api';
+import { formatAmount, formatNumber } from '../../lib/format';
+import { readStored } from '../../lib/storage';
+
+const SUPERADMIN_TENANTS_KEY = 'kpsydesk_superadmin_tenants';
+const SAAS_INVOICES_KEY = 'kpsydesk_saas_invoices';
 
 export const SuperAdminDashboard: React.FC = () => {
   const [mrr, setMrr] = useState(0);
@@ -20,27 +25,17 @@ export const SuperAdminDashboard: React.FC = () => {
       setTotalStudents(students);
     }).catch(() => {
       // Fallback si indisponible
-      const savedTenants = localStorage.getItem('kpsydesk_superadmin_tenants');
-      if (savedTenants) {
-        const tenants = JSON.parse(savedTenants);
-        setActiveTenantsCount(tenants.length);
-      }
+      setActiveTenantsCount(readStored<any[]>(SUPERADMIN_TENANTS_KEY, []).length);
     });
 
     // Calcul Financier
-    const savedInvoices = localStorage.getItem('kpsydesk_saas_invoices');
-    if (savedInvoices) {
-      const invoices = JSON.parse(savedInvoices);
-      const paid = invoices.filter((i: any) => i.status === 'PAID');
-      const overdue = invoices.filter((i: any) => i.status === 'OVERDUE');
-      
-      const totalMrr = paid.reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0);
-      setMrr(totalMrr);
-      
-      setOverdueInvoices(overdue);
-      // Prendre les 3 dernières factures payées
-      setRecentTransactions(paid.slice(-3).reverse());
-    }
+    const invoices = readStored<any[]>(SAAS_INVOICES_KEY, []);
+    const paid = invoices.filter((i: any) => i.status === 'PAID');
+
+    setMrr(paid.reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0));
+    setOverdueInvoices(invoices.filter((i: any) => i.status === 'OVERDUE'));
+    // Prendre les 3 dernières factures payées
+    setRecentTransactions(paid.slice(-3).reverse());
   }, []);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
@@ -64,8 +59,8 @@ export const SuperAdminDashboard: React.FC = () => {
         <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>Finances & Comptabilité</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
           {[
-            { title: 'MRR (Revenu Mensuel)', value: `${mrr.toLocaleString('fr-FR')} F`, trend: '+12.5%', icon: TrendingUp, color: '#10b981' },
-            { title: 'ARR (Revenu Annuel)', value: `${(mrr * 12).toLocaleString('fr-FR')} F`, trend: '+15.2%', icon: DollarSign, color: '#38bdf8' },
+            { title: 'MRR (Revenu Mensuel)', value: formatAmount(mrr), trend: '+12.5%', icon: TrendingUp, color: '#10b981' },
+            { title: 'ARR (Revenu Annuel)', value: formatAmount(mrr * 12), trend: '+15.2%', icon: DollarSign, color: '#38bdf8' },
             { title: 'Taux de Churn', value: '0%', trend: '0%', icon: UserMinus, color: '#ef4444' },
             { title: 'Valeur Vie Client (LTV)', value: '450 000 F', trend: '+5%', icon: Wallet, color: '#8b5cf6' },
           ].map((kpi, i) => (
@@ -108,7 +103,7 @@ export const SuperAdminDashboard: React.FC = () => {
           <div style={{ width: '100%', height: '12px', backgroundColor: '#0f172a', borderRadius: '6px', overflow: 'hidden', border: '1px solid #334155' }}>
             <div style={{ width: `${Math.min(100, (mrr / 1500000) * 100)}%`, height: '100%', backgroundColor: '#f59e0b', borderRadius: '6px' }}></div>
           </div>
-          <p style={{ margin: '16px 0 0 0', color: '#94a3b8', fontSize: '0.9rem' }}>Encore {Math.max(0, 1500000 - mrr).toLocaleString('fr-FR')} F pour atteindre l'objectif.</p>
+          <p style={{ margin: '16px 0 0 0', color: '#94a3b8', fontSize: '0.9rem' }}>Encore {formatAmount(Math.max(0, 1500000 - mrr))} pour atteindre l'objectif.</p>
         </div>
 
         {/* Dernières Transactions */}
@@ -135,7 +130,7 @@ export const SuperAdminDashboard: React.FC = () => {
                     </div>
                   </td>
                   <td style={{ padding: '12px 0', color: '#cbd5e1', fontSize: '0.9rem' }}>{tx.plan}</td>
-                  <td style={{ padding: '12px 0', textAlign: 'right', color: 'white', fontWeight: 600, fontFamily: 'var(--font-data)' }}>+ {tx.amount.toLocaleString('fr-FR')} F</td>
+                  <td style={{ padding: '12px 0', textAlign: 'right', color: 'white', fontWeight: 600, fontFamily: 'var(--font-data)' }}>+ {formatAmount(tx.amount)}</td>
                 </tr>
               )) : (
                 <tr><td colSpan={3} style={{ color: '#94a3b8', textAlign: 'center', padding: '20px' }}>Aucune transaction récente.</td></tr>
@@ -151,8 +146,8 @@ export const SuperAdminDashboard: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
           {[
             { title: 'Écoles Actives', value: activeTenantsCount.toString(), trend: '+1', icon: Building2, color: '#3b82f6' },
-            { title: 'Élèves Gérés au total', value: totalStudents.toLocaleString('fr-FR'), trend: '+15', icon: Users, color: '#8b5cf6' },
-            { title: 'Utilisateurs Actifs (DAU)', value: (totalStudents + (activeTenantsCount * 12)).toLocaleString('fr-FR'), trend: '+12%', icon: Globe2, color: '#f59e0b' },
+            { title: 'Élèves Gérés au total', value: formatNumber(totalStudents), trend: '+15', icon: Users, color: '#8b5cf6' },
+            { title: 'Utilisateurs Actifs (DAU)', value: formatNumber(totalStudents + (activeTenantsCount * 12)), trend: '+12%', icon: Globe2, color: '#f59e0b' },
             { title: 'Taux de Conversion', value: '4.8%', trend: '+0.5%', icon: MousePointerClick, color: '#10b981' },
           ].map((kpi, i) => (
             <div key={i} style={{ backgroundColor: '#1e293b', padding: '24px', borderRadius: '16px', border: '1px solid #334155' }}>

@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { AuthGuard } from '../../common/guards/auth.guard';
-import { Request } from 'express';
+import { TenantId } from '../../common/decorators/tenant-id.decorator';
 
 @Controller('api/v1/tenant/courses')
 @UseGuards(AuthGuard)
@@ -14,8 +14,7 @@ export class CourseController {
   }
 
   @Post()
-  create(@Body() createCourseDto: any, @Req() request: Request) {
-    const tenantId = (request as any).user.tenantId;
+  create(@Body() createCourseDto: Record<string, unknown>, @TenantId() tenantId: string) {
     return this.courseService.create(createCourseDto, tenantId);
   }
 }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, Trash2, FileSpreadsheet, User, MapPin, Phone, Mail, Calendar as CalendarIcon, Printer, BadgeInfo, FileText } from 'lucide-react';
 import { api } from '../../lib/api';
+import { formatDate } from '../../lib/format';
+import { STORAGE_KEYS, readStored, readStoredOrSeed, writeStored } from '../../lib/storage';
 
 interface StudentData {
   id: string;
@@ -67,21 +69,13 @@ export const StudentView: React.FC = () => {
       if (response.data.length > 0) setClassId(response.data[0].id);
     } catch (err) {
       console.warn('Erreur classes, fallback local:', err);
-      const savedClasses = localStorage.getItem('kpsydesk_classes');
-      if (savedClasses) {
-        const parsedClasses = JSON.parse(savedClasses);
-        setAvailableClasses(parsedClasses);
-        if (parsedClasses.length > 0) setClassId(parsedClasses[0].id);
-      } else {
-        const defaultClasses = [
-          { id: 'cls-1', name: 'Classe de 6ème A' },
-          { id: 'cls-2', name: 'Classe de 5ème B' },
-          { id: 'cls-3', name: 'Classe de 3ème' }
-        ];
-        setAvailableClasses(defaultClasses);
-        setClassId(defaultClasses[0].id);
-        localStorage.setItem('kpsydesk_classes', JSON.stringify(defaultClasses));
-      }
+      const parsedClasses = readStoredOrSeed(STORAGE_KEYS.classes, [
+        { id: 'cls-1', name: 'Classe de 6ème A' },
+        { id: 'cls-2', name: 'Classe de 5ème B' },
+        { id: 'cls-3', name: 'Classe de 3ème' }
+      ]);
+      setAvailableClasses(parsedClasses);
+      if (parsedClasses.length > 0) setClassId(parsedClasses[0].id);
     }
   };
 
@@ -118,28 +112,25 @@ export const StudentView: React.FC = () => {
         address: s.address || ''
       }));
       setStudents(apiStudents);
-      localStorage.setItem('kpsydesk_students', JSON.stringify(apiStudents));
+      writeStored(STORAGE_KEYS.students, apiStudents);
     } catch (err) {
       console.warn('Erreur API students:', err);
-      const savedStudents = localStorage.getItem('kpsydesk_students');
-      if (savedStudents) {
-        let parsed = JSON.parse(savedStudents);
-        let changed = false;
-        
-        // Attribuer un matricule aux étudiants existants s'ils n'en ont pas
-        parsed.forEach((s: any, index: number) => {
-          if (!s.matricule) {
-            const tempArray = parsed.slice(0, index); 
-            s.matricule = generateMatricule(tempArray.concat(parsed.slice(index + 1)));
-            changed = true;
-          }
-        });
+      const parsed = readStored<any[]>(STORAGE_KEYS.students, []);
+      let changed = false;
 
-        if (changed) {
-          localStorage.setItem('kpsydesk_students', JSON.stringify(parsed));
+      // Attribuer un matricule aux étudiants existants s'ils n'en ont pas
+      parsed.forEach((s: any, index: number) => {
+        if (!s.matricule) {
+          const tempArray = parsed.slice(0, index);
+          s.matricule = generateMatricule(tempArray.concat(parsed.slice(index + 1)));
+          changed = true;
         }
-        setStudents(parsed);
+      });
+
+      if (changed) {
+        writeStored(STORAGE_KEYS.students, parsed);
       }
+      setStudents(parsed);
     }
   };
 
@@ -186,7 +177,7 @@ export const StudentView: React.FC = () => {
           s.id === editingId ? { ...s, ...studentPayload, className: selectedClass?.name || 'Inconnue' } : s
         );
         setStudents(updatedStudents);
-        localStorage.setItem('kpsydesk_students', JSON.stringify(updatedStudents));
+        writeStored(STORAGE_KEYS.students, updatedStudents);
       }
     } else {
       try {
@@ -203,7 +194,7 @@ export const StudentView: React.FC = () => {
         };
         const updatedStudents = [newStudent, ...students];
         setStudents(updatedStudents);
-        localStorage.setItem('kpsydesk_students', JSON.stringify(updatedStudents));
+        writeStored(STORAGE_KEYS.students, updatedStudents);
       }
     }
 
@@ -236,21 +227,18 @@ export const StudentView: React.FC = () => {
         console.warn('Fallback: Suppression locale');
         const updatedStudents = students.filter(s => s.id !== id);
         setStudents(updatedStudents);
-        localStorage.setItem('kpsydesk_students', JSON.stringify(updatedStudents));
+        writeStored(STORAGE_KEYS.students, updatedStudents);
       }
     }
   };
 
-  const getSchoolSettings = () => {
-    const saved = localStorage.getItem('kpsydesk_school_settings');
-    if (saved) return JSON.parse(saved);
-    return {
+  const getSchoolSettings = () =>
+    readStored<Record<string, any>>(STORAGE_KEYS.schoolSettings, {
       schoolName: 'Établissement (Non configuré)',
       address: '',
       phone: '',
       motto: ''
-    };
-  };
+    });
 
   const generateDocument = (std: StudentData, type: 'IDCARD' | 'CERTIFICATE') => {
     const settings = getSchoolSettings();
@@ -351,7 +339,7 @@ export const StudentView: React.FC = () => {
               <img src="${qrUrl}" class="qr" alt="QR Code" />
             </div>
             <div class="signature">
-              Fait à ______________________, le ${new Date().toLocaleDateString('fr-FR')}<br/><br/>
+              Fait à ______________________, le ${formatDate(new Date())}<br/><br/>
               Le Directeur / La Directrice<br/><br/>
               <em>(Cachet et Signature)</em>
             </div>

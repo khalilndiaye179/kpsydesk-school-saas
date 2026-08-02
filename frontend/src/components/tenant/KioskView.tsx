@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, MapPin, Clock, CheckCircle, AlertTriangle, UserCheck } from 'lucide-react';
 import { SchoolSettings } from './SettingsView';
+import { STORAGE_KEYS, TENANT_KEY_PREFIXES, readStored, writeStored } from '../../lib/storage';
 
 interface Staff {
   id: string;
@@ -48,17 +49,11 @@ export const KioskView: React.FC = () => {
   // Chargement des données
   useEffect(() => {
     // Récupérer le personnel
-    const savedUsers = localStorage.getItem('kpsydesk_tenant_users');
-    if (savedUsers) {
-      const users = JSON.parse(savedUsers);
-      setStaffList(users.filter((u: any) => !['STUDENT', 'PARENT'].includes(u.role)));
-    }
-    
+    const users = readStored<any[]>(TENANT_KEY_PREFIXES.users, []);
+    setStaffList(users.filter((u: any) => !['STUDENT', 'PARENT'].includes(u.role)));
+
     // Récupérer les paramètres Kiosque
-    const savedSettings = localStorage.getItem('kpsydesk_school_settings');
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
-    }
+    setSettings(prev => readStored(STORAGE_KEYS.schoolSettings, prev));
   }, []);
 
   // Démarrer la géolocalisation et la caméra dès la sélection d'un employé
@@ -201,9 +196,8 @@ export const KioskView: React.FC = () => {
     };
 
     // Sauvegarde
-    const existing = localStorage.getItem('kpsydesk_clock_events');
-    const events = existing ? JSON.parse(existing) : [];
-    localStorage.setItem('kpsydesk_clock_events', JSON.stringify([newEvent, ...events]));
+    const events = readStored<any[]>(TENANT_KEY_PREFIXES.clockEvents, []);
+    writeStored(TENANT_KEY_PREFIXES.clockEvents, [newEvent, ...events]);
 
     // Feedback
     setSuccessMessage(`${type === 'CLOCK_IN' ? 'Arrivée' : 'Départ'} enregistré avec succès à ${currentTime.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}`);

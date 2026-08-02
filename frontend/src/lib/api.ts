@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { readStoredOrSeed, writeStored } from './storage';
 
 // Instance Axios pour KPSyDesk School
 // En production (school.kpsyinformatique.com), les appels /api/* passent par Nginx vers le backend.
@@ -33,3 +34,25 @@ api.interceptors.request.use((config) => {
 }, (error) => {
   return Promise.reject(error);
 });
+
+/**
+ * Lecture d'une ressource avec repli hors-ligne : le résultat de l'API est mis en
+ * cache dans le localStorage, et en cas d'échec on relit ce cache (ou les données
+ * de démonstration fournies).
+ */
+export async function fetchWithLocalFallback<T>(
+  path: string,
+  storageKey: string,
+  fallback: T,
+  transform?: (data: any) => T,
+): Promise<T> {
+  try {
+    const response = await api.get(path);
+    const data = transform ? transform(response.data) : (response.data as T);
+    writeStored(storageKey, data);
+    return data;
+  } catch (err) {
+    console.warn(`Erreur API ${path}, bascule sur les données locales :`, err);
+    return readStoredOrSeed(storageKey, fallback);
+  }
+}

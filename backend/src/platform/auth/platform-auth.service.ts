@@ -6,10 +6,17 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
 import * as speakeasy from 'speakeasy';
+import {
+  OTP_MAX_ATTEMPTS,
+  compareSecret,
+  expiresInMinutes,
+  generateOtpCode,
+  hashSecret,
+} from '../../common/auth/credentials.util';
+import { PLATFORM_TOKEN_EXPIRATION } from '../../common/config/jwt.config';
 
-const BCRYPT_ROUNDS = 12;
+const OTP_TTL_MINUTES = 5;
 
 @Injectable()
 export class PlatformAuthService {
@@ -32,7 +39,7 @@ export class PlatformAuthService {
       throw new UnauthorizedException('Identifiants invalides.');
     }
 
-    const isMatch = await bcrypt.compare(pass, user.passwordHash);
+    const isMatch = await compareSecret(pass, user.passwordHash);
     if (!isMatch) {
       throw new UnauthorizedException('Identifiants invalides.');
     }
@@ -57,9 +64,9 @@ export class PlatformAuthService {
     }
 
     // Cas B : MFA Enrôlé + Activé -> Génération d'un OtpChallenge
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const codeHash = await bcrypt.hash(otp, BCRYPT_ROUNDS);
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min
+    const otp = generateOtpCode();
+    const codeHash = await hashSecret(otp);
+    const expiresAt = expiresInMinutes(OTP_TTL_MINUTES);
 
     const challenge = await this.prisma.otpChallenge.create({
       data: {
@@ -95,7 +102,7 @@ export class PlatformAuthService {
       throw new UnauthorizedException('Code de vérification expiré.');
     }
 
-    if (challenge.attempts >= 5) {
+    if (challenge.attempts >= OTP_MAX_ATTEMPTS) {
       throw new UnauthorizedException('Nombre maximum de tentatives atteint.');
     }
 
@@ -119,7 +126,7 @@ export class PlatformAuthService {
     }
 
     if (!isValid) {
-      isValid = await bcrypt.compare(otpCode, challenge.codeHash);
+      isValid = await compareSecret(otpCode, challenge.codeHash);
     }
 
     if (!isValid) {
@@ -144,7 +151,9 @@ export class PlatformAuthService {
       scope: 'platform',
     };
 
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '8h' });
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: PLATFORM_TOKEN_EXPIRATION,
+    });
 
     return {
       access_token: accessToken,

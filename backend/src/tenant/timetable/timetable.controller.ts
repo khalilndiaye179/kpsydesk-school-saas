@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { TimetableService } from './timetable.service';
 import { AuthGuard } from '../../common/guards/auth.guard';
-import { Request } from 'express';
+import { TenantId } from '../../common/decorators/tenant-id.decorator';
 
 @Controller('api/v1/tenant/timetables')
 @UseGuards(AuthGuard)
@@ -14,8 +14,7 @@ export class TimetableController {
   }
 
   @Post()
-  create(@Body() createTimetableDto: any, @Req() request: Request) {
-    const tenantId = (request as any).user.tenantId;
+  create(@Body() createTimetableDto: Record<string, unknown>, @TenantId() tenantId: string) {
     return this.timetableService.create(createTimetableDto, tenantId);
   }
 }
