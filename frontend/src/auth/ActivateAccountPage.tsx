@@ -38,12 +38,8 @@ export const ActivateAccountPage: React.FC = () => {
         }
       } catch (err) {
         // Mode démo offline-first
-        if (token.length > 5) {
-          setIsTokenValid(true);
-          setEmail('invite.user@kpsyschool.com');
-        } else {
-          setError("Invitation introuvable ou expirée.");
-        }
+        setIsTokenValid(true);
+        setEmail(token.includes('@') ? token : 'nouveau.collaborateur@kpsyschool.com');
       } finally {
         setIsCheckingToken(false);
       }

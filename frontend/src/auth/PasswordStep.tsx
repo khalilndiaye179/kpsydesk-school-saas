@@ -155,8 +155,21 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onDirectL
         {isLoading ? <Loader2 className="lucide-spin" size={20} /> : 'SE CONNECTER'}
       </button>
 
-      {/* Lien discret sécurisé vers l'activation par invitation */}
-      <div style={{ textAlign: 'center', marginTop: '8px' }}>
+      {/* Bouton direct d'accès à la première configuration TOTP */}
+      <a 
+        href="/mfa-enrollment?enroll_token=demo_token"
+        style={{
+          padding: '12px', backgroundColor: 'rgba(56, 189, 248, 0.1)',
+          color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '12px',
+          fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', textAlign: 'center',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '4px'
+        }}
+      >
+        <Shield size={16} color="#38bdf8" /> Configurer mon QR Code TOTP (Première Fois)
+      </a>
+
+      {/* Lien activation par invitation */}
+      <div style={{ textAlign: 'center', marginTop: '6px' }}>
         <a 
           href="/activate-account"
           style={{ color: '#94a3b8', fontSize: '0.8rem', textDecoration: 'underline', cursor: 'pointer' }}
