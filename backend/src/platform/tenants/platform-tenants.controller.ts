@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Patch,
+  Post,
+  Delete,
   Param,
   Body,
   UseGuards,
@@ -45,5 +47,51 @@ export class PlatformTenantsController {
       throw new ForbiddenException('Statut invalide.');
     }
     return this.service.updateStatus(id, status);
+  }
+
+  /**
+   * PATCH /api/v1/platform/tenants/:id/plan
+   * Redimensionne / affecte un plan SaaS à un tenant — SuperAdmin uniquement.
+   */
+  @Patch(':id/plan')
+  async updatePlan(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body('plan') plan: string,
+  ) {
+    if (req.user?.role !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Accès réservé aux Super-Administrateurs.');
+    }
+    return this.service.updatePlan(id, plan);
+  }
+
+  /**
+   * POST /api/v1/platform/tenants/:id/reset-password
+   * Réinitialise le mot de passe de l'administrateur du tenant et renvoie le pass temporaire — SuperAdmin uniquement.
+   */
+  @Post(':id/reset-password')
+  async resetAdminPassword(
+    @Request() req: any,
+    @Param('id') id: string,
+  ) {
+    if (req.user?.role !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Accès réservé aux Super-Administrateurs.');
+    }
+    return this.service.resetAdminPassword(id);
+  }
+
+  /**
+   * DELETE /api/v1/platform/tenants/:id
+   * Purge définitivement un tenant et toutes ses données en cascade — SuperAdmin uniquement.
+   */
+  @Delete(':id')
+  async purgeTenant(
+    @Request() req: any,
+    @Param('id') id: string,
+  ) {
+    if (req.user?.role !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Accès réservé aux Super-Administrateurs.');
+    }
+    return this.service.purgeTenant(id);
   }
 }

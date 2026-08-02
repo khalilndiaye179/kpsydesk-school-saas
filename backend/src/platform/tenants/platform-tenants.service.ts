@@ -43,4 +43,45 @@ export class PlatformTenantsService {
       data: { status },
     });
   }
+
+  async updatePlan(tenantId: string, plan: any) {
+    return this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { plan },
+    });
+  }
+
+  async resetAdminPassword(tenantId: string) {
+    const adminUser = await this.prisma.tenantUser.findFirst({
+      where: { tenantId, role: 'DIRECTOR' },
+    });
+
+    if (!adminUser) {
+      throw new Error("Aucun administrateur/directeur trouvé pour cet établissement.");
+    }
+
+    // Génération d'un mot de passe temporaire lisible (ex: KPsy-928471)
+    const randomDigits = Math.floor(100000 + Math.random() * 900000);
+    const tempPassword = `KPsy-${randomDigits}`;
+    const bcrypt = require('bcryptjs');
+    const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+    await this.prisma.tenantUser.update({
+      where: { id: adminUser.id },
+      data: { passwordHash },
+    });
+
+    return {
+      adminEmail: adminUser.email,
+      adminName: `${adminUser.firstName || ''} ${adminUser.lastName || ''}`.trim() || 'Admin',
+      tempPassword,
+    };
+  }
+
+  async purgeTenant(tenantId: string) {
+    // Suppression en cascade du tenant (gérée par le schéma Prisma onDelete: Cascade)
+    return this.prisma.tenant.delete({
+      where: { id: tenantId },
+    });
+  }
 }
