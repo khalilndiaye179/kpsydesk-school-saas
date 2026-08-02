@@ -25,7 +25,7 @@ import { TenantGuideView } from './components/tenant/TenantGuideView';
 // SuperAdmin
 import { SuperAdminLayout } from './components/superadmin/SuperAdminLayout';
 import { SuperAdminDashboard } from './components/superadmin/SuperAdminDashboard';
-import { TenantsManager } from './components/superadmin/TenantsManager';
+import { FleetView } from './components/superadmin/FleetView';
 import { SaaSBillingView } from './components/superadmin/SaaSBillingView';
 import { SuperAdminSettingsView } from './components/superadmin/SuperAdminSettingsView';
 import { SuperAdminAuditsView } from './components/superadmin/SuperAdminAuditsView';
@@ -61,7 +61,7 @@ const SuperAdminApp = () => {
       onLogout={handleLogout}
     >
       {activeAdminView === 'dashboard' && <SuperAdminDashboard />}
-      {activeAdminView === 'tenants' && <TenantsManager />}
+      {activeAdminView === 'tenants' && <FleetView />}
       {activeAdminView === 'billing' && <SaaSBillingView onConfigureGateways={() => {
         setTargetSettingsTab('PAYMENT');
         setActiveAdminView('settings');
