@@ -60,6 +60,7 @@ export const TenantsManager: React.FC = () => {
       await api.post('/admin/tenants', { name, domain, plan });
       fetchTenants();
     } catch (err) {
+      console.warn('Erreur API POST /admin/tenants, fallback local:', err);
       const newTenant: TenantData = {
         id: Date.now().toString(),
         name,

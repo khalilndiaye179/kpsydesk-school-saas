@@ -39,7 +39,7 @@ export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ 
           return parsed;
         }
       } catch (e) {
-        // Fallback en cas d'erreur de parsing
+        console.warn('Tarifs sauvegardés illisibles, réinitialisation aux valeurs par défaut:', e);
       }
     }
     localStorage.setItem('kpsydesk_pricing_plans', JSON.stringify(defaultPlans));

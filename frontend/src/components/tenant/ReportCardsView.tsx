@@ -60,6 +60,7 @@ export const ReportCardsView: React.FC = () => {
       setStudents(apiStudents);
       localStorage.setItem('kpsydesk_students', JSON.stringify(apiStudents));
     } catch (err) {
+      console.warn('Erreur API /tenant/students, fallback local:', err);
       const savedStudents = localStorage.getItem('kpsydesk_students');
       if (savedStudents) setStudents(JSON.parse(savedStudents));
     }
@@ -70,6 +71,7 @@ export const ReportCardsView: React.FC = () => {
       setEvaluations(evalRes.data);
       localStorage.setItem('kpsydesk_evaluations', JSON.stringify(evalRes.data));
     } catch (err) {
+      console.warn('Erreur API /tenant/evaluations, fallback local:', err);
       const savedEvals = localStorage.getItem('kpsydesk_evaluations');
       if (savedEvals) setEvaluations(JSON.parse(savedEvals));
     }
@@ -79,6 +81,7 @@ export const ReportCardsView: React.FC = () => {
       const attRes = await api.get('/tenant/attendances');
       setAttendances(attRes.data);
     } catch (err) {
+      console.warn('Erreur API /tenant/attendances, fallback local:', err);
       const savedAtt = localStorage.getItem('kpsydesk_attendances');
       if (savedAtt) setAttendances(JSON.parse(savedAtt));
     }

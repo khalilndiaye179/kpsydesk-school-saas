@@ -38,6 +38,7 @@ export const StructureView: React.FC = () => {
       const response = await api.get('/tenant/students');
       setStudents(response.data);
     } catch (err) {
+      console.warn('Erreur API /tenant/students, fallback local:', err);
       const savedStudents = localStorage.getItem('kpsydesk_students');
       if (savedStudents) setStudents(JSON.parse(savedStudents));
     }
@@ -125,6 +126,7 @@ export const StructureView: React.FC = () => {
         await api.delete(`/tenant/classes/${id}`);
         fetchClasses();
       } catch (err) {
+        console.warn(`Erreur API suppression classe ${id}, fallback local:`, err);
         const updated = classes.filter(c => c.id !== id);
         setClasses(updated);
         localStorage.setItem('kpsydesk_classes', JSON.stringify(updated));

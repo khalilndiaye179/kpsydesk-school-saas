@@ -61,6 +61,7 @@ export const TeacherView: React.FC = () => {
       const response = await api.get('/tenant/teachers');
       setTeachers(response.data);
     } catch (err) {
+      console.warn('Erreur API /tenant/teachers, fallback local:', err);
       const saved = localStorage.getItem('kpsydesk_teachers');
       if (saved) {
         setTeachers(JSON.parse(saved));
@@ -79,6 +80,7 @@ export const TeacherView: React.FC = () => {
       const response = await api.get('/tenant/timetables');
       setTimetables(response.data);
     } catch (err) {
+      console.warn('Erreur API /tenant/timetables, fallback local:', err);
       const saved = localStorage.getItem('kpsydesk_timetables');
       if (saved) setTimetables(JSON.parse(saved));
     }
@@ -89,6 +91,7 @@ export const TeacherView: React.FC = () => {
       const response = await api.get(`/tenant/availabilities/${teacherId}`);
       setAvailabilities(response.data);
     } catch (err) {
+      console.warn(`Erreur API /tenant/availabilities/${teacherId}, fallback local:`, err);
       const saved = localStorage.getItem(`kpsydesk_availabilities_${teacherId}`);
       if (saved) setAvailabilities(JSON.parse(saved));
       else setAvailabilities([]);
@@ -119,6 +122,7 @@ export const TeacherView: React.FC = () => {
       await api.delete(`/tenant/teachers/${id}`);
       fetchTeachers();
     } catch (err) {
+      console.warn(`Erreur API suppression enseignant ${id}, fallback local:`, err);
       const updated = teachers.filter(t => t.id !== id);
       setTeachers(updated);
       localStorage.setItem('kpsydesk_teachers', JSON.stringify(updated));
@@ -135,6 +139,7 @@ export const TeacherView: React.FC = () => {
         await api.put(`/tenant/teachers/${editingId}`, payload);
         fetchTeachers();
       } catch (err) {
+        console.warn(`Erreur API modification enseignant ${editingId}, fallback local:`, err);
         const updated = teachers.map(t => t.id === editingId ? { ...t, ...payload } : t);
         setTeachers(updated);
         localStorage.setItem('kpsydesk_teachers', JSON.stringify(updated));
@@ -145,6 +150,7 @@ export const TeacherView: React.FC = () => {
         savedId = res.data.id;
         fetchTeachers();
       } catch (err) {
+        console.warn('Erreur API création enseignant, fallback local:', err);
         const newT: TeacherData = { id: savedId, ...payload };
         const updated = [...teachers, newT];
         setTeachers(updated);
@@ -157,6 +163,7 @@ export const TeacherView: React.FC = () => {
       try {
         await api.post(`/tenant/availabilities/${savedId}`, { availabilities });
       } catch (err) {
+        console.warn(`Erreur API sauvegarde disponibilités ${savedId}, fallback local:`, err);
         localStorage.setItem(`kpsydesk_availabilities_${savedId}`, JSON.stringify(availabilities));
       }
     }

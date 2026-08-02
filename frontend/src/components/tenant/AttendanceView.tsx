@@ -51,6 +51,7 @@ export const AttendanceView: React.FC = () => {
       setClasses(clsRes.data);
       if (clsRes.data.length > 0) setSelectedClass(clsRes.data[0].id);
     } catch (err) {
+      console.warn('Erreur API /tenant/classes, fallback local:', err);
       const saved = localStorage.getItem('kpsydesk_classes');
       if (saved) {
         const p = JSON.parse(saved);
@@ -63,6 +64,7 @@ export const AttendanceView: React.FC = () => {
       const attRes = await api.get('/tenant/attendances');
       setAttendances(attRes.data);
     } catch (err) {
+      console.warn('Erreur API /tenant/attendances, fallback local:', err);
       const saved = localStorage.getItem('kpsydesk_attendances');
       if (saved) setAttendances(JSON.parse(saved));
     }
@@ -71,6 +73,7 @@ export const AttendanceView: React.FC = () => {
       const stdRes = await api.get('/tenant/students');
       setAllStudents(stdRes.data);
     } catch (err) {
+      console.warn('Erreur API /tenant/students, fallback local:', err);
       const saved = localStorage.getItem('kpsydesk_students');
       if (saved) setAllStudents(JSON.parse(saved));
     }
@@ -81,6 +84,7 @@ export const AttendanceView: React.FC = () => {
       const res = await api.get(`/tenant/students?classId=${classId}`);
       setStudents(res.data);
     } catch (err) {
+      console.warn(`Erreur API /tenant/students?classId=${classId}, fallback local:`, err);
       const saved = localStorage.getItem('kpsydesk_students');
       if (saved) {
         const allStudents: StudentData[] = JSON.parse(saved);

@@ -55,6 +55,7 @@ export const HRView: React.FC = () => {
       setStaff(res.data);
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(res.data));
     } catch (err) {
+      console.warn('Erreur API /tenant/users, fallback local:', err);
       const saved = localStorage.getItem(USERS_STORAGE_KEY);
       if (saved) {
         // Purge automatique des 3 utilisateurs de test (Amadou DIOP, Awa FALL, Ousmane SOW)

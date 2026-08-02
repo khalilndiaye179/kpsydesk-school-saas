@@ -40,6 +40,7 @@ export const TimetableView: React.FC = () => {
       setAvailableClasses(classRes.data);
       if (classRes.data.length > 0) setClassId(classRes.data[0].id);
     } catch (err) {
+      console.warn('Erreur API /tenant/classes, fallback local:', err);
       const savedClasses = localStorage.getItem('kpsydesk_classes');
       if (savedClasses) {
         const parsedClasses = JSON.parse(savedClasses);
@@ -54,6 +55,7 @@ export const TimetableView: React.FC = () => {
       setAvailableTeachers(teacherRes.data);
       if (teacherRes.data.length > 0) setTeacher(teacherRes.data[0].id);
     } catch (err) {
+      console.warn('Erreur API /tenant/teachers, fallback local:', err);
       const savedTeachers = localStorage.getItem('kpsydesk_teachers');
       if (savedTeachers) {
         const parsedTeachers = JSON.parse(savedTeachers);
@@ -68,6 +70,7 @@ export const TimetableView: React.FC = () => {
       setAvailableCourses(courseRes.data);
       if (courseRes.data.length > 0) setSubject(courseRes.data[0].id);
     } catch (err) {
+      console.warn('Erreur API /tenant/courses, fallback local:', err);
       const savedCourses = localStorage.getItem('kpsydesk_courses');
       if (savedCourses) {
         const parsedCourses = JSON.parse(savedCourses);
@@ -97,6 +100,7 @@ export const TimetableView: React.FC = () => {
       setEntries(apiEntries);
       localStorage.setItem('kpsydesk_timetable', JSON.stringify(apiEntries));
     } catch (err) {
+      console.warn('Erreur API /tenant/timetables, fallback local:', err);
       const savedEntries = localStorage.getItem('kpsydesk_timetable');
       if (savedEntries) {
         setEntries(JSON.parse(savedEntries));
@@ -153,7 +157,9 @@ export const TimetableView: React.FC = () => {
       if (savedAvail) {
         teacherAvailabilities = JSON.parse(savedAvail);
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn(`Disponibilités enseignant illisibles pour ${teacher}:`, e);
+    }
 
     if (teacherAvailabilities.length === 0) {
       alert("Cet enseignant n'a défini aucune disponibilité. Impossible de l'affecter.");

@@ -248,9 +248,11 @@ export const TenantSignupWizard: React.FC = () => {
       setResendCooldown(45);
       setGeneralError('');
       alert("Un nouveau code OTP a été envoyé à votre adresse email.");
-    } catch (err) {
-      setResendCooldown(45);
-      alert("Code OTP renvoyé avec succès.");
+    } catch (err: any) {
+      const message = err?.response?.data?.message
+        || err?.message
+        || "Impossible de renvoyer le code OTP. Veuillez réessayer.";
+      setGeneralError(Array.isArray(message) ? message.join(' | ') : message);
     } finally {
       setIsLoading(false);
     }
