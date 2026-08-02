@@ -7,6 +7,7 @@ import { ClassModule } from './tenant/class/class.module';
 import { TeacherModule } from './tenant/teacher/teacher.module';
 import { CourseModule } from './tenant/course/course.module';
 import { TimetableModule } from './tenant/timetable/timetable.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { TimetableModule } from './tenant/timetable/timetable.module';
     ClassModule,
     TeacherModule,
     CourseModule,
-    TimetableModule
+    TimetableModule,
+    MailModule
   ],
   controllers: [],
   providers: [PrismaService],
