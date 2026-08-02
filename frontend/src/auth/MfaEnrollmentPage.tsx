@@ -29,10 +29,14 @@ export const MfaEnrollmentPage: React.FC = () => {
         setQrCodeUrl(res.data.qr_code_url);
         setTotpSecret(res.data.secret);
       } catch (err) {
-        // Fallback sécurisé pour démo offline
-        const secret = `KPSYSCHOOL-SECRET-${Date.now()}`;
+        // Clé TOTP en Base32 standard (Conforme RFC 6238 - Uniquement A-Z et 2-7)
+        const base32Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        let secret = 'KPSYSCHOOL';
+        for (let i = 0; i < 16; i++) {
+          secret += base32Chars.charAt(Math.floor(Math.random() * base32Chars.length));
+        }
         setTotpSecret(secret);
-        setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`otpauth://totp/KPsySchool:${userEmail}?secret=${secret}&issuer=KPsySchool`)}`);
+        setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`otpauth://totp/KPsySchool:${userEmail}?secret=${secret}&issuer=KPsySchool`)}`);
       }
     };
 
