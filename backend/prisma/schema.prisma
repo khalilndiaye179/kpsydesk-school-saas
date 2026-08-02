@@ -398,3 +398,28 @@ model SecurityAuditLog {
   details   String?
   createdAt DateTime @default(now())
 }
+
+model PendingSignup {
+  id                  String   @id @default(uuid()) @db.Uuid
+  schoolName          String
+  subdomain           String   @unique
+  plan                SaaSPlan @default(TRIAL_7D)
+  
+  // Infos Administrateur
+  firstName           String
+  lastName            String
+  email               String   @unique
+  phone               String   // Format E.164 normalisé (+221XXXXXXXXX)
+  country             String   @default("SN")
+  jobTitle            String   // ex: Directeur, Censeur, Fondateur
+  passwordHash        String   // Haché avec bcrypt dès l'étape temporaire
+  
+  // Canal & OTP
+  verificationChannel String   @default("email") // "email" (seul actif), "sms" (future extension)
+  otpCodeHash         String   // Haché avec bcrypt
+  expiresAt           DateTime
+  attempts            Int      @default(0)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
