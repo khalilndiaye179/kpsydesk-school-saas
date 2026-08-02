@@ -404,23 +404,24 @@ model SecurityAuditLog {
 model PendingSignup {
   id                  String   @id @default(uuid()) @db.Uuid
   schoolName          String
-  subdomain           String   @unique
+  subdomain           String   @unique // Unicité garantie par upsert dans le service
   plan                SaaSPlan @default(TRIAL_7D)
+  billingCycle        String   @default("MONTHLY") // "MONTHLY" | "ANNUAL"
   
   // Infos Administrateur
   firstName           String
   lastName            String
-  email               String   @unique
+  email               String   @unique // Unicité garantie par upsert dans le service
   phone               String   // Format E.164 normalisé (+221XXXXXXXXX)
   country             String   @default("SN")
   jobTitle            String   // ex: Directeur, Censeur, Fondateur
-  passwordHash        String   // Haché avec bcrypt dès l'étape temporaire
+  passwordHash        String   // bcrypt cost=12 dès le stockage temporaire
   
   // Canal & OTP
-  verificationChannel String   @default("email") // "email" (seul actif), "sms" (future extension)
-  otpCodeHash         String   // Haché avec bcrypt
-  expiresAt           DateTime
-  attempts            Int      @default(0)
+  verificationChannel String   @default("email") // "email" (seul actif), "sms" rejeté en dur
+  otpCodeHash         String   // bcrypt cost=12
+  expiresAt           DateTime // now() + 15 minutes
+  attempts            Int      @default(0) // max 5
   
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt

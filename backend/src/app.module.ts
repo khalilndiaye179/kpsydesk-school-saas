@@ -8,6 +8,7 @@ import { TeacherModule } from './tenant/teacher/teacher.module';
 import { CourseModule } from './tenant/course/course.module';
 import { TimetableModule } from './tenant/timetable/timetable.module';
 import { MailModule } from './mail/mail.module';
+import { PublicSignupModule } from './signup/signup.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { MailModule } from './mail/mail.module';
     TeacherModule,
     CourseModule,
     TimetableModule,
-    MailModule
+    MailModule,
+    PublicSignupModule,
   ],
   controllers: [],
   providers: [PrismaService],

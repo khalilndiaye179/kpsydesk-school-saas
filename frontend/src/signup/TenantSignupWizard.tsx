@@ -145,7 +145,7 @@ export const TenantSignupWizard: React.FC = () => {
   // Soumission à l'Écran 3 : Envoi du code OTP et création temporaire PendingSignup
   const handleRequestVerification = async () => {
     if (selectedChannel === 'sms') {
-      setGeneralError("Le canal SMS n'est pas encore disponible.");
+      setGeneralError("Le canal SMS n'est pas encore disponible. Veuillez sélectionner le canal Email.");
       return;
     }
 
@@ -157,6 +157,7 @@ export const TenantSignupWizard: React.FC = () => {
         schoolName,
         subdomain,
         plan: selectedPlan,
+        billingCycle,
         firstName,
         lastName,
         email,
@@ -167,18 +168,17 @@ export const TenantSignupWizard: React.FC = () => {
         verificationChannel: 'email'
       });
 
-      setSignupId(res.data.signupId || `signup_${Date.now()}`);
+      setSignupId(res.data.signupId);
       setAttemptsLeft(5);
       setTimerSeconds(900);
       setResendCooldown(45);
       setStep(4);
     } catch (err: any) {
-      // En mode démo / fallback
-      setSignupId(`signup_${Date.now()}`);
-      setAttemptsLeft(5);
-      setTimerSeconds(900);
-      setResendCooldown(45);
-      setStep(4);
+      // AUCUN fallback silencieux : affichage de l'erreur et blocage
+      const message = err?.response?.data?.message
+        || err?.message
+        || "Une erreur est survenue lors de l'envoi du code de vérification. Vérifiez votre connexion et réessayez.";
+      setGeneralError(Array.isArray(message) ? message.join(' | ') : message);
     } finally {
       setIsLoading(false);
     }
@@ -189,6 +189,10 @@ export const TenantSignupWizard: React.FC = () => {
     e.preventDefault();
     if (otpCode.length !== 6) {
       setGeneralError("Le code OTP doit contenir exactement 6 chiffres.");
+      return;
+    }
+    if (!signupId) {
+      setGeneralError("Session d'inscription invalide. Veuillez recommencer depuis le début.");
       return;
     }
 
@@ -204,12 +208,16 @@ export const TenantSignupWizard: React.FC = () => {
 
       setStep(5);
     } catch (err: any) {
-      // Démo / Fallback
-      if (otpCode.length === 6) {
-        setStep(5);
-      } else {
+      // AUCUN fallback silencieux : affichage de l'erreur et blocage
+      const message = err?.response?.data?.message
+        || err?.message
+        || 'Code OTP invalide ou expiré. Veuillez réessayer.';
+      const finalMessage = Array.isArray(message) ? message.join(' | ') : message;
+      setGeneralError(finalMessage);
+      
+      // Mettre à jour les tentatives restantes si l'erreur le précise
+      if (finalMessage.includes('tentative')) {
         setAttemptsLeft(prev => Math.max(0, prev - 1));
-        setGeneralError("Code OTP invalide ou expiré.");
       }
     } finally {
       setIsLoading(false);
@@ -612,6 +620,8 @@ export const TenantSignupWizard: React.FC = () => {
                 ⏱️ Temps restant : <strong>{formatTimer(timerSeconds)}</strong> | Essais restants : <strong>{attemptsLeft}/5</strong>
               </div>
             </div>
+
+            {/* Code OTP envoyé à l'adresse */}
 
             <div>
               <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.85rem', marginBottom: '8px' }}>Saisissez le code à 6 chiffres</label>
