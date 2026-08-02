@@ -361,3 +361,14 @@ model StaffClockEvent {
   tenant          Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   staff           TenantUser @relation(fields: [staffId], references: [id], onDelete: Cascade)
 }
+
+model OtpChallenge {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String?
+  email       String
+  codeHash    String
+  expiresAt   DateTime
+  attempts    Int       @default(0)
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+}
