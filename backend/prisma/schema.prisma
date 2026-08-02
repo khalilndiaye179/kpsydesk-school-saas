@@ -19,14 +19,20 @@ model Tenant {
   updatedAt       DateTime       @updatedAt
   
   // Relations
-  users           TenantUser[]
-  modules         TenantModule[]
-  classes         Class[]
-  students        Student[]
-  teachers        Teacher[]
-  courses         Course[]
-  timetables      Timetable[]
-  attendances     Attendance[]
+  users                   TenantUser[]
+  modules                 TenantModule[]
+  classes                 Class[]
+  students                Student[]
+  teachers                Teacher[]
+  courses                 Course[]
+  timetables              Timetable[]
+  attendances             Attendance[]
+  expenses                TenantExpense[]
+  teacherAvailabilities   TeacherAvailability[]
+  courseRequirements      ClassCourseRequirement[]
+  rooms                   Room[]
+  settings                TenantSettings?
+  clockEvents             StaffClockEvent[]
 }
 
 enum TenantStatus {
