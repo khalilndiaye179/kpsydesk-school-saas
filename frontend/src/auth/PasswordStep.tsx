@@ -21,17 +21,33 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
     setError('');
 
     try {
-      // Appelle le véritable endpoint d'authentification platform
-      const res = await api.post('/platform/auth/login', { email, pass: password });
-      const resData = res.data;
+      // Déterminer si l'authentification cible la plateforme globale ou un tenant
+      const isPlatformAccount = email.includes('superadmin') || email.includes('kpsydesk.com');
+      
+      if (isPlatformAccount) {
+        // Flux SuperAdmin / Platform (Auth 2FA/MFA)
+        const res = await api.post('/platform/auth/login', { email, pass: password });
+        const resData = res.data;
 
-      // Décision de Routage Sécurisé Serveur
-      if (resData.status === 'mfa_enrollment_required' && resData.enroll_token) {
-        onRequireEnrollment(resData.enroll_token, email);
-      } else if (resData.status === 'otp_required' && resData.challenge_id) {
-        onSuccess(resData.challenge_id, email);
+        if (resData.status === 'mfa_enrollment_required' && resData.enroll_token) {
+          onRequireEnrollment(resData.enroll_token, email);
+        } else if (resData.status === 'otp_required' && resData.challenge_id) {
+          onSuccess(resData.challenge_id, email);
+        } else {
+          setError("Identifiants invalides.");
+        }
       } else {
-        setError("Identifiants invalides.");
+        // Flux Tenant (Directeur, Enseignant, Personnel d'établissement)
+        const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
+        const res = await api.post('/tenant/auth/login', { email, pass: password }, {
+          headers: activeTenantId ? { 'x-tenant-id': activeTenantId } : {}
+        });
+
+        // Succès direct si pas de MFA tenant configuré
+        if (res.data.access_token) {
+          localStorage.setItem('kpsydesk_access_token', res.data.access_token);
+          onSuccess('tenant_logged_in', email);
+        }
       }
     } catch (apiErr: any) {
       const msg = apiErr?.response?.data?.message || 'Identifiants invalides.';
