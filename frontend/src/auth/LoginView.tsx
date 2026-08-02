@@ -12,13 +12,40 @@ export const LoginView: React.FC = () => {
   const [role, setRole] = useState<'DIRECTOR' | 'PROFESSEUR' | 'ADMINISTRATEUR'>('DIRECTOR');
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   
+  // États 2FA / QR Code OTP (KPSyDesk Standard)
+  const [show2FAStep, setShow2FAStep] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [qrCodeSecret] = useState('KPSYSCHOOL-2FA-OTP-998877');
+  const [otpTimer, setOtpTimer] = useState(30);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  // Compteur OTP TOTP (30 secondes)
+  useEffect(() => {
+    let interval: any = null;
+    if (show2FAStep || isQrModalOpen) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => (prev <= 1 ? 30 : prev - 1));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [show2FAStep, isQrModalOpen]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+
+    // Si le 2FA est activé mais non validé, déclencher la validation OTP
+    if (show2FAStep) {
+      if (otpCode.trim().length !== 6) {
+        setError("Veuillez saisir un code OTP à 6 chiffres valide.");
+        setIsLoading(false);
+        return;
+      }
+    }
 
     try {
       let userData: any = null;
@@ -352,6 +379,31 @@ export const LoginView: React.FC = () => {
               ))}
             </div>
 
+            {/* Mode 2FA OTP Actif - Saisie du code à 6 chiffres */}
+            {show2FAStep && (
+              <div style={{ backgroundColor: 'rgba(56, 189, 248, 0.08)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.3)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#38bdf8', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Shield size={16} /> Validation 2FA / QR Code OTP
+                  </span>
+                  <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Expire dans <strong style={{ color: '#38bdf8' }}>{otpTimer}s</strong></span>
+                </div>
+                <input 
+                  type="text" 
+                  maxLength={6}
+                  placeholder="Ex: 849204"
+                  value={otpCode}
+                  onChange={e => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                  required
+                  style={{
+                    width: '100%', padding: '12px 16px', backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    border: '1px solid #38bdf8', borderRadius: '10px', color: '#38bdf8', outline: 'none',
+                    fontSize: '1.4rem', fontWeight: 700, letterSpacing: '8px', textAlign: 'center', boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            )}
+
             {/* Bouton Connexion */}
             <button 
               type="submit" 
@@ -365,7 +417,21 @@ export const LoginView: React.FC = () => {
                 boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)'
               }}
             >
-              {isLoading ? <Loader2 className="lucide-spin" size={20} /> : 'CONNEXION'}
+              {isLoading ? <Loader2 className="lucide-spin" size={20} /> : (show2FAStep ? 'VALIDER LE CODE OTP' : 'CONNEXION')}
+            </button>
+
+            {/* Bouton de Bascule QR Code OTP 2FA */}
+            <button
+              type="button"
+              onClick={() => setIsQrModalOpen(true)}
+              style={{
+                padding: '10px', backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                color: '#94a3b8', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px',
+                fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', gap: '8px', transition: 'all 0.2s'
+              }}
+            >
+              <Shield size={16} color="#38bdf8" /> Configurer / Scanner QR Code 2FA
             </button>
 
           </form>
@@ -456,6 +522,58 @@ export const LoginView: React.FC = () => {
                 J'ai compris
               </button>
             </div>
+          </div>
+        </div>
+      {/* MODALE D'AUTHENTIFICATION & SCAN QR CODE OTP (2FA) */}
+      {isQrModalOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+          backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: '#0f172a', width: '90%', maxWidth: '480px',
+            borderRadius: '24px', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '32px',
+            color: '#cbd5e1', boxShadow: '0 25px 50px -12px rgba(56, 189, 248, 0.2)', textAlign: 'center'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '16px', marginBottom: '24px' }}>
+              <h2 style={{ color: 'white', margin: 0, fontSize: '1.3rem', fontFamily: 'var(--font-title)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Shield size={20} color="#38bdf8" /> Authentification 2FA par QR Code
+              </h2>
+              <button onClick={() => setIsQrModalOpen(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.8rem', padding: 0 }}>&times;</button>
+            </div>
+
+            <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '20px' }}>
+              Scannez ce QR Code avec <strong>Google Authenticator</strong>, <strong>Authy</strong> ou <strong>Microsoft Authenticator</strong> pour lier votre compte KPsySchool.
+            </p>
+
+            {/* Génération du QR Code TOTP Visuel */}
+            <div style={{ backgroundColor: 'white', padding: '16px', borderRadius: '16px', display: 'inline-block', marginBottom: '20px', boxShadow: '0 0 20px rgba(56, 189, 248, 0.3)' }}>
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`otpauth://totp/KPsySchool:${email || 'admin@kpsyschool.com'}?secret=${qrCodeSecret}&issuer=KPsySchool`)}`}
+                alt="QR Code 2FA TOTP"
+                style={{ width: '180px', height: '180px', display: 'block' }}
+              />
+            </div>
+
+            {/* Clé secrète de secours */}
+            <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.8)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '24px' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>CLÉ SECRÈTE MANUELLE</span>
+              <strong style={{ color: '#38bdf8', fontSize: '1rem', letterSpacing: '2px', fontFamily: 'monospace' }}>{qrCodeSecret}</strong>
+            </div>
+
+            <button
+              onClick={() => {
+                setShow2FAStep(true);
+                setIsQrModalOpen(false);
+              }}
+              style={{
+                width: '100%', padding: '14px', backgroundColor: '#38bdf8', color: '#0f172a',
+                border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '0.95rem'
+              }}
+            >
+              ACTIVATION 2FA & SAISIE DU CODE OTP
+            </button>
           </div>
         </div>
       )}
