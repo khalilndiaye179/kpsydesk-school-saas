@@ -58,6 +58,7 @@ model PlatformUser {
   role            PlatformRole   @default(SUPPORT)
   isTwoFactorEnabled Boolean     @default(false)
   isMfaEnrolled   Boolean        @default(false)
+  mustChangePassword Boolean     @default(true)
   twoFactorSecret String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
