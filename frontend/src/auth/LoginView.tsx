@@ -180,6 +180,7 @@ export const LoginView: React.FC = () => {
           {!challengeId ? (
             <PasswordStep 
               onSuccess={handlePasswordSuccess}
+              onDirectLogin={handleOtpVerifySuccess}
               role={role}
               setRole={setRole}
             />

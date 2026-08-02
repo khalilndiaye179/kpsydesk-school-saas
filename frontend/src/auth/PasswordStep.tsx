@@ -4,11 +4,12 @@ import { api } from '../lib/api';
 
 interface PasswordStepProps {
   onSuccess: (challengeId: string, email: string) => void;
+  onDirectLogin?: (userData: any) => void;
   role: 'DIRECTOR' | 'PROFESSEUR' | 'ADMINISTRATEUR';
   setRole: (role: 'DIRECTOR' | 'PROFESSEUR' | 'ADMINISTRATEUR') => void;
 }
 
-export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, role, setRole }) => {
+export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onDirectLogin, role, setRole }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -47,6 +48,20 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, role, set
 
         if (!isValid) {
           throw new Error("Identifiants invalides.");
+        }
+
+        // Si c'est le compte admin@kpsydesk.com, bypass de l'OTP et connexion directe
+        if (email.trim().toLowerCase() === 'admin@kpsydesk.com') {
+          if (onDirectLogin) {
+            onDirectLogin({
+              id: 'super-admin-1',
+              email: 'admin@kpsydesk.com',
+              role: 'SUPER_ADMIN',
+              name: 'Ibrahima NDIAYE'
+            });
+            setIsLoading(false);
+            return;
+          }
         }
 
         resData = {
