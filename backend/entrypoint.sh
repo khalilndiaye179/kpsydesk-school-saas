@@ -7,4 +7,8 @@ npx prisma db push --accept-data-loss || npx prisma migrate deploy || {
 }
 
 echo "[KPsySchool Backend] Démarrage du serveur NestJS en production..."
-exec node dist/main.js
+if [ -f "dist/src/main.js" ]; then
+  exec node dist/src/main.js
+else
+  exec node dist/main.js
+fi
