@@ -129,4 +129,4 @@ export class MfaService {
       message: 'Double authentification MFA/TOTP activée avec succès.',
     };
   }
-
+}

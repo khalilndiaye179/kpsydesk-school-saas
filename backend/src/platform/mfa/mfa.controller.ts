@@ -3,6 +3,12 @@ import { MfaService } from './mfa.service';
 import { MfaEnrollTokenGuard } from '../../common/guards/mfa-enroll-token.guard';
 import { Request } from 'express';
 
+interface EnrollUser {
+  id: string;
+  email: string;
+  scope: string;
+}
+
 @Controller('mfa')
 export class MfaController {
   constructor(private readonly mfaService: MfaService) {}
@@ -16,7 +22,7 @@ export class MfaController {
   @UseGuards(MfaEnrollTokenGuard)
   @HttpCode(HttpStatus.OK)
   async enroll(@Req() req: Request) {
-    const user = req['user'];
+    const user = req['user'] as EnrollUser;
     return this.mfaService.generateEnrollment(user.id, user.email);
   }
 
@@ -33,7 +39,7 @@ export class MfaController {
     @Req() req: Request,
     @Body() body: { totp_code: string },
   ) {
-    const user = req['user'];
+    const user = req['user'] as EnrollUser;
     return this.mfaService.confirmEnrollment(user.id, body.totp_code);
   }
 }
