@@ -71,17 +71,6 @@ enum PlatformRole {
   TECH_OPS
 }
 
-/// Challenge OTP éphémère créé lors d'une tentative de login plateforme avec 2FA actif
-model OtpChallenge {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @db.Uuid
-  email     String
-  codeHash  String                  // Hash bcrypt du code OTP (ou vide si TOTP pur)
-  attempts  Int       @default(0)   // Nombre de tentatives échouées (max 5)
-  expiresAt DateTime                // TTL 5 minutes
-  usedAt    DateTime?               // Marqué quand validé — ne peut être réutilisé
-  createdAt DateTime  @default(now())
-}
 
 model TenantModule {
   tenantId        String         @db.Uuid
