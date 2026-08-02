@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Building2, TrendingUp, Activity, BarChart3, DollarSign, Wallet, LineChart, Server, Globe2, MousePointerClick, ShieldCheck, AlertCircle, MapPin, CreditCard, Target, UserMinus, ShieldAlert, ArrowRight } from 'lucide-react';
+import { api } from '../../lib/api';
 
 export const SuperAdminDashboard: React.FC = () => {
   const [mrr, setMrr] = useState(0);
@@ -9,15 +10,22 @@ export const SuperAdminDashboard: React.FC = () => {
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
 
   useEffect(() => {
-    // Calcul de l'Audience
-    const savedTenants = localStorage.getItem('kpsydesk_superadmin_tenants');
-    if (savedTenants) {
-      const tenants = JSON.parse(savedTenants);
-      const actives = tenants.filter((t: any) => t.status === 'ACTIVE');
-      setActiveTenantsCount(actives.length);
+    // Calcul de l'Audience depuis l'API réelle
+    api.get('/platform/tenants', {
+      headers: { Authorization: 'Bearer fake-jwt-token-superadmin' }
+    }).then((res) => {
+      const tenants = res.data;
+      setActiveTenantsCount(tenants.length);
       const students = tenants.reduce((acc: number, curr: any) => acc + (curr.studentsCount || 0), 0);
       setTotalStudents(students);
-    }
+    }).catch(() => {
+      // Fallback si indisponible
+      const savedTenants = localStorage.getItem('kpsydesk_superadmin_tenants');
+      if (savedTenants) {
+        const tenants = JSON.parse(savedTenants);
+        setActiveTenantsCount(tenants.length);
+      }
+    });
 
     // Calcul Financier
     const savedInvoices = localStorage.getItem('kpsydesk_saas_invoices');
