@@ -5,9 +5,10 @@ import { PrismaService } from '../../prisma.service';
 export class TimetableService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(tenantId: string) {
     return this.prisma.runWithTenantContext(async (tx) => {
       return tx.timetable.findMany({
+        where: { tenantId },
         orderBy: [
           { dayOfWeek: 'asc' },
           { startTime: 'asc' }

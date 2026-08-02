@@ -10,9 +10,11 @@ import { TimetableModule } from './tenant/timetable/timetable.module';
 import { MailModule } from './mail/mail.module';
 import { PublicSignupModule } from './signup/signup.module';
 import { PlatformModule } from './platform/platform.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
+    CommonModule,
     TenantModule, 
     StudentModule, 
     ClassModule,

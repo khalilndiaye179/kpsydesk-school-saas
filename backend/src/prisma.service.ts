@@ -1,6 +1,7 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { tenantLocalStorage } from './common/tenancy/tenant.middleware';
+import { isValidTenantId } from './common/tenancy/tenant-id';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -24,10 +25,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       return callback(this);
     }
 
-    // Exécution dans une transaction SQL pour appliquer le SET LOCAL du tenant_id
+    if (!isValidTenantId(tenantId)) {
+      throw new BadRequestException('Identifiant de tenant invalide.');
+    }
+
+    // Exécution dans une transaction SQL pour appliquer le tenant_id local à la transaction.
     return this.$transaction(async (tx) => {
-      // SET LOCAL réinitialise automatiquement app.tenant_id après la transaction
-      await tx.$executeRawUnsafe(`SET LOCAL app.tenant_id = '${tenantId}';`);
+      // set_config(..., is_local = true) équivaut à SET LOCAL et prend une valeur
+      // paramétrée : aucune interpolation de chaîne dans le SQL.
+      await tx.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
       return callback(tx);
     });
   }

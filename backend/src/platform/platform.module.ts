@@ -6,11 +6,12 @@ import { PlatformAuthController } from './auth/platform-auth.controller';
 import { PlatformAuthService } from './auth/platform-auth.service';
 import { PlatformJwtGuard } from '../common/guards/platform-jwt.guard';
 import { PrismaService } from '../prisma.service';
+import { getJwtSecret } from '../common/config/jwt.config';
 
 @Module({
   imports: [
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'kpsydesk_jwt_super_secret_key_change_me_in_production',
+      secret: getJwtSecret(),
       signOptions: { expiresIn: '8h' },
     }),
   ],

@@ -258,7 +258,7 @@ d'environnement (`.env`, non versionné) ou un gestionnaire de secrets
 
 ```
 SUPER_ADMIN_EMAIL=neguinho.ndiaye@gmail.com
-SUPER_ADMIN_PASSWORD=Neguinho179@#@
+SUPER_ADMIN_PASSWORD=<défini via variable d'environnement, jamais versionné>
 ```
 
 Exigences de sécurité à appliquer sans exception sur ce compte :

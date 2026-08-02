@@ -9,8 +9,8 @@ export class TeacherController {
   constructor(private readonly teacherService: TeacherService) {}
 
   @Get()
-  findAll() {
-    return this.teacherService.findAll();
+  findAll(@Req() request: Request) {
+    return this.teacherService.findAll((request as any).user.tenantId);
   }
 
   @Post()

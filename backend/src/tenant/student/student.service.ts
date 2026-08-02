@@ -5,10 +5,12 @@ import { PrismaService } from '../../prisma.service';
 export class StudentService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
-    // runWithTenantContext garantit que "SET LOCAL app.tenant_id" est injecté
+  async findAll(tenantId: string) {
+    // runWithTenantContext applique le RLS PostgreSQL ; le filtre explicite garantit
+    // l'isolation même si les policies ne sont pas actives sur la connexion courante.
     return this.prisma.runWithTenantContext(async (tx) => {
       return tx.student.findMany({
+        where: { tenantId },
         include: { class: true },
         orderBy: { lastName: 'asc' }
       });
@@ -20,16 +22,16 @@ export class StudentService {
       return tx.student.create({
         data: {
           ...data,
-          tenantId: tenantId, // Assuré par le token / guard dans un cas réel
+          tenantId: tenantId,
         }
       });
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, tenantId: string) {
     return this.prisma.runWithTenantContext(async (tx) => {
-      const student = await tx.student.findUnique({
-        where: { id },
+      const student = await tx.student.findFirst({
+        where: { id, tenantId },
         include: { class: true }
       });
       if (!student) throw new NotFoundException('Élève non trouvé');

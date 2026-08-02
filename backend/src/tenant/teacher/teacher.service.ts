@@ -5,9 +5,10 @@ import { PrismaService } from '../../prisma.service';
 export class TeacherService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(tenantId: string) {
     return this.prisma.runWithTenantContext(async (tx) => {
       return tx.teacher.findMany({
+        where: { tenantId },
         orderBy: { lastName: 'asc' }
       });
     });

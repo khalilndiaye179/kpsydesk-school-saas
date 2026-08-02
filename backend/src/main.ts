@@ -11,11 +11,22 @@ async function bootstrap() {
   // Validation globale des DTOs
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
+    forbidNonWhitelisted: true,
     transform: true,
   }));
 
-  // Activer les CORS pour le frontend React
-  app.enableCors();
+  // CORS restreint aux origines explicitement autorisées (CORS_ORIGINS, séparées par des virgules)
+  const allowedOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  app.enableCors({
+    origin: allowedOrigins.length > 0 ? allowedOrigins : false,
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
+    credentials: true,
+  });
 
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');

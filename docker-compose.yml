@@ -24,7 +24,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-kpsyschool_db}
       POSTGRES_USER: ${POSTGRES_USER:-kpsyschool_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-SecuredPassword2026!}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est requis}
     volumes:
       - kpsyschool_pgdata:/var/lib/postgresql/data
     networks:
@@ -53,14 +53,15 @@ services:
       - .env
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-kpsyschool_admin}:${POSTGRES_PASSWORD:-SecuredPassword2026!}@kpsyschool_postgres:5432/${POSTGRES_DB:-kpsyschool_db}?schema=public
-      JWT_SECRET: ${JWT_SECRET:-KPsySchool_JWT_Secret_Key_998877665544332211!}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kpsyschool_admin}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est requis}@kpsyschool_postgres:5432/${POSTGRES_DB:-kpsyschool_db}?schema=public
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET est requis}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://school.kpsyinformatique.com}
       PORT: 3000
       SMTP_HOST: ${SMTP_HOST:-smtp.hostinger.com}
       SMTP_PORT: ${SMTP_PORT:-465}
       SMTP_SECURE: ${SMTP_SECURE:-true}
       SMTP_USER: ${SMTP_USER:-kpsydesk.support@kpsyinformatique.com}
-      SMTP_PASS: ${SMTP_PASS}
+      SMTP_PASS: ${SMTP_PASS:?SMTP_PASS est requis}
       SMTP_FROM: ${SMTP_FROM:-"KPSyDesk School <kpsydesk.support@kpsyinformatique.com>"}
     ports:
       - "127.0.0.1:8091:3000"
@@ -105,7 +106,7 @@ services:
       POSTGRES_HOST: kpsyschool_postgres
       POSTGRES_DB: ${POSTGRES_DB:-kpsyschool_db}
       POSTGRES_USER: ${POSTGRES_USER:-kpsyschool_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-SecuredPassword2026!}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est requis}
     volumes:
       - kpsyschool_backups:/backups
       - ./deploy/scripts/backup-kpsyschool-postgres.sh:/backup.sh:ro

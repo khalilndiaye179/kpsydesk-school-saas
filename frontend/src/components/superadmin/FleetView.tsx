@@ -65,9 +65,7 @@ export const FleetView: React.FC = () => {
     setIsLoading(true);
     setApiError('');
     try {
-      const res = await api.get('/platform/tenants', {
-        headers: { Authorization: 'Bearer fake-jwt-token-superadmin' }
-      });
+      const res = await api.get('/platform/tenants');
       setTenants(res.data);
       // Effacer la notification après rechargement
       localStorage.removeItem('kpsydesk_new_signup_created');
@@ -129,9 +127,7 @@ export const FleetView: React.FC = () => {
     if (window.confirm('Confirmer le changement de statut ?')) {
       const newStatus = currentStatus === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED';
       try {
-        await api.patch(`/platform/tenants/${id}/status`, { status: newStatus }, {
-          headers: { Authorization: 'Bearer fake-jwt-token-superadmin' }
-        });
+        await api.patch(`/platform/tenants/${id}/status`, { status: newStatus });
         // Recharger la liste depuis l'API pour refléter l'état réel en base
         await loadTenants();
       } catch (err: any) {

@@ -1,6 +1,8 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { getJwtSecret } from '../../common/config/jwt.config';
+import { isValidTenantId } from '../../common/tenancy/tenant-id';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -8,11 +10,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'kpsydesk_jwt_super_secret_key_change_me_in_production',
+      secretOrKey: getJwtSecret(),
     });
   }
 
   async validate(payload: any) {
+    // Seuls les jetons tenant (sans scope platform) donnent accès aux ressources tenant
+    if (payload.scope || !isValidTenantId(payload.tenantId)) {
+      throw new UnauthorizedException('Jeton sans contexte tenant valide');
+    }
+
     // Ce payload est ce qu'on a mis dans signAsync({ sub, email, role, tenantId })
     return { 
       userId: payload.sub, 

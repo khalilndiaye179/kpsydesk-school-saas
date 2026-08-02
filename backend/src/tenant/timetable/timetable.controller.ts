@@ -9,8 +9,8 @@ export class TimetableController {
   constructor(private readonly timetableService: TimetableService) {}
 
   @Get()
-  findAll() {
-    return this.timetableService.findAll();
+  findAll(@Req() request: Request) {
+    return this.timetableService.findAll((request as any).user.tenantId);
   }
 
   @Post()

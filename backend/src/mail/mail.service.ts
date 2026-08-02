@@ -22,7 +22,9 @@ export class MailService {
         pass: process.env.SMTP_PASS || '',
       },
       tls: {
-        rejectUnauthorized: false // Garantit la poignée de main SSL sans blocage de certificat
+        // La validation du certificat serveur reste active (protection contre le MITM).
+        // Ne désactiver qu'explicitement, en développement, via SMTP_ALLOW_SELF_SIGNED=true.
+        rejectUnauthorized: process.env.SMTP_ALLOW_SELF_SIGNED !== 'true',
       }
     });
 

@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { getJwtSecret } from '../config/jwt.config';
 
 @Injectable()
 export class PlatformJwtGuard implements CanActivate {
@@ -18,7 +19,7 @@ export class PlatformJwtGuard implements CanActivate {
 
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_SECRET || 'kpsydesk_jwt_super_secret_key_change_me_in_production',
+        secret: getJwtSecret(),
       });
 
       // VÉRIFICATION STRICTE DU SCOPE : doit être exactement "platform"
