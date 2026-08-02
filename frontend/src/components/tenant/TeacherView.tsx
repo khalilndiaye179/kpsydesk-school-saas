@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit, X } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, CheckCircle, AlertTriangle, Star, X, User } from 'lucide-react';
 import { api } from '../../lib/api';
 
 // Définitions

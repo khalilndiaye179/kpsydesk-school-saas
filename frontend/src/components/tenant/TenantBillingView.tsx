@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { CreditCard, CheckCircle2, Zap, AlertCircle, Smartphone, Clock } from 'lucide-react';
+import { CreditCard, CheckCircle2, ShieldCheck, Zap, AlertCircle, Smartphone, Clock } from 'lucide-react';
+import { useSubscriptionPricing } from '../../hooks/useSubscriptionPricing';
 
 export const TenantBillingView: React.FC = () => {
   const [currentPlan, setCurrentPlan] = useState('ESSAI');
