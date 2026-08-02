@@ -6,8 +6,8 @@ import {
   UnprocessableEntityException,
   Logger,
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma.service';
-import { MailService } from '../../mail/mail.service';
+import { PrismaService } from '../prisma.service';
+import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcryptjs';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
