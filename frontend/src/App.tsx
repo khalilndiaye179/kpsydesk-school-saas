@@ -35,6 +35,8 @@ import { SuperAdminAboutView } from './components/superadmin/SuperAdminAboutView
 
 // Auth
 import { LoginView } from './auth/LoginView';
+import { ActivateAccountPage } from './auth/ActivateAccountPage';
+import { MfaEnrollmentPage } from './auth/MfaEnrollmentPage';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { useAuth } from './auth/AuthContext';
 
@@ -149,6 +151,8 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginView />} />
+      <Route path="/activate-account" element={<ActivateAccountPage />} />
+      <Route path="/mfa-enrollment" element={<MfaEnrollmentPage />} />
       <Route 
         path="/superadmin/*" 
         element={

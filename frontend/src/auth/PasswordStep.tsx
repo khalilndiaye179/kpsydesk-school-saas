@@ -14,10 +14,6 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onDirectL
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // Modale de premier Scan QR Code TOTP
-  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
-  const [qrCodeSecret] = useState('KPSYSCHOOL-2FA-OTP-998877');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,71 +155,15 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onDirectL
         {isLoading ? <Loader2 className="lucide-spin" size={20} /> : 'SE CONNECTER'}
       </button>
 
-      {/* Option Première Connexion - Configurer Authenticator / QR Code */}
-      <button
-        type="button"
-        onClick={() => setIsQrModalOpen(true)}
-        style={{
-          padding: '12px', backgroundColor: 'rgba(56, 189, 248, 0.08)',
-          color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '12px',
-          fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', gap: '8px', transition: 'all 0.2s', marginTop: '4px'
-        }}
-      >
-        <Shield size={16} color="#38bdf8" /> Première connexion ? Scanner mon QR Code 2FA
-      </button>
-
-      {/* MODALE D'AUTHENTIFICATION & SCAN QR CODE OTP (2FA) */}
-      {isQrModalOpen && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-          backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
-        }}>
-          <div style={{
-            backgroundColor: '#0f172a', width: '90%', maxWidth: '460px',
-            borderRadius: '24px', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '32px',
-            color: '#cbd5e1', boxShadow: '0 25px 50px -12px rgba(56, 189, 248, 0.2)', textAlign: 'center'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '16px', marginBottom: '20px' }}>
-              <h2 style={{ color: 'white', margin: 0, fontSize: '1.2rem', fontFamily: 'var(--font-title)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Shield size={20} color="#38bdf8" /> Configurer l'OTP (2FA)
-              </h2>
-              <button onClick={() => setIsQrModalOpen(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.8rem', padding: 0 }}>&times;</button>
-            </div>
-
-            <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '16px', lineHeight: 1.5 }}>
-              Scannez ce QR Code avec votre application <strong>Google Authenticator</strong> ou <strong>Authy</strong> sur votre smartphone pour associer votre compte KPsySchool.
-            </p>
-
-            {/* Génération du QR Code TOTP Visuel */}
-            <div style={{ backgroundColor: 'white', padding: '16px', borderRadius: '16px', display: 'inline-block', marginBottom: '16px', boxShadow: '0 0 20px rgba(56, 189, 248, 0.3)' }}>
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`otpauth://totp/KPsySchool:${email || 'admin@kpsyschool.com'}?secret=${qrCodeSecret}&issuer=KPsySchool`)}`}
-                alt="QR Code 2FA TOTP"
-                style={{ width: '180px', height: '180px', display: 'block' }}
-              />
-            </div>
-
-            {/* Clé secrète manuelle */}
-            <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.8)', padding: '10px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '20px' }}>
-              <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', marginBottom: '2px' }}>CLÉ SECRÈTE MANUELLE</span>
-              <strong style={{ color: '#38bdf8', fontSize: '0.95rem', letterSpacing: '2px', fontFamily: 'monospace' }}>{qrCodeSecret}</strong>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsQrModalOpen(false)}
-              style={{
-                width: '100%', padding: '12px', backgroundColor: '#38bdf8', color: '#0f172a',
-                border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem'
-              }}
-            >
-              J'AI SCANNÉ LE QR CODE
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Lien discret sécurisé vers l'activation par invitation */}
+      <div style={{ textAlign: 'center', marginTop: '8px' }}>
+        <a 
+          href="/activate-account"
+          style={{ color: '#94a3b8', fontSize: '0.8rem', textDecoration: 'underline', cursor: 'pointer' }}
+        >
+          Vous avez reçu une invitation ? Activer mon compte
+        </a>
+      </div>
     </form>
   );
 };
