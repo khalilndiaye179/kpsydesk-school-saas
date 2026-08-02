@@ -1,24 +1,21 @@
 version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: kpsydesk-postgres
+    container_name: kpsydesk-school-postgres
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_DB: kpsydesk_db
-      POSTGRES_USER: kpsydesk_admin
-      POSTGRES_PASSWORD: kpsydesk_secure_pass
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
-      - kpsydesk-network
-
+      - kpsydesk-school-network
 networks:
-  kpsydesk-network:
+  kpsydesk-school-network:
     driver: bridge
-
 volumes:
   pgdata:
     driver: local
