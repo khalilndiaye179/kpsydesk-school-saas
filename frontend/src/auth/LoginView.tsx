@@ -38,10 +38,48 @@ export const LoginView: React.FC = () => {
     setIsLoading(true);
     setError('');
 
-    // Si le 2FA est activé mais non validé, déclencher la validation OTP
+    // Récupération de la liste des collaborateurs sauvegardés dans la Console Admin
+    const savedColsRaw = localStorage.getItem('kpsydesk_superadmin_collaborators');
+    const savedCols: any[] = savedColsRaw ? JSON.parse(savedColsRaw) : [
+      { email: 'admin@kpsydesk.com', password: 'Admin2026!', isMfaActive: true, name: 'Ibrahima NDIAYE', role: 'SUPER_ADMIN' },
+      { email: 'compta@kpsydesk.com', password: 'Fatou2026!', isMfaActive: true, name: 'Fatou Sow', role: 'SUPER_ADMIN' }
+    ];
+
+    const matchedCol = savedCols.find((c: any) => c.email.toLowerCase() === email.trim().toLowerCase());
+
+    // 1. VÉRIFICATION STRICTE DU MOT DE PASSE POUR ADMIN ET COLLABORATEURS
+    if (matchedCol) {
+      if (password !== matchedCol.password) {
+        setError("Mot de passe incorrect. Veuillez saisir le mot de passe valide défini pour ce compte.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Si le MFA OTP est actif sur ce compte et qu'on est pas encore à l'étape OTP
+      if (matchedCol.isMfaActive && !show2FAStep) {
+        setShow2FAStep(true);
+        setError("🔒 Double Authentification activée : Veuillez saisir votre code OTP à 6 chiffres.");
+        setIsLoading(false);
+        return;
+      }
+    } else if (email === 'admin@kpsydesk.com') {
+      if (password !== 'Admin2026!') {
+        setError("Mot de passe incorrect pour le compte Super-Admin.");
+        setIsLoading(false);
+        return;
+      }
+      if (!show2FAStep) {
+        setShow2FAStep(true);
+        setError("🔒 Double Authentification activée : Veuillez saisir votre code OTP à 6 chiffres.");
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // 2. VÉRIFICATION DU CODE OTP À 6 CHIFFRES SI L'ÉTAPE 2FA EST ACTIVE
     if (show2FAStep) {
-      if (otpCode.trim().length !== 6) {
-        setError("Veuillez saisir un code OTP à 6 chiffres valide.");
+      if (!otpCode || otpCode.trim().length !== 6) {
+        setError("Accès refusé : Veuillez saisir un code OTP à 6 chiffres valide pour valider la double authentification.");
         setIsLoading(false);
         return;
       }
@@ -60,10 +98,12 @@ export const LoginView: React.FC = () => {
         
         userData = res.data.user;
       } catch (apiError) {
-        console.warn("API de login indisponible, passage en mode démo (Fallback Local)");
-        await new Promise(resolve => setTimeout(resolve, 800));
+        console.warn("API de login indisponible, passage en mode démo (Vérification locale stricte)");
+        await new Promise(resolve => setTimeout(resolve, 600));
 
-        if (email === 'admin@kpsydesk.com') {
+        if (matchedCol) {
+          userData = { id: matchedCol.id || 'admin-col-id', email: matchedCol.email, role: matchedCol.role || 'SUPER_ADMIN', name: matchedCol.name };
+        } else if (email === 'admin@kpsydesk.com') {
           userData = { id: 'super-admin-1', email, role: 'SUPER_ADMIN', name: 'Ibrahima NDIAYE' };
         } else if (
           email === 'directeur@ecole.com' || 
@@ -81,7 +121,6 @@ export const LoginView: React.FC = () => {
             tenantId: 'tenant-asadji' 
           };
         } else {
-          // Permettre à tout nouvel identifiant créé d'accéder comme Tenant Admin
           userData = {
             id: `tenant-admin-${Date.now()}`,
             email,
