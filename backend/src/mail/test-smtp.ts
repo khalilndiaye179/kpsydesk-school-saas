@@ -1,7 +1,11 @@
 import * as dotenv from 'dotenv';
 import * as nodemailer from 'nodemailer';
 
+dotenv.config({ path: '/app/.env' });
+dotenv.config({ path: './.env' });
 dotenv.config();
+
+console.log('🚀 Démarrage du script test-smtp.ts...');
 
 async function testSmtpConnection() {
   const targetEmail = process.argv[2] || 'kpsydesk.support@kpsyinformatique.com';
