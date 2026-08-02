@@ -4,12 +4,12 @@ import { api } from '../lib/api';
 
 interface PasswordStepProps {
   onSuccess: (challengeId: string, email: string) => void;
-  onDirectLogin?: (userData: any) => void;
+  onRequireEnrollment: (enrollToken: string, email: string) => void;
   role: 'DIRECTOR' | 'PROFESSEUR' | 'ADMINISTRATEUR';
   setRole: (role: 'DIRECTOR' | 'PROFESSEUR' | 'ADMINISTRATEUR') => void;
 }
 
-export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onDirectLogin, role, setRole }) => {
+export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequireEnrollment, role, setRole }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,28 +46,31 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onDirectL
           throw new Error("Identifiants invalides.");
         }
 
-        // Si c'est le compte admin@kpsydesk.com, bypass de l'OTP et connexion directe
-        if (email.trim().toLowerCase() === 'admin@kpsydesk.com') {
-          if (onDirectLogin) {
-            onDirectLogin({
-              id: 'super-admin-1',
-              email: 'admin@kpsydesk.com',
-              role: 'SUPER_ADMIN',
-              name: 'Ibrahima NDIAYE'
-            });
-            setIsLoading(false);
-            return;
-          }
-        }
+        // Vérification du statut d'enrôlement MFA stocké
+        const mfaStatusStore = localStorage.getItem(`kpsydesk_mfa_enrolled_${email.trim().toLowerCase()}`);
+        const isEnrolled = mfaStatusStore === 'true';
 
-        resData = {
-          status: 'otp_required',
-          challenge_id: `chal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        };
+        const dynamicEnrollToken = `enroll_jwt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        if (!isEnrolled) {
+          // Statut 1 : Mot de passe exact mais aucun TOTP enrôlé -> Génération token d'enrôlement unique
+          resData = {
+            status: 'mfa_enrollment_required',
+            enroll_token: dynamicEnrollToken
+          };
+        } else {
+          // Statut 2 : Mot de passe exact et TOTP enrôlé -> Génération challenge OTP
+          resData = {
+            status: 'otp_required',
+            challenge_id: `chal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          };
+        }
       }
 
-      // ÉTAPE 2 : Décision Serveur - Le DOM OTP ne s'affichera QUE si le statut otp_required est renvoyé
-      if (resData && resData.status === 'otp_required' && resData.challenge_id) {
+      // ÉTAPE 2 : Décision de Routage Sécurisé Serveur
+      if (resData && resData.status === 'mfa_enrollment_required' && resData.enroll_token) {
+        onRequireEnrollment(resData.enroll_token, email);
+      } else if (resData && resData.status === 'otp_required' && resData.challenge_id) {
         onSuccess(resData.challenge_id, email);
       } else {
         setError("Identifiants invalides.");
@@ -155,21 +158,8 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onDirectL
         {isLoading ? <Loader2 className="lucide-spin" size={20} /> : 'SE CONNECTER'}
       </button>
 
-      {/* Bouton direct d'accès à la première configuration TOTP */}
-      <a 
-        href="/mfa-enrollment?enroll_token=demo_token"
-        style={{
-          padding: '12px', backgroundColor: 'rgba(56, 189, 248, 0.1)',
-          color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '12px',
-          fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', textAlign: 'center',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '4px'
-        }}
-      >
-        <Shield size={16} color="#38bdf8" /> Configurer mon QR Code TOTP (Première Fois)
-      </a>
-
       {/* Lien activation par invitation */}
-      <div style={{ textAlign: 'center', marginTop: '6px' }}>
+      <div style={{ textAlign: 'center', marginTop: '12px' }}>
         <a 
           href="/activate-account"
           style={{ color: '#94a3b8', fontSize: '0.8rem', textDecoration: 'underline', cursor: 'pointer' }}
