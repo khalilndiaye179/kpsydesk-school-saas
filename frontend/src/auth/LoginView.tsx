@@ -524,6 +524,8 @@ export const LoginView: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
       {/* MODALE D'AUTHENTIFICATION & SCAN QR CODE OTP (2FA) */}
       {isQrModalOpen && (
         <div style={{
