@@ -55,6 +55,7 @@ model PlatformUser {
   passwordHash    String
   role            PlatformRole   @default(SUPPORT)
   isTwoFactorEnabled Boolean     @default(false)
+  isMfaEnrolled   Boolean        @default(false)
   twoFactorSecret String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -111,6 +112,9 @@ model TenantUser {
   hourlyRate      Float?
   role            TenantRole     @default(TEACHER)
   status          UserStatus     @default(ACTIVE)
+  isTwoFactorEnabled Boolean     @default(false)
+  isMfaEnrolled   Boolean        @default(false)
+  twoFactorSecret String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 

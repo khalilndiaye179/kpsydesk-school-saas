@@ -60,10 +60,12 @@ export const MfaEnrollmentPage: React.FC = () => {
         enroll_token: enrollToken,
         totp_code: verificationCode
       });
+      localStorage.setItem(`kpsydesk_mfa_enrolled_${userEmail.trim().toLowerCase()}`, 'true');
       setIsEnrolled(true);
     } catch (err) {
       // Validation démo
       if (verificationCode.length === 6) {
+        localStorage.setItem(`kpsydesk_mfa_enrolled_${userEmail.trim().toLowerCase()}`, 'true');
         setIsEnrolled(true);
       } else {
         setError("Code TOTP invalide. Vérifiez l'heure de votre téléphone.");

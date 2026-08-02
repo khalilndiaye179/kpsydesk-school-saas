@@ -15,7 +15,12 @@ export const LoginView: React.FC = () => {
   const [userEmail, setUserEmail] = useState<string>('');
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
 
-  // Étape 1 Réussie : Réception du challenge_id du serveur -> Passage à l'Étape 2 (OtpStep)
+  // Étape 1A : Redirection automatique si le serveur exige l'enrôlement MFA initial
+  const handleRequireEnrollment = (enrollToken: string, email: string) => {
+    navigate(`/mfa-enrollment?enroll_token=${enrollToken}&email=${encodeURIComponent(email)}`);
+  };
+
+  // Étape 1B Réussie : Réception du challenge_id du serveur -> Passage à l'Étape 2 (OtpStep)
   const handlePasswordSuccess = (newChallengeId: string, email: string) => {
     setChallengeId(newChallengeId);
     setUserEmail(email);
@@ -180,7 +185,7 @@ export const LoginView: React.FC = () => {
           {!challengeId ? (
             <PasswordStep 
               onSuccess={handlePasswordSuccess}
-              onDirectLogin={handleOtpVerifySuccess}
+              onRequireEnrollment={handleRequireEnrollment}
               role={role}
               setRole={setRole}
             />
