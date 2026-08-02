@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, Download, Printer, Award, BookOpen, Star, UserCheck } from 'lucide-react';
+import { FileText, Download, Printer, Award, Star } from 'lucide-react';
 import { api } from '../../lib/api';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
