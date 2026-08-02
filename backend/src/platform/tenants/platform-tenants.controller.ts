@@ -9,10 +9,10 @@ import {
   Request,
 } from '@nestjs/common';
 import { PlatformTenantsService } from './platform-tenants.service';
-import { AuthGuard } from '../../common/guards/auth.guard';
+import { PlatformJwtGuard } from '../../common/guards/platform-jwt.guard';
 
 @Controller('platform/tenants')
-@UseGuards(AuthGuard)
+@UseGuards(PlatformJwtGuard)
 export class PlatformTenantsController {
   constructor(private readonly service: PlatformTenantsService) {}
 

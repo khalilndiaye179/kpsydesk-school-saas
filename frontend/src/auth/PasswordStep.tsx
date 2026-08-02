@@ -21,64 +21,21 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
     setError('');
 
     try {
-      // ÉTAPE 1 : Appel vérification serveur (Supabase Auth / API Backend)
-      let resData: any = null;
+      // Appelle le véritable endpoint d'authentification platform
+      const res = await api.post('/platform/auth/login', { email, pass: password });
+      const resData = res.data;
 
-      try {
-        const res = await api.post('/tenant/auth/verify-password', { email, pass: password }, {
-          headers: { 'x-tenant-id': '39b8b0e8-1111-4444-a1a1-9b1979b00001' }
-        });
-        resData = res.data;
-      } catch (apiErr) {
-        // Fallback sécurisé : Vérification locale stricte pour démo offline-first
-        const savedColsRaw = localStorage.getItem('kpsydesk_superadmin_collaborators');
-        const savedCols: any[] = savedColsRaw ? JSON.parse(savedColsRaw) : [
-          { email: 'admin@kpsydesk.com', password: 'Admin2026!' },
-          { email: 'compta@kpsydesk.com', password: 'Fatou2026!' }
-        ];
-
-        const matchedCol = savedCols.find((c: any) => c.email.toLowerCase() === email.trim().toLowerCase());
-        const isValid = (matchedCol && matchedCol.password === password) || 
-                        (email === 'admin@kpsydesk.com' && password === 'Admin2026!') ||
-                        (email.includes('@') && password.length >= 6);
-
-        if (!isValid) {
-          throw new Error("Identifiants invalides.");
-        }
-
-        // Vérification du statut d'enrôlement MFA stocké
-        const mfaStatusStore = localStorage.getItem(`kpsydesk_mfa_enrolled_${email.trim().toLowerCase()}`);
-        const isEnrolled = mfaStatusStore === 'true';
-
-        const dynamicEnrollToken = `enroll_jwt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-        if (!isEnrolled) {
-          // Statut 1 : Mot de passe exact mais aucun TOTP enrôlé -> Génération token d'enrôlement unique
-          resData = {
-            status: 'mfa_enrollment_required',
-            enroll_token: dynamicEnrollToken
-          };
-        } else {
-          // Statut 2 : Mot de passe exact et TOTP enrôlé -> Génération challenge OTP
-          resData = {
-            status: 'otp_required',
-            challenge_id: `chal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-          };
-        }
-      }
-
-      // ÉTAPE 2 : Décision de Routage Sécurisé Serveur
-      if (resData && resData.status === 'mfa_enrollment_required' && resData.enroll_token) {
+      // Décision de Routage Sécurisé Serveur
+      if (resData.status === 'mfa_enrollment_required' && resData.enroll_token) {
         onRequireEnrollment(resData.enroll_token, email);
-      } else if (resData && resData.status === 'otp_required' && resData.challenge_id) {
+      } else if (resData.status === 'otp_required' && resData.challenge_id) {
         onSuccess(resData.challenge_id, email);
       } else {
         setError("Identifiants invalides.");
       }
-
-    } catch (err: any) {
-      // Erreur générique sans énumération de compte
-      setError("Identifiants invalides.");
+    } catch (apiErr: any) {
+      const msg = apiErr?.response?.data?.message || 'Identifiants invalides.';
+      setError(Array.isArray(msg) ? msg.join(' | ') : msg);
     } finally {
       setIsLoading(false);
     }
