@@ -101,33 +101,28 @@ export const FleetView: React.FC = () => {
 
     const lockedPriceAtCreation = Number(selectedPlan.price || selectedPlan.prix);
 
-    // 1. Création du tenant dans le parc
+    // 1. Création locale provisoire (le modal admin ne crée pas encore en BDD)
+    // Le rechargement API est déclenché après fermeture du modal
     const newTenant: TenantData = {
       id: tenantId,
       name: newName,
-      type: newType,
+      subdomain: newName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'),
       plan: selectedPlan.name || newPlanId,
       status: 'TRIAL',
       studentsCount: 0,
+      usersCount: 1,
       contactEmail: newEmail,
+      contactName: null,
+      contactPhone: null,
+      createdAt: new Date().toISOString(),
     };
     saveTenants([...tenants, newTenant]);
-
-    // 2. CRITICAL : Insertion immédiate dans tenant_subscriptions avec prix_verrouille = plans.prix AU MOMENT T
-    const newSubscription = {
-      id: `sub_${Date.now()}`,
-      tenantId: tenantId,
-      planId: selectedPlan.id,
-      prixVerrouille: lockedPriceAtCreation, // COPIE FIGÉE DU PRIX LIVE À LA CRÉATION
-      dateDebutCycle: new Date().toISOString(),
-      dateProchainRenouvellement: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      statut: 'ACTIF'
-    };
-    localStorage.setItem(`kpsydesk_tenant_sub_${tenantId}`, JSON.stringify(newSubscription));
 
     setShowAddModal(false);
     setNewName('');
     setNewEmail('');
+    // Recharger depuis l'API pour refléter l'état réel de la base
+    loadTenants();
   };
 
   const toggleStatus = async (id: string, currentStatus: string) => {

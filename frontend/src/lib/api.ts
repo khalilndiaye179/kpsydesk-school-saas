@@ -1,10 +1,17 @@
 import axios from 'axios';
 
 // Instance Axios pour KPSyDesk School
+// En production (school.kpsyinformatique.com), les appels /api/* passent par Nginx vers le backend.
+// En développement local (localhost), on cible directement le port 8091.
+const API_BASE_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:8091/api/v1'
+  : '/api/v1';
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://school.kpsyinformatique.com/api/v1',
+  baseURL: API_BASE_URL,
   timeout: 10000,
 });
+
 
 // Intercepteur pour injecter automatiquement le Token et le Tenant ID
 api.interceptors.request.use((config) => {
