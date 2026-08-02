@@ -13,7 +13,8 @@ export const TenantSignupWizard: React.FC = () => {
   // Écran 1 : Infos Établissement
   const [schoolName, setSchoolName] = useState('');
   const [subdomain, setSubdomain] = useState('');
-  const [selectedPlan, setSelectedPlan] = useState<'TRIAL_7D' | 'STANDARD' | 'PREMIUM' | 'ENTERPRISE'>('TRIAL_7D');
+  const [selectedPlan, setSelectedPlan] = useState<'TRIAL_7D' | 'STANDARD' | 'PREMIUM' | 'PRO' | 'ENTERPRISE'>('STANDARD');
+  const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'ANNUAL'>('ANNUAL');
 
   // Écran 2 : Infos Administrateur
   const [firstName, setFirstName] = useState('');
@@ -242,10 +243,33 @@ export const TenantSignupWizard: React.FC = () => {
   };
 
   const plans = [
-    { id: 'TRIAL_7D', name: 'Essai Gratuit 7j', price: '0 FCFA', badge: 'Découverte', desc: 'Idéal pour tester toutes les fonctionnalités avec 100 élèves.' },
-    { id: 'STANDARD', name: 'Plan Standard', price: '150 000 FCFA/m', badge: 'Populaire', desc: 'Pour les écoles jusqu\'à 500 élèves avec kiosque et bulletins.' },
-    { id: 'PREMIUM', name: 'Plan Premium', price: '300 000 FCFA/m', badge: 'Recommandé', desc: 'Gestion complète jusqu\'à 2 000 élèves, RH et comptabilité.' },
-    { id: 'ENTERPRISE', name: 'Sur Mesure', price: 'Sur Devis', badge: 'Illimité', desc: 'Infrastructure dédiée, accompagnement et fonctionnalités personnalisées.' },
+    { 
+      id: 'STANDARD', 
+      name: 'Plan Standard', 
+      monthlyPrice: '25 000 FCFA / mois',
+      annualPrice: '180 000 FCFA / an',
+      annualSubtext: 'soit 20 000 F/m (-20% sur 9 mois)',
+      badge: 'Populaire', 
+      desc: 'Gestion essentielle : élèves, classes, absences, bulletins & pointage kiosque.' 
+    },
+    { 
+      id: 'PREMIUM', 
+      name: 'Plan Premium', 
+      monthlyPrice: '50 000 FCFA / mois',
+      annualPrice: '360 000 FCFA / an',
+      annualSubtext: 'soit 40 000 F/m (-20% sur 9 mois)',
+      badge: 'Recommandé', 
+      desc: 'Gestion complète : RH, comptabilité, messagerie parents & statistiques avancées.' 
+    },
+    { 
+      id: 'PRO', 
+      name: 'Plan Pro', 
+      monthlyPrice: '75 000 FCFA / mois',
+      annualPrice: '540 000 FCFA / an',
+      annualSubtext: 'soit 60 000 F/m (-20% sur 9 mois)',
+      badge: 'Haute Performance', 
+      desc: 'Multi-établissements, exports illimités, priorité support & API personnalisée.' 
+    },
   ];
 
   return (
@@ -323,25 +347,70 @@ export const TenantSignupWizard: React.FC = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.85rem', marginBottom: '10px' }}>Choisissez votre Offre / Plan *</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <label style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Choisissez votre Offre / Plan *</label>
+                
+                {/* Switcher Mensuel / Annuel */}
+                <div style={{ backgroundColor: '#020617', padding: '4px', borderRadius: '12px', border: '1px solid #1e293b', display: 'flex', gap: '4px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setBillingCycle('MONTHLY')}
+                    style={{
+                      padding: '6px 12px', border: 'none', borderRadius: '8px', cursor: 'pointer',
+                      fontSize: '0.75rem', fontWeight: 600,
+                      backgroundColor: billingCycle === 'MONTHLY' ? '#38bdf8' : 'transparent',
+                      color: billingCycle === 'MONTHLY' ? '#0f172a' : '#94a3b8'
+                    }}
+                  >
+                    Mensuel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBillingCycle('ANNUAL')}
+                    style={{
+                      padding: '6px 12px', border: 'none', borderRadius: '8px', cursor: 'pointer',
+                      fontSize: '0.75rem', fontWeight: 600,
+                      backgroundColor: billingCycle === 'ANNUAL' ? '#10b981' : 'transparent',
+                      color: billingCycle === 'ANNUAL' ? '#0f172a' : '#94a3b8',
+                      display: 'flex', alignItems: 'center', gap: '4px'
+                    }}
+                  >
+                    Annuel (9 mois) <span style={{ backgroundColor: '#0f172a', color: '#10b981', padding: '1px 5px', borderRadius: '6px', fontSize: '0.65rem' }}>-20%</span>
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                 {plans.map(p => (
                   <div 
                     key={p.id}
                     onClick={() => setSelectedPlan(p.id as any)}
                     style={{
-                      padding: '14px', borderRadius: '12px', cursor: 'pointer',
+                      padding: '14px', borderRadius: '14px', cursor: 'pointer',
                       backgroundColor: selectedPlan === p.id ? 'rgba(56, 189, 248, 0.1)' : '#020617',
                       border: `2px solid ${selectedPlan === p.id ? '#38bdf8' : '#1e293b'}`,
-                      transition: 'all 200ms ease'
+                      transition: 'all 200ms ease',
+                      display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                      <strong style={{ color: 'white', fontSize: '0.9rem' }}>{p.name}</strong>
-                      <span style={{ fontSize: '0.65rem', backgroundColor: selectedPlan === p.id ? '#38bdf8' : '#334155', color: selectedPlan === p.id ? '#0f172a' : 'white', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>{p.badge}</span>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <strong style={{ color: 'white', fontSize: '0.85rem' }}>{p.name}</strong>
+                        <span style={{ fontSize: '0.6rem', backgroundColor: selectedPlan === p.id ? '#38bdf8' : '#334155', color: selectedPlan === p.id ? '#0f172a' : 'white', padding: '2px 5px', borderRadius: '4px', fontWeight: 700 }}>{p.badge}</span>
+                      </div>
+                      
+                      <div style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.95rem', marginBottom: '2px' }}>
+                        {billingCycle === 'ANNUAL' ? p.annualPrice : p.monthlyPrice}
+                      </div>
+                      
+                      {billingCycle === 'ANNUAL' && (
+                        <div style={{ color: '#10b981', fontSize: '0.7rem', fontWeight: 600, marginBottom: '8px' }}>
+                          {p.annualSubtext}
+                        </div>
+                      )}
+
+                      <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0, lineHeight: '1.3' }}>{p.desc}</p>
                     </div>
-                    <div style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.95rem', marginBottom: '6px' }}>{p.price}</div>
-                    <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0, lineHeight: '1.3' }}>{p.desc}</p>
                   </div>
                 ))}
               </div>
