@@ -11,8 +11,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Installation de toutes les dépendances (y compris devDependencies pour Nest CLI et Prisma)
-RUN npm ci
+# Installation de toutes les dépendances
+RUN npm install
 
 # Génération du client Prisma compilé
 RUN npx prisma generate
