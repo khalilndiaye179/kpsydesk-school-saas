@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit, Save, CheckCircle, AlertTriangle, Star, X, User } from 'lucide-react';
+import { Plus, Trash2, Edit, X } from 'lucide-react';
 import { api } from '../../lib/api';
 
 // Définitions
@@ -128,7 +128,7 @@ export const TeacherView: React.FC = () => {
   const handleSaveTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { firstName, lastName, email, phone, specialty };
-    let savedId = editingId;
+    let savedId: string = editingId || `local-t-${Date.now()}`;
 
     if (editingId) {
       try {
@@ -140,13 +140,12 @@ export const TeacherView: React.FC = () => {
         localStorage.setItem('kpsydesk_teachers', JSON.stringify(updated));
       }
     } else {
-      savedId = `local-t-${Date.now()}`;
       try {
         const res = await api.post('/tenant/teachers', payload);
         savedId = res.data.id;
         fetchTeachers();
       } catch (err) {
-        const newT = { id: savedId, ...payload };
+        const newT: TeacherData = { id: savedId, ...payload };
         const updated = [...teachers, newT];
         setTeachers(updated);
         localStorage.setItem('kpsydesk_teachers', JSON.stringify(updated));

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HelpCircle, MessagesSquare, Clock, AlertCircle, LogIn } from 'lucide-react';
+import { MessagesSquare, Clock, AlertCircle, LogIn } from 'lucide-react';
 import { CardKPI } from '../shared/CardKPI';
 
 interface Ticket {
@@ -89,9 +89,9 @@ Voulez-vous continuer ?`);
       
       {/* KPI Support */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
-        <CardKPI title="Tickets Ouverts" value={tickets.filter(t => t.status === 'OPEN').length.toString()} icon={AlertCircle} trend={{ value: '+2', label: 'aujourd\'hui' }} />
-        <CardKPI title="En cours de traitement" value={tickets.filter(t => t.status === 'IN_PROGRESS').length.toString()} icon={Clock} />
-        <CardKPI title="Résolus (30j)" value="142" icon={MessagesSquare} />
+        <CardKPI label="Tickets Ouverts" value={tickets.filter(t => t.status === 'OPEN').length.toString()} icon={<AlertCircle size={24} />} trend="+2 aujourd'hui" isPositive={false} />
+        <CardKPI label="En cours de traitement" value={tickets.filter(t => t.status === 'IN_PROGRESS').length.toString()} icon={<Clock size={24} />} trend="Normal" isPositive={true} />
+        <CardKPI label="Résolus (30j)" value="142" icon={<MessagesSquare size={24} />} trend="+12" isPositive={true} />
       </div>
 
       {/* Liste des Tickets */}

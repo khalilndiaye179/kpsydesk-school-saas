@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Plus, Server, Activity, ShieldAlert, Power } from 'lucide-react';
+import { Building2, Plus, Server, Activity, ShieldAlert } from 'lucide-react';
 import { CardKPI } from '../shared/CardKPI';
 
 interface TenantData {
@@ -130,10 +130,10 @@ export const FleetView: React.FC = () => {
       
       {/* KPI */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
-        <CardKPI title="Total Établissements" value={tenants.length.toString()} icon={Building2} trend={{ value: '+2', label: 'ce mois' }} />
-        <CardKPI title="Élèves gérés" value={tenants.reduce((acc, curr) => acc + curr.studentsCount, 0).toLocaleString('fr-FR')} icon={Activity} />
-        <CardKPI title="Tenants Suspendus" value={tenants.filter(t => t.status === 'SUSPENDED').length.toString()} icon={ShieldAlert} />
-        <CardKPI title="Santé Serveur" value="99.9%" icon={Server} />
+        <CardKPI label="Total Établissements" value={tenants.length.toString()} icon={<Building2 size={24} />} trend="+2 ce mois" isPositive={true} />
+        <CardKPI label="Élèves gérés" value={tenants.reduce((acc, curr) => acc + curr.studentsCount, 0).toLocaleString('fr-FR')} icon={<Activity size={24} />} trend="+15%" isPositive={true} />
+        <CardKPI label="Tenants Suspendus" value={tenants.filter(t => t.status === 'SUSPENDED').length.toString()} icon={<ShieldAlert size={24} />} trend="0" isPositive={true} />
+        <CardKPI label="Santé Serveur" value="99.9%" icon={<Server size={24} />} trend="Optimal" isPositive={true} />
       </div>
 
       {/* Main List */}

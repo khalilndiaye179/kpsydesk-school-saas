@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, FileSpreadsheet, Layers, Edit, Users, X } from 'lucide-react';
+import { Plus, Trash2, Edit, Users, X } from 'lucide-react';
 import { api } from '../../lib/api';
 
 interface ClassData {
