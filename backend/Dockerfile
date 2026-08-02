@@ -5,6 +5,9 @@
 # STAGE 1 : Build & Compilation
 FROM node:20-alpine AS builder
 
+# Installation d'OpenSSL pour Prisma sous Alpine
+RUN apk add --no-cache openssl libc6-compat
+
 WORKDIR /app
 
 # Copie des manifestes de dépendances
@@ -29,6 +32,9 @@ RUN npm prune --production
 # ------------------------------------------------------------------------------
 # STAGE 2 : Image d'Exécution Légère de Production
 FROM node:20-alpine AS runner
+
+# Installation d'OpenSSL runtime pour Prisma sous Alpine
+RUN apk add --no-cache openssl libc6-compat
 
 WORKDIR /app
 
