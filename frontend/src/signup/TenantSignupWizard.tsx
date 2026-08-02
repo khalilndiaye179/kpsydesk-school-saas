@@ -200,13 +200,25 @@ export const TenantSignupWizard: React.FC = () => {
     setGeneralError('');
 
     try {
-      await api.post('/tenants/signup/verify', {
+      const res = await api.post('/tenants/signup/verify', {
         signupId,
         email,
         otpCode
       });
 
+      // Notifier la Console SuperAdmin qu'un nouveau tenant vient d'être créé
+      // FleetView lira cette clé au montage et affichera un bandeau d'alerte
+      localStorage.setItem('kpsydesk_new_signup_created', JSON.stringify({
+        schoolName,
+        email,
+        subdomain,
+        plan: selectedPlan,
+        createdAt: new Date().toISOString(),
+        tenantId: res?.data?.tenantId ?? null,
+      }));
+
       setStep(5);
+
     } catch (err: any) {
       // AUCUN fallback silencieux : affichage de l'erreur et blocage
       const message = err?.response?.data?.message

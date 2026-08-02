@@ -1,21 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { Building2, Plus, Server, Activity, ShieldAlert, Power } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Building2, Plus, Server, Activity, ShieldAlert, Power, RefreshCw, AlertCircle } from 'lucide-react';
 import { CardKPI } from '../shared/CardKPI';
+import { api } from '../../lib/api';
 
 interface TenantData {
   id: string;
   name: string;
-  type: string;
+  subdomain: string;
   plan: string;
   status: 'ACTIVE' | 'TRIAL' | 'SUSPENDED';
   studentsCount: number;
-  contactEmail: string;
+  usersCount: number;
+  contactEmail: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
+  createdAt: string;
 }
 
 export const FleetView: React.FC = () => {
   const [tenants, setTenants] = useState<TenantData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [publishedPlans, setPublishedPlans] = useState<any[]>([]);
+  const [newSignupAlert, setNewSignupAlert] = useState(false);
 
   // Nouveaux états du formulaire
   const [newName, setNewName] = useState('');
@@ -23,7 +31,7 @@ export const FleetView: React.FC = () => {
   const [newPlanId, setNewPlanId] = useState('PRO');
   const [newEmail, setNewEmail] = useState('');
 
-  // 1. Charger les plans publiés en direct depuis la table plans / localStorage
+  // 1. Charger les plans publiés depuis localStorage
   useEffect(() => {
     const savedPlans = localStorage.getItem('kpsydesk_pricing_plans');
     if (savedPlans) {
@@ -44,27 +52,40 @@ export const FleetView: React.FC = () => {
       ];
       setPublishedPlans(defaultPlans);
     }
-  }, []);
 
-  // 2. Charger le parc de tenants
-  useEffect(() => {
-    const savedTenants = localStorage.getItem('kpsydesk_tenants_fleet');
-    if (savedTenants) {
-      setTenants(JSON.parse(savedTenants));
-    } else {
-      const defaultTenants: TenantData[] = [
-        { id: '1', name: 'Lycée d\'Excellence Birago Diop', type: 'LYCEE', plan: 'PREMIUM', status: 'ACTIVE', studentsCount: 1250, contactEmail: 'direction@birago.edu.sn' },
-        { id: '2', name: 'Groupe Scolaire Les Pédagogues', type: 'ECOLE', plan: 'PRO', status: 'TRIAL', studentsCount: 450, contactEmail: 'contact@lespedagogues.sn' },
-        { id: '3', name: 'Institut Supérieur de Management', type: 'FORMATION_PRO', plan: 'PREMIUM', status: 'SUSPENDED', studentsCount: 3200, contactEmail: 'admin@ism.edu.sn' }
-      ];
-      setTenants(defaultTenants);
-      localStorage.setItem('kpsydesk_tenants_fleet', JSON.stringify(defaultTenants));
+    // Vérification d'une notification de nouveau tenant créé via le portail d'inscription
+    const signupAlert = localStorage.getItem('kpsydesk_new_signup_created');
+    if (signupAlert) {
+      setNewSignupAlert(true);
     }
   }, []);
 
+  // 2. Charger le parc de tenants depuis l'API réelle (PostgreSQL)
+  const loadTenants = useCallback(async () => {
+    setIsLoading(true);
+    setApiError('');
+    try {
+      const res = await api.get('/platform/tenants', {
+        headers: { Authorization: 'Bearer fake-jwt-token-superadmin' }
+      });
+      setTenants(res.data);
+      // Effacer la notification après rechargement
+      localStorage.removeItem('kpsydesk_new_signup_created');
+      setNewSignupAlert(false);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Erreur de chargement des tenants.';
+      setApiError(Array.isArray(msg) ? msg.join(' | ') : msg);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTenants();
+  }, [loadTenants]);
+
   const saveTenants = (data: TenantData[]) => {
     setTenants(data);
-    localStorage.setItem('kpsydesk_tenants_fleet', JSON.stringify(data));
   };
 
   const handleAddTenant = (e: React.FormEvent) => {
@@ -109,10 +130,19 @@ export const FleetView: React.FC = () => {
     setNewEmail('');
   };
 
-  const toggleStatus = (id: string, currentStatus: string) => {
+  const toggleStatus = async (id: string, currentStatus: string) => {
     if (window.confirm('Confirmer le changement de statut ?')) {
       const newStatus = currentStatus === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED';
-      saveTenants(tenants.map(t => t.id === id ? { ...t, status: newStatus as any } : t));
+      try {
+        await api.patch(`/platform/tenants/${id}/status`, { status: newStatus }, {
+          headers: { Authorization: 'Bearer fake-jwt-token-superadmin' }
+        });
+        // Recharger la liste depuis l'API pour refléter l'état réel en base
+        await loadTenants();
+      } catch (err: any) {
+        const msg = err?.response?.data?.message || err?.message || 'Erreur lors du changement de statut.';
+        alert(Array.isArray(msg) ? msg.join(' | ') : msg);
+      }
     }
   };
 
@@ -128,11 +158,22 @@ export const FleetView: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
       
+      {/* Bandeau alerte nouveau signup */}
+      {newSignupAlert && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', backgroundColor: '#fff7ed', border: '1px solid #f59e0b', borderRadius: '10px', color: '#92400e' }}>
+          <AlertCircle size={18} />
+          <span style={{ fontWeight: 600 }}>Un nouvel établissement vient de s'inscrire via le portail public. Cliquez sur Actualiser pour le voir.</span>
+          <button onClick={loadTenants} style={{ marginLeft: 'auto', padding: '6px 14px', backgroundColor: '#f59e0b', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}>
+            Actualiser
+          </button>
+        </div>
+      )}
+
       {/* KPI */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
-        <CardKPI label="Total Établissements" value={tenants.length.toString()} icon={<Building2 size={24} />} trend="+2 ce mois" isPositive={true} />
-        <CardKPI label="Élèves gérés" value={tenants.reduce((acc, curr) => acc + curr.studentsCount, 0).toLocaleString('fr-FR')} icon={<Activity size={24} />} trend="+15%" isPositive={true} />
-        <CardKPI label="Tenants Suspendus" value={tenants.filter(t => t.status === 'SUSPENDED').length.toString()} icon={<ShieldAlert size={24} />} trend="0" isPositive={true} />
+        <CardKPI label="Total Établissements" value={tenants.length.toString()} icon={<Building2 size={24} />} trend="Source : BDD" isPositive={true} />
+        <CardKPI label="Élèves gérés" value={tenants.reduce((acc, curr) => acc + curr.studentsCount, 0).toLocaleString('fr-FR')} icon={<Activity size={24} />} trend="Données réelles" isPositive={true} />
+        <CardKPI label="Tenants Suspendus" value={tenants.filter(t => t.status === 'SUSPENDED').length.toString()} icon={<ShieldAlert size={24} />} trend="Live" isPositive={true} />
         <CardKPI label="Santé Serveur" value="99.9%" icon={<Server size={24} />} trend="Optimal" isPositive={true} />
       </div>
 
@@ -140,43 +181,89 @@ export const FleetView: React.FC = () => {
       <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid var(--border)', padding: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-title)' }}>Parc de Tenants (Fleet)</h3>
-          <button 
-            onClick={() => setShowAddModal(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
-          >
-            <Plus size={18} /> Provisionner un Tenant
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button
+              onClick={loadTenants}
+              disabled={isLoading}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: 500 }}
+            >
+              <RefreshCw size={15} style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
+              Actualiser
+            </button>
+            <button
+              onClick={() => setShowAddModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+            >
+              <Plus size={18} /> Provisionner un Tenant
+            </button>
+          </div>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid var(--border)', color: 'var(--text-secondary)' }}>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Nom de l'Établissement</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Contact</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Plan</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Statut</th>
-              <th style={{ padding: '12px', textAlign: 'right' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tenants.map(t => (
-              <tr key={t.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                <td style={{ padding: '16px 12px', fontWeight: 600 }}>
-                  {t.name} <br/>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>Type: {t.type} | {t.studentsCount} élèves</span>
-                </td>
-                <td style={{ padding: '16px 12px', color: 'var(--text-secondary)' }}>{t.contactEmail}</td>
-                <td style={{ padding: '16px 12px', fontFamily: 'var(--font-data)' }}>{t.plan}</td>
-                <td style={{ padding: '16px 12px' }}>{getStatusBadge(t.status)}</td>
-                <td style={{ padding: '16px 12px', textAlign: 'right' }}>
-                  <button onClick={() => toggleStatus(t.id, t.status)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.status === 'SUSPENDED' ? 'var(--status-positive)' : 'var(--status-negative)' }} title="Changer le statut">
-                    <Power size={18} />
-                  </button>
-                </td>
+        {/* Erreur API */}
+        {apiError && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', marginBottom: '16px', color: '#991b1b' }}>
+            <AlertCircle size={16} />
+            <span>{apiError}</span>
+          </div>
+        )}
+
+        {/* Spinner de chargement */}
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-secondary)' }}>
+            <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', opacity: 0.4 }} />
+            <p style={{ marginTop: '12px' }}>Chargement du parc de tenants...</p>
+          </div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+            <thead>
+              <tr style={{ borderBottom: '2px solid var(--border)', color: 'var(--text-secondary)' }}>
+                <th style={{ padding: '12px', textAlign: 'left' }}>Nom de l'Établissement</th>
+                <th style={{ padding: '12px', textAlign: 'left' }}>Contact Admin</th>
+                <th style={{ padding: '12px', textAlign: 'left' }}>Plan</th>
+                <th style={{ padding: '12px', textAlign: 'left' }}>Statut</th>
+                <th style={{ padding: '12px', textAlign: 'left' }}>Créé le</th>
+                <th style={{ padding: '12px', textAlign: 'right' }}>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {tenants.length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                    Aucun établissement enregistré.
+                  </td>
+                </tr>
+              )}
+              {tenants.map(t => (
+                <tr key={t.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td style={{ padding: '16px 12px', fontWeight: 600 }}>
+                    {t.name}<br />
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>
+                      {t.subdomain}.kpsyschool.com &bull; {t.studentsCount} élèves
+                    </span>
+                  </td>
+                  <td style={{ padding: '16px 12px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                    <span style={{ fontWeight: 500, color: 'var(--text)' }}>{t.contactName ?? '—'}</span><br />
+                    {t.contactEmail ?? '—'}
+                  </td>
+                  <td style={{ padding: '16px 12px', fontFamily: 'var(--font-data)', fontWeight: 600 }}>{t.plan}</td>
+                  <td style={{ padding: '16px 12px' }}>{getStatusBadge(t.status)}</td>
+                  <td style={{ padding: '16px 12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    {new Date(t.createdAt).toLocaleDateString('fr-FR')}
+                  </td>
+                  <td style={{ padding: '16px 12px', textAlign: 'right' }}>
+                    <button
+                      onClick={() => toggleStatus(t.id, t.status)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.status === 'SUSPENDED' ? 'var(--status-positive)' : 'var(--status-negative)' }}
+                      title={t.status === 'SUSPENDED' ? 'Réactiver' : 'Suspendre'}
+                    >
+                      <Power size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Modal Ajout */}
