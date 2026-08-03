@@ -9,8 +9,9 @@ export class StudentController {
   constructor(private readonly studentService: StudentService) {}
 
   @Get()
-  findAll() {
-    return this.studentService.findAll();
+  findAll(@Req() request: Request) {
+    const tenantId = (request as any).user.tenantId;
+    return this.studentService.findAll(tenantId);
   }
 
   @Post()
@@ -20,7 +21,8 @@ export class StudentController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.studentService.findOne(id);
+  findOne(@Param('id') id: string, @Req() request: Request) {
+    const tenantId = (request as any).user.tenantId;
+    return this.studentService.findOne(id, tenantId);
   }
 }

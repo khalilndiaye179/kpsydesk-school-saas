@@ -5,8 +5,9 @@ import { PrismaService } from '../../prisma.service';
 export class TenantUsersService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(tenantId: string) {
     return this.prisma.tenantUser.findMany({
+      where: { tenantId },
       select: {
         id: true,
         email: true,

@@ -9,8 +9,9 @@ export class TenantUsersController {
   constructor(private readonly service: TenantUsersService) {}
 
   @Get()
-  async findAll() {
-    return this.service.findAll();
+  async findAll(@Req() req: Request) {
+    const tenantId = (req as any).user?.tenantId;
+    return this.service.findAll(tenantId);
   }
 
   @Post()

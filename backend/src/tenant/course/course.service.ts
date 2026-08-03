@@ -5,22 +5,19 @@ import { PrismaService } from '../../prisma.service';
 export class CourseService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.runWithTenantContext(async (tx) => {
-      return tx.course.findMany({
-        orderBy: { name: 'asc' }
-      });
+  async findAll(tenantId: string) {
+    return this.prisma.course.findMany({
+      where: { tenantId },
+      orderBy: { name: 'asc' },
     });
   }
 
   async create(data: any, tenantId: string) {
-    return this.prisma.runWithTenantContext(async (tx) => {
-      return tx.course.create({
-        data: {
-          ...data,
-          tenantId: tenantId,
-        }
-      });
+    return this.prisma.course.create({
+      data: {
+        ...data,
+        tenantId: tenantId,
+      },
     });
   }
 }

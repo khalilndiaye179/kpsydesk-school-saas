@@ -9,8 +9,9 @@ export class CourseController {
   constructor(private readonly courseService: CourseService) {}
 
   @Get()
-  findAll() {
-    return this.courseService.findAll();
+  findAll(@Req() request: Request) {
+    const tenantId = (request as any).user.tenantId;
+    return this.courseService.findAll(tenantId);
   }
 
   @Post()
