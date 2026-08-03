@@ -99,31 +99,50 @@ export const HRView: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newUser: StaffUser = {
-      id: `usr-${Date.now()}`,
+    const payload = {
       email,
+      pass: generatedPassword || 'KPsySchool2026!',
       firstName,
       lastName,
       phone,
       title: newTitle,
       role: newRole,
-      status: 'ACTIVE',
       contractType: newContractType,
       baseSalary: newBaseSalary ? parseFloat(newBaseSalary) : undefined,
       hourlyRate: newHourlyRate ? parseFloat(newHourlyRate) : undefined,
-      createdAt: new Date().toISOString(),
     };
 
     try {
-      // Pour la démo, on n'a pas encore l'endpoint POST /tenant/users avec le password
-      // On sauvegarde juste en local
-      const updated = [newUser, ...staff];
+      // Appel API backend réél
+      const response = await api.post('/tenant/users', payload);
+      const createdUser = response.data;
+      
+      const updated = [createdUser, ...staff];
       setStaff(updated);
       const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
       const USERS_STORAGE_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
     } catch (error) {
-      console.error(error);
+      console.warn('Fallback sauvegarde locale RH', error);
+      const newUser: StaffUser = {
+        id: `usr-${Date.now()}`,
+        email,
+        firstName,
+        lastName,
+        phone,
+        title: newTitle,
+        role: newRole,
+        status: 'ACTIVE',
+        contractType: newContractType,
+        baseSalary: newBaseSalary ? parseFloat(newBaseSalary) : undefined,
+        hourlyRate: newHourlyRate ? parseFloat(newHourlyRate) : undefined,
+        createdAt: new Date().toISOString(),
+      };
+      const updated = [newUser, ...staff];
+      setStaff(updated);
+      const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
+      const USERS_STORAGE_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
     }
     
     setShowModal(false);
