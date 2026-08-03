@@ -70,7 +70,7 @@ export const DashboardView: React.FC = () => {
     });
     setClassDistribution(dist);
 
-    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '39b8b0e8-1111-4444-a1a1-9b1979b00001';
+    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
 
     // Load Payments isolés
     const sPayments = localStorage.getItem(`kpsydesk_tenant_payments_${activeTenantId}`);

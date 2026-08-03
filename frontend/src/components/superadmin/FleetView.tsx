@@ -156,8 +156,22 @@ export const FleetView: React.FC = () => {
 
   const handleAddTenant = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowAddModal(false);
-    loadTenants();
+    if (!newName || !newEmail) return;
+
+    try {
+      await api.post('/platform/tenants', {
+        name: newName,
+        email: newEmail,
+        plan: newPlanId,
+      }, { headers: authHeaders });
+
+      setShowAddModal(false);
+      setNewName('');
+      setNewEmail('');
+      await loadTenants();
+    } catch (err: any) {
+      alert("Erreur lors de la création de l'établissement : " + (err?.response?.data?.message || err.message));
+    }
   };
 
   const getStatusBadge = (status: string) => {

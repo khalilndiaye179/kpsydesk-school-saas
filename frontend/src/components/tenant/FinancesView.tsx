@@ -68,7 +68,7 @@ export const FinancesView: React.FC = () => {
     fetchData();
   }, []);
 
-  const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '39b8b0e8-1111-4444-a1a1-9b1979b00001';
+  const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
   const PAYMENTS_KEY = `kpsydesk_tenant_payments_${activeTenantId}`;
   const EXPENSES_KEY = `kpsydesk_tenant_expenses_${activeTenantId}`;
   const USERS_KEY = `kpsydesk_tenant_users_${activeTenantId}`;

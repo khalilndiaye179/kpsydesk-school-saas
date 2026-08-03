@@ -44,6 +44,30 @@ export class PlatformTenantsService {
     });
   }
 
+  async create(data: { name: string; email: string; plan?: any }) {
+    const subdomain = data.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+    const bcrypt = require('bcryptjs');
+    const defaultPassHash = await bcrypt.hash('KPsySchool2026!', 12);
+
+    return this.prisma.tenant.create({
+      data: {
+        name: data.name,
+        subdomain,
+        plan: data.plan || 'PRO',
+        status: 'ACTIVE',
+        users: {
+          create: {
+            email: data.email,
+            passwordHash: defaultPassHash,
+            firstName: 'Directeur',
+            lastName: data.name,
+            role: 'DIRECTOR',
+          },
+        },
+      },
+    });
+  }
+
   async updatePlan(tenantId: string, plan: any) {
     return this.prisma.tenant.update({
       where: { id: tenantId },

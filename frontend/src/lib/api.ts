@@ -18,8 +18,8 @@ api.interceptors.request.use((config) => {
   // Dans un cas réel, on lirait le token depuis un AuthContext ou localStorage
   const token = localStorage.getItem('kpsydesk_access_token') || 'fake-jwt-token-tenant';
   
-  // Simulation de la sélection d'école pour le multi-tenant
-  const tenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '39b8b0e8-1111-4444-a1a1-9b1979b00001';
+  // Tenant ID issu du login — jamais de fallback codé en dur
+  const tenantId = localStorage.getItem('kpsydesk_active_tenant_id');
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

@@ -46,7 +46,7 @@ export const HRView: React.FC = () => {
   }, []);
 
   const fetchStaff = async () => {
-    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '39b8b0e8-1111-4444-a1a1-9b1979b00001';
+    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
     const USERS_STORAGE_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
     const CLOCK_STORAGE_KEY = `kpsydesk_clock_events_${activeTenantId}`;
 
@@ -119,7 +119,7 @@ export const HRView: React.FC = () => {
       // On sauvegarde juste en local
       const updated = [newUser, ...staff];
       setStaff(updated);
-      const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '39b8b0e8-1111-4444-a1a1-9b1979b00001';
+      const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
       const USERS_STORAGE_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
     } catch (error) {

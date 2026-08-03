@@ -40,6 +40,7 @@ export class TenantAuthService {
         id: user.id,
         email: user.email,
         role: user.role,
+        tenantId: user.tenantId,   // ← CRITIQUE : nécessaire pour le frontend
       }
     };
   }

@@ -45,21 +45,44 @@ export const KioskView: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Chargement des données
+  // Chargement des données isolées par Tenant
   useEffect(() => {
-    // Récupérer le personnel
-    const savedUsers = localStorage.getItem('kpsydesk_tenant_users');
+    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
+    
+    // Récupérer le personnel du tenant actif
+    const USERS_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
+    const savedUsers = localStorage.getItem(USERS_KEY) || localStorage.getItem('kpsydesk_tenant_users');
+    
     if (savedUsers) {
-      const users = JSON.parse(savedUsers);
-      setStaffList(users.filter((u: any) => !['STUDENT', 'PARENT'].includes(u.role)));
+      try {
+        const users = JSON.parse(savedUsers);
+        const filtered = users.filter((u: any) => !['STUDENT', 'PARENT'].includes(u.role));
+        if (filtered.length > 0) {
+          setStaffList(filtered);
+        } else {
+          setStaffList(getDefaultStaff());
+        }
+      } catch (e) {
+        setStaffList(getDefaultStaff());
+      }
+    } else {
+      setStaffList(getDefaultStaff());
     }
     
     // Récupérer les paramètres Kiosque
-    const savedSettings = localStorage.getItem('kpsydesk_school_settings');
+    const SETTINGS_KEY = `kpsydesk_school_settings_${activeTenantId}`;
+    const savedSettings = localStorage.getItem(SETTINGS_KEY) || localStorage.getItem('kpsydesk_school_settings');
     if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
+      try { setSettings(JSON.parse(savedSettings)); } catch(e){}
     }
   }, []);
+
+  const getDefaultStaff = (): Staff[] => [
+    { id: 'usr-1', firstName: 'Directeur', lastName: 'Général', role: 'DIRECTOR' },
+    { id: 'usr-2', firstName: 'Ousmane', lastName: 'SOW', role: 'TEACHER' },
+    { id: 'usr-3', firstName: 'Aminata', lastName: 'DIOP', role: 'ACCOUNTANT' },
+    { id: 'usr-4', firstName: 'Mamadou', lastName: 'FALL', role: 'DRIVER' },
+  ];
 
   // Démarrer la géolocalisation et la caméra dès la sélection d'un employé
   useEffect(() => {
@@ -200,10 +223,14 @@ export const KioskView: React.FC = () => {
       photoDataUrl: photoData || undefined
     };
 
-    // Sauvegarde
-    const existing = localStorage.getItem('kpsydesk_clock_events');
+    // Sauvegarde isolée par Tenant
+    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
+    const CLOCK_KEY = `kpsydesk_clock_events_${activeTenantId}`;
+    const existing = localStorage.getItem(CLOCK_KEY) || localStorage.getItem('kpsydesk_clock_events');
     const events = existing ? JSON.parse(existing) : [];
-    localStorage.setItem('kpsydesk_clock_events', JSON.stringify([newEvent, ...events]));
+    const updatedEvents = [newEvent, ...events];
+    localStorage.setItem(CLOCK_KEY, JSON.stringify(updatedEvents));
+    localStorage.setItem('kpsydesk_clock_events', JSON.stringify(updatedEvents));
 
     // Feedback
     setSuccessMessage(`${type === 'CLOCK_IN' ? 'Arrivée' : 'Départ'} enregistré avec succès à ${currentTime.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}`);

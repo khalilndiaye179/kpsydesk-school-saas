@@ -70,10 +70,18 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
           // Succès direct si pas de MFA tenant configuré
           if (res.data.access_token) {
             localStorage.setItem('kpsydesk_access_token', res.data.access_token);
+
+            // ✅ CRITIQUE : sauvegarder le vrai tenantId retourné par le backend
+            const realTenantId = res.data.user?.tenantId || res.data.tenantId;
+            if (realTenantId) {
+              localStorage.setItem('kpsydesk_active_tenant_id', realTenantId);
+            }
+
             onDirectLogin({
               id: res.data.user?.id || `user_${Date.now()}`,
               email: email,
               role: 'TENANT_ADMIN',
+              tenantId: realTenantId,
               name: res.data.user?.firstName ? `${res.data.user.firstName} ${res.data.user.lastName || ''}` : email.split('@')[0].toUpperCase(),
             });
           }

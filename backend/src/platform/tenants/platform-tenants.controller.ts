@@ -31,6 +31,21 @@ export class PlatformTenantsController {
   }
 
   /**
+   * POST /api/v1/platform/tenants
+   * Création et provisionnement manuel d'un tenant en BDD — SuperAdmin uniquement.
+   */
+  @Post()
+  async create(
+    @Request() req: any,
+    @Body() body: { name: string; email: string; plan?: string },
+  ) {
+    if (req.user?.role !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Accès réservé aux Super-Administrateurs.');
+    }
+    return this.service.create(body);
+  }
+
+  /**
    * PATCH /api/v1/platform/tenants/:id/status
    * Met à jour le statut d'un tenant (ACTIVE, SUSPENDED, ARCHIVED) — SuperAdmin uniquement.
    */
