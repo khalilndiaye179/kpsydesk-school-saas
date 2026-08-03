@@ -7,6 +7,9 @@ import { PrismaService } from '../prisma.service';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './auth/jwt.strategy';
 
+import { TenantUsersController } from './users/tenant-users.controller';
+import { TenantUsersService } from './users/tenant-users.service';
+
 @Module({
   imports: [
     JwtModule.register({
@@ -14,7 +17,7 @@ import { JwtStrategy } from './auth/jwt.strategy';
       signOptions: { expiresIn: '1d' },
     }),
   ],
-  controllers: [TenantAuthController, TenantClassesController],
-  providers: [TenantAuthService, TenantClassesService, PrismaService, JwtStrategy],
+  controllers: [TenantAuthController, TenantClassesController, TenantUsersController],
+  providers: [TenantAuthService, TenantClassesService, TenantUsersService, PrismaService, JwtStrategy],
 })
 export class TenantModule {}
