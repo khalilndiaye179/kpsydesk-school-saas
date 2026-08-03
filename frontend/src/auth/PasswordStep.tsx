@@ -23,7 +23,8 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
 
     try {
       // Déterminer si l'authentification cible la plateforme globale (SuperAdmin) ou un tenant
-      const isPlatformAccount = role === 'ADMINISTRATEUR' || email.includes('admin') || email.includes('superadmin') || email.includes('kpsydesk.com');
+      const isPlatformAccount = email.toLowerCase() === 'admin@kpsydesk.com' || email.toLowerCase().endsWith('@kpsydesk.com') || email.toLowerCase().includes('superadmin@');
+
       
       if (isPlatformAccount) {
         // Flux SuperAdmin / Platform

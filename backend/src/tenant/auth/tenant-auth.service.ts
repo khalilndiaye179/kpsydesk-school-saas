@@ -12,27 +12,41 @@ export class TenantAuthService {
 
   async login(email: string, pass: string, tenantId?: string, host?: string) {
     let targetTenantId = tenantId;
+    const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Si pas de tenantId transmis, tenter la résolution depuis le sous-domaine Host (ex: lycee-abdoulaye-sadji.kpsyschool.com)
+    // 1. Tenter la résolution depuis le sous-domaine Host (ex: lycee-abdoulaye-sadji.kpsyschool.com -> lycee-abdoulaye-sadji)
     if (!targetTenantId && host) {
       const cleanHost = host.split(':')[0]; // Retirer le port si présent
       const parts = cleanHost.split('.');
-      if (parts.length >= 3 && parts[0] !== 'app' && parts[0] !== 'www' && parts[0] !== 'localhost') {
-        const sub = parts[0];
-        const tenant = await this.prisma.tenant.findUnique({ where: { subdomain: sub } });
+      if (parts.length >= 2 && !['app', 'www', 'localhost', '127', 'school', 'srv1838382'].includes(parts[0])) {
+        const sub = parts[0].toLowerCase();
+        const tenant = await this.prisma.tenant.findFirst({ 
+          where: { subdomain: { equals: sub, mode: 'insensitive' } } 
+        });
         if (tenant) {
           targetTenantId = tenant.id;
         }
       }
     }
 
-    // 2. Si toujours pas de tenantId, chercher le TenantUser par email
+    // 2. Si pas trouvé par sous-domaine, chercher le TenantUser par email (insensible à la casse)
     if (!targetTenantId) {
       const userByEmail = await this.prisma.tenantUser.findFirst({
-        where: { email },
+        where: { email: { equals: cleanEmail, mode: 'insensitive' } },
       });
       if (userByEmail) {
         targetTenantId = userByEmail.tenantId;
+      }
+    }
+
+    // 3. Fallback : Si un seul tenant existe en base de données, l'utiliser par défaut
+    if (!targetTenantId) {
+      const count = await this.prisma.tenant.count();
+      if (count === 1) {
+        const onlyTenant = await this.prisma.tenant.findFirst();
+        if (onlyTenant) {
+          targetTenantId = onlyTenant.id;
+        }
       }
     }
 
@@ -40,13 +54,16 @@ export class TenantAuthService {
       throw new UnauthorizedException('Établissement introuvable pour ces identifiants');
     }
 
-    // Les requêtes ici sont exécutées sous le scoping tenant_id via PrismaService
+    // Recherche de l'utilisateur dans l'établissement identifié
     const user = await this.prisma.tenantUser.findFirst({
-      where: { email, tenantId: targetTenantId },
+      where: { 
+        email: { equals: cleanEmail, mode: 'insensitive' }, 
+        tenantId: targetTenantId 
+      },
     });
 
     if (!user) {
-      throw new UnauthorizedException('Identifiants invalides');
+      throw new UnauthorizedException('Identifiants invalides pour cet établissement');
     }
 
     const isMatch = await bcrypt.compare(pass, user.passwordHash);
