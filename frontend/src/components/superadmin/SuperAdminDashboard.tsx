@@ -11,9 +11,7 @@ export const SuperAdminDashboard: React.FC = () => {
 
   useEffect(() => {
     // Calcul de l'Audience depuis l'API réelle
-    api.get('/platform/tenants', {
-      headers: { Authorization: 'Bearer fake-jwt-token-superadmin' }
-    }).then((res) => {
+    api.get('/platform/tenants').then((res) => {
       const tenants = res.data;
       setActiveTenantsCount(tenants.length);
       const students = tenants.reduce((acc: number, curr: any) => acc + (curr.studentsCount || 0), 0);

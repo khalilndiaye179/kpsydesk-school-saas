@@ -49,8 +49,8 @@ export const FleetView: React.FC = () => {
   const [newPlanId, setNewPlanId] = useState('PRO');
   const [newEmail, setNewEmail] = useState('');
 
-  const token = localStorage.getItem('kpsydesk_access_token') || 'fake-jwt-token-superadmin';
-  const authHeaders = { Authorization: `Bearer ${token}` };
+  const token = localStorage.getItem('kpsydesk_access_token') || '';
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
 
   // 1. Charger les plans publiés depuis localStorage ou valeurs par défaut
   useEffect(() => {

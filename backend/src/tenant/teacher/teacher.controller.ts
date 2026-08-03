@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { TeacherService } from './teacher.service';
-import { AuthGuard } from '../../common/guards/auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Request } from 'express';
 
 @Controller('tenant/teachers')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 export class TeacherController {
   constructor(private readonly teacherService: TeacherService) {}
 

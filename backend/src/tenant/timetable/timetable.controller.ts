@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { TimetableService } from './timetable.service';
-import { AuthGuard } from '../../common/guards/auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Request } from 'express';
 
 @Controller('tenant/timetables')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 export class TimetableController {
   constructor(private readonly timetableService: TimetableService) {}
 

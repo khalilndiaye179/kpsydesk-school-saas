@@ -15,10 +15,7 @@ export const api = axios.create({
 
 // Intercepteur pour injecter automatiquement le Token et le Tenant ID
 api.interceptors.request.use((config) => {
-  // Dans un cas réel, on lirait le token depuis un AuthContext ou localStorage
-  const token = localStorage.getItem('kpsydesk_access_token') || 'fake-jwt-token-tenant';
-  
-  // Tenant ID issu du login — jamais de fallback codé en dur
+  const token = localStorage.getItem('kpsydesk_access_token');
   const tenantId = localStorage.getItem('kpsydesk_active_tenant_id');
 
   if (token) {
@@ -33,3 +30,20 @@ api.interceptors.request.use((config) => {
 }, (error) => {
   return Promise.reject(error);
 });
+
+// Intercepteur de réponse : Redirection /login sur 401 (Session/Token invalide ou expiré)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Ignorer si la requête d'origine est déjà la tentative de login
+      if (!error.config.url?.includes('/auth/login')) {
+        localStorage.removeItem('kpsydesk_access_token');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
