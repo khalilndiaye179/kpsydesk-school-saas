@@ -1,11 +1,20 @@
 import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { tenantLocalStorage } from '../../common/tenancy/tenant.middleware';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  canActivate(context: ExecutionContext) {
-    // Add custom authentication logic here if needed
-    return super.canActivate(context);
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isValid = (await super.canActivate(context)) as boolean;
+    if (isValid) {
+      const request = context.switchToHttp().getRequest();
+      const user = request.user;
+      if (user && user.tenantId) {
+        // Enregistre le tenantId extrait de façon sécurisée du JWT dans le stockage asynchrone du thread
+        tenantLocalStorage.enterWith(user.tenantId);
+      }
+    }
+    return isValid;
   }
 
   handleRequest(err: any, user: any, info: any) {
@@ -15,3 +24,4 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return user;
   }
 }
+

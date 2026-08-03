@@ -13,7 +13,7 @@ export const api = axios.create({
 });
 
 
-// Intercepteur pour injecter automatiquement le Token et le Tenant ID
+// Intercepteur pour injecter automatiquement le Token et le Tenant ID si présent
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('kpsydesk_access_token');
   const tenantId = localStorage.getItem('kpsydesk_active_tenant_id');
@@ -31,14 +31,17 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-// Intercepteur de réponse : Redirection /login sur 401 (Session/Token invalide ou expiré)
+// Intercepteur de réponse : Redirection /login SEULEMENT sur 401 avéré (Token réellement expiré/invalide)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Ignorer si la requête d'origine est déjà la tentative de login
-      if (!error.config.url?.includes('/auth/login')) {
+      const isLoginRequest = error.config.url?.includes('/auth/login');
+      // Rediriger uniquement si un token existait et a été rejeté comme invalide/expiré par le backend
+      if (!isLoginRequest && localStorage.getItem('kpsydesk_access_token')) {
+        console.warn('Session expiré ou token invalide. Redirection vers /login');
         localStorage.removeItem('kpsydesk_access_token');
+        localStorage.removeItem('kpsydesk_user');
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
@@ -47,3 +50,4 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
