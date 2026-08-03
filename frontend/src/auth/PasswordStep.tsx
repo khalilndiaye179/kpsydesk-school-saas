@@ -86,13 +86,8 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
             });
           }
         } catch (apiErr: any) {
-          // Fallback démo pour environnement de test local sans backend actif
-          onDirectLogin({
-            id: `user_${Date.now()}`,
-            email: email,
-            role: 'TENANT_ADMIN',
-            name: email.split('@')[0].toUpperCase(),
-          });
+          // Relancer l'erreur pour que l'interface affiche l'erreur réelle du backend sans créer de session sans token JWT
+          throw apiErr;
         }
       }
     } catch (apiErr: any) {

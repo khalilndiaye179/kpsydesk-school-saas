@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Headers, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { TenantAuthService } from './tenant-auth.service';
 
 @Controller('tenant/auth')
@@ -7,12 +8,13 @@ export class TenantAuthController {
 
   @Post('login')
   async login(
-    @Body() loginDto: { email: string; pass: string },
-    @Headers('x-tenant-id') tenantId: string,
+    @Body() loginDto: { email: string; pass: string; tenantId?: string },
+    @Headers('x-tenant-id') headerTenantId: string,
+    @Req() req: Request,
   ) {
-    if (!tenantId) {
-      throw new UnauthorizedException('Tenant non spécifié dans les en-têtes');
-    }
-    return this.authService.login(loginDto.email, loginDto.pass, tenantId);
+    const tenantId = headerTenantId || loginDto.tenantId;
+    const host = req.headers.host || '';
+    return this.authService.login(loginDto.email, loginDto.pass, tenantId, host);
   }
 }
+
