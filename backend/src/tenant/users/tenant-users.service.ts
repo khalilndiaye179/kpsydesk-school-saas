@@ -25,12 +25,13 @@ export class TenantUsersService {
     });
   }
 
-  async create(data: any) {
+  async create(data: any, tenantId: string) {
     const bcrypt = require('bcryptjs');
     const passwordHash = await bcrypt.hash(data.pass || 'KPsySchool2026!', 12);
 
     return this.prisma.tenantUser.create({
       data: {
+        tenantId,
         email: data.email,
         passwordHash,
         firstName: data.firstName,
