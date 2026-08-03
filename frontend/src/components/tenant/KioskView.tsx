@@ -47,29 +47,41 @@ export const KioskView: React.FC = () => {
 
   // Chargement des données isolées par Tenant
   useEffect(() => {
-    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
-    
-    // Récupérer le personnel du tenant actif
-    const USERS_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
-    const savedUsers = localStorage.getItem(USERS_KEY) || localStorage.getItem('kpsydesk_tenant_users');
-    
-    if (savedUsers) {
+    const fetchStaffFromApi = async () => {
+      const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
+      const USERS_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
+      
       try {
-        const users = JSON.parse(savedUsers);
-        const filtered = users.filter((u: any) => !['STUDENT', 'PARENT'].includes(u.role));
-        if (filtered.length > 0) {
+        const response = await api.get('/tenant/users');
+        if (response.data && Array.isArray(response.data)) {
+          const filtered = response.data.filter((u: any) => !['STUDENT', 'PARENT'].includes(u.role));
           setStaffList(filtered);
-        } else {
+          localStorage.setItem(USERS_KEY, JSON.stringify(response.data));
+          return;
+        }
+      } catch (err) {
+        console.warn('API /tenant/users non disponible, fallback localStorage', err);
+      }
+
+      // Fallback local storage
+      const savedUsers = localStorage.getItem(USERS_KEY) || localStorage.getItem('kpsydesk_tenant_users');
+      if (savedUsers) {
+        try {
+          const users = JSON.parse(savedUsers);
+          const filtered = users.filter((u: any) => !['STUDENT', 'PARENT'].includes(u.role));
+          setStaffList(filtered.length > 0 ? filtered : getDefaultStaff());
+        } catch (e) {
           setStaffList(getDefaultStaff());
         }
-      } catch (e) {
+      } else {
         setStaffList(getDefaultStaff());
       }
-    } else {
-      setStaffList(getDefaultStaff());
-    }
-    
+    };
+
+    fetchStaffFromApi();
+
     // Récupérer les paramètres Kiosque
+    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
     const SETTINGS_KEY = `kpsydesk_school_settings_${activeTenantId}`;
     const savedSettings = localStorage.getItem(SETTINGS_KEY) || localStorage.getItem('kpsydesk_school_settings');
     if (savedSettings) {
@@ -311,7 +323,7 @@ export const KioskView: React.FC = () => {
               </div>
 
               {/* Statut Photo */}
-              {settings?.kioskRequirePhoto !== false && (
+              {settings?.kioskRequirePhoto === true && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', backgroundColor: isPhotoCaptured ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)' }}>
                   <Camera size={24} color={isPhotoCaptured ? '#10b981' : '#f59e0b'} />
                   <div>
@@ -327,15 +339,15 @@ export const KioskView: React.FC = () => {
             <div style={{ marginTop: 'auto', display: 'flex', gap: '16px' }}>
               <button 
                 onClick={() => handleClockInOut('CLOCK_IN')}
-                disabled={locationStatus === 'ERROR' || (settings?.kioskRequirePhoto !== false && !isPhotoCaptured)}
-                style={{ flex: 1, padding: '20px', borderRadius: '16px', backgroundColor: '#10b981', color: 'white', border: 'none', fontSize: '1.2rem', fontWeight: 700, cursor: (locationStatus === 'ERROR' || (settings?.kioskRequirePhoto !== false && !isPhotoCaptured)) ? 'not-allowed' : 'pointer', opacity: (locationStatus === 'ERROR' || (settings?.kioskRequirePhoto !== false && !isPhotoCaptured)) ? 0.5 : 1 }}
+                disabled={locationStatus === 'ERROR' || (settings?.kioskRequirePhoto === true && !isPhotoCaptured)}
+                style={{ flex: 1, padding: '20px', borderRadius: '16px', backgroundColor: '#10b981', color: 'white', border: 'none', fontSize: '1.2rem', fontWeight: 700, cursor: (locationStatus === 'ERROR' || (settings?.kioskRequirePhoto === true && !isPhotoCaptured)) ? 'not-allowed' : 'pointer', opacity: (locationStatus === 'ERROR' || (settings?.kioskRequirePhoto === true && !isPhotoCaptured)) ? 0.5 : 1 }}
               >
                 📥 ARRIVÉE
               </button>
               <button 
                 onClick={() => handleClockInOut('CLOCK_OUT')}
-                disabled={locationStatus === 'ERROR' || (settings?.kioskRequirePhoto !== false && !isPhotoCaptured)}
-                style={{ flex: 1, padding: '20px', borderRadius: '16px', backgroundColor: '#ef4444', color: 'white', border: 'none', fontSize: '1.2rem', fontWeight: 700, cursor: (locationStatus === 'ERROR' || (settings?.kioskRequirePhoto !== false && !isPhotoCaptured)) ? 'not-allowed' : 'pointer', opacity: (locationStatus === 'ERROR' || (settings?.kioskRequirePhoto !== false && !isPhotoCaptured)) ? 0.5 : 1 }}
+                disabled={locationStatus === 'ERROR' || (settings?.kioskRequirePhoto === true && !isPhotoCaptured)}
+                style={{ flex: 1, padding: '20px', borderRadius: '16px', backgroundColor: '#ef4444', color: 'white', border: 'none', fontSize: '1.2rem', fontWeight: 700, cursor: (locationStatus === 'ERROR' || (settings?.kioskRequirePhoto === true && !isPhotoCaptured)) ? 'not-allowed' : 'pointer', opacity: (locationStatus === 'ERROR' || (settings?.kioskRequirePhoto === true && !isPhotoCaptured)) ? 0.5 : 1 }}
               >
                 📤 DÉPART
               </button>
