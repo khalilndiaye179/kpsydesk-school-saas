@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, MapPin, Clock, CheckCircle, AlertTriangle, UserCheck } from 'lucide-react';
 import { SchoolSettings } from './SettingsView';
+import { api } from '../../lib/api';
 
 interface Staff {
   id: string;
