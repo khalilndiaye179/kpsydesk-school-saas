@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type Role = 'SUPER_ADMIN' | 'TENANT_ADMIN' | null;
+type Role = 'SUPER_ADMIN' | 'TENANT_ADMIN' | 'ADMIN' | 'DIRECTOR' | 'TEACHER' | string | null;
 
 interface User {
   id: string;

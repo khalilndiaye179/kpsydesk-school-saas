@@ -81,7 +81,7 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
             onDirectLogin({
               id: res.data.user?.id || `user_${Date.now()}`,
               email: email,
-              role: 'TENANT_ADMIN',
+              role: res.data.user?.role || 'TENANT_ADMIN',
               tenantId: realTenantId,
               name: res.data.user?.firstName ? `${res.data.user.firstName} ${res.data.user.lastName || ''}` : email.split('@')[0].toUpperCase(),
             });
