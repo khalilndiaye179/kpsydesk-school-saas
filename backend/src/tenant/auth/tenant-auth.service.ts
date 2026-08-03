@@ -14,32 +14,41 @@ export class TenantAuthService {
     let targetTenantId = tenantId;
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Tenter la résolution depuis le sous-domaine Host (ex: lycee-abdoulaye-sadji.kpsyschool.com -> lycee-abdoulaye-sadji)
+    // Étape 1 : Résolution par sous-domaine extrait du Host HTTP
     if (!targetTenantId && host) {
-      const cleanHost = host.split(':')[0]; // Retirer le port si présent
+      const cleanHost = host.split(':')[0];
       const parts = cleanHost.split('.');
-      if (parts.length >= 2 && !['app', 'www', 'localhost', '127', 'school', 'srv1838382'].includes(parts[0])) {
+      const excluded = ['app', 'www', 'localhost', '127', 'school', 'srv1838382', 'kpsyinformatique', 'kpsyschool'];
+      if (parts.length >= 2 && !excluded.includes(parts[0])) {
         const sub = parts[0].toLowerCase();
-        const tenant = await this.prisma.tenant.findFirst({ 
-          where: { subdomain: { equals: sub, mode: 'insensitive' } } 
-        });
+        const tenant = await this.prisma.tenant.findUnique({ where: { subdomain: sub } });
         if (tenant) {
           targetTenantId = tenant.id;
         }
       }
     }
 
-    // 2. Si pas trouvé par sous-domaine, chercher le TenantUser par email (insensible à la casse)
+    // Étape 2 : Résolution par email de l'utilisateur
     if (!targetTenantId) {
-      const userByEmail = await this.prisma.tenantUser.findFirst({
-        where: { email: { equals: cleanEmail, mode: 'insensitive' } },
+      const found = await this.prisma.tenantUser.findFirst({
+        where: { email: cleanEmail },
       });
-      if (userByEmail) {
-        targetTenantId = userByEmail.tenantId;
+      if (found) {
+        targetTenantId = found.tenantId;
       }
     }
 
-    // 3. Fallback : Si un seul tenant existe en base de données, l'utiliser par défaut
+    // Étape 2b : Essai avec l'email exact tel que saisi (casse originale)
+    if (!targetTenantId) {
+      const found = await this.prisma.tenantUser.findFirst({
+        where: { email: email.trim() },
+      });
+      if (found) {
+        targetTenantId = found.tenantId;
+      }
+    }
+
+    // Étape 3 : Fallback mono-tenant (si un seul établissement en base)
     if (!targetTenantId) {
       const count = await this.prisma.tenant.count();
       if (count === 1) {
@@ -51,16 +60,18 @@ export class TenantAuthService {
     }
 
     if (!targetTenantId) {
-      throw new UnauthorizedException('Établissement introuvable pour ces identifiants');
+      throw new UnauthorizedException('Établissement introuvable. Contactez votre administrateur.');
     }
 
-    // Recherche de l'utilisateur dans l'établissement identifié
-    const user = await this.prisma.tenantUser.findFirst({
-      where: { 
-        email: { equals: cleanEmail, mode: 'insensitive' }, 
-        tenantId: targetTenantId 
-      },
+    // Recherche de l'utilisateur (essai lowercase puis casse originale)
+    let user = await this.prisma.tenantUser.findFirst({
+      where: { email: cleanEmail, tenantId: targetTenantId },
     });
+    if (!user) {
+      user = await this.prisma.tenantUser.findFirst({
+        where: { email: email.trim(), tenantId: targetTenantId },
+      });
+    }
 
     if (!user) {
       throw new UnauthorizedException('Identifiants invalides pour cet établissement');
@@ -68,14 +79,14 @@ export class TenantAuthService {
 
     const isMatch = await bcrypt.compare(pass, user.passwordHash);
     if (!isMatch) {
-      throw new UnauthorizedException('Identifiants invalides');
+      throw new UnauthorizedException('Mot de passe incorrect');
     }
 
-    const payload = { 
-      sub: user.id, 
-      email: user.email, 
-      role: user.role, 
-      tenantId: user.tenantId 
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      tenantId: user.tenantId,
     };
 
     return {
@@ -90,5 +101,6 @@ export class TenantAuthService {
       }
     };
   }
+
 }
 
