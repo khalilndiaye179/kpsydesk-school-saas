@@ -9,6 +9,8 @@ import { JwtStrategy } from './auth/jwt.strategy';
 
 import { TenantUsersController } from './users/tenant-users.controller';
 import { TenantUsersService } from './users/tenant-users.service';
+import { TenantSettingsController } from './settings/tenant-settings.controller';
+import { TenantSettingsService } from './settings/tenant-settings.service';
 
 @Module({
   imports: [
@@ -17,7 +19,19 @@ import { TenantUsersService } from './users/tenant-users.service';
       signOptions: { expiresIn: '1d' },
     }),
   ],
-  controllers: [TenantAuthController, TenantClassesController, TenantUsersController],
-  providers: [TenantAuthService, TenantClassesService, TenantUsersService, PrismaService, JwtStrategy],
+  controllers: [
+    TenantAuthController, 
+    TenantClassesController, 
+    TenantUsersController,
+    TenantSettingsController,
+  ],
+  providers: [
+    TenantAuthService, 
+    TenantClassesService, 
+    TenantUsersService, 
+    TenantSettingsService,
+    PrismaService, 
+    JwtStrategy,
+  ],
 })
 export class TenantModule {}

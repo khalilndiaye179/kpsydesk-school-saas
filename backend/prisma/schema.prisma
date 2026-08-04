@@ -346,6 +346,15 @@ model TenantSettings {
   id                      String   @id @default(uuid()) @db.Uuid
   tenantId                String   @unique @db.Uuid
   
+  // Identité Officielle & Coordonnées Établissement
+  ministry                String?
+  ia                      String?
+  motto                   String?
+  address                 String?
+  phone                   String?
+  email                   String?
+  logo                    String?  @db.Text
+
   // Kiosque Pointage
   kioskLatitude           Float?
   kioskLongitude          Float?

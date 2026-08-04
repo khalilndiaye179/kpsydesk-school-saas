@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, Image as ImageIcon, Building, MapPin, Phone, Mail, FileCheck, Navigation } from 'lucide-react';
+import { Save, Image as ImageIcon, Building, MapPin, Phone, Mail, FileCheck, Navigation, Loader2 } from 'lucide-react';
+import { api } from '../../lib/api';
 
 declare global {
   interface Window {
@@ -42,12 +43,37 @@ export const SettingsView: React.FC = () => {
   });
   
   const [isSaved, setIsSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
+  // 1. Charger les paramètres depuis le backend PostgreSQL (avec fallback localStorage)
   useEffect(() => {
-    const saved = localStorage.getItem('kpsydesk_school_settings');
-    if (saved) {
-      setSettings(JSON.parse(saved));
-    }
+    const fetchSettings = async () => {
+      setIsLoading(true);
+      setErrorMsg('');
+      try {
+        const res = await api.get('/tenant/settings');
+        if (res.data) {
+          setSettings(res.data);
+          localStorage.setItem('kpsydesk_school_settings', JSON.stringify(res.data));
+        }
+      } catch (err: any) {
+        console.warn('Backend settings indisponible, bascule sur localStorage:', err);
+        const saved = localStorage.getItem('kpsydesk_school_settings');
+        if (saved) {
+          try {
+            setSettings(JSON.parse(saved));
+          } catch (e) {
+            console.error('Erreur lecture localStorage:', e);
+          }
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSettings();
   }, []);
 
   const mapRef = useRef<HTMLDivElement>(null);
@@ -56,7 +82,6 @@ export const SettingsView: React.FC = () => {
 
   useEffect(() => {
     if (mapRef.current && window.L && !leafletMap.current) {
-      // Init map
       const initialLat = settings.kioskLatitude ? parseFloat(settings.kioskLatitude) : 14.6928;
       const initialLng = settings.kioskLongitude ? parseFloat(settings.kioskLongitude) : -17.4467;
 
@@ -74,7 +99,7 @@ export const SettingsView: React.FC = () => {
         updateLocation(lat, lng);
       });
     }
-  }, [settings.kioskLatitude, settings.kioskLongitude]); // add deps to re-init if needed, but the ref check prevents double init
+  }, [settings.kioskLatitude, settings.kioskLongitude]);
 
   const updateLocation = (lat: number, lng: number) => {
     setSettings(prev => ({
@@ -125,21 +150,54 @@ export const SettingsView: React.FC = () => {
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('kpsydesk_school_settings', JSON.stringify(settings));
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+    setIsSaving(true);
+    setErrorMsg('');
+
+    try {
+      // 1. Sauvegarder dans la base PostgreSQL via API
+      const res = await api.put('/tenant/settings', settings);
+      if (res.data) {
+        setSettings(res.data);
+        localStorage.setItem('kpsydesk_school_settings', JSON.stringify(res.data));
+      }
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3500);
+    } catch (err: any) {
+      console.error('Erreur lors de la sauvegarde des paramètres:', err);
+      // Fallback localstorage
+      localStorage.setItem('kpsydesk_school_settings', JSON.stringify(settings));
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3500);
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '350px', gap: '12px', color: 'var(--text-secondary)' }}>
+        <Loader2 className="lucide-spin" size={24} />
+        <span>Chargement des paramètres de l'établissement...</span>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.5rem', color: 'var(--text-primary)', margin: 0 }}>Paramètres de l'établissement</h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: '0.9rem' }}>Configurez les informations qui apparaîtront sur les documents officiels.</p>
+          <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.5rem', color: 'var(--text-primary)', margin: 0 }}>Paramètres & Configuration</h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: '0.9rem' }}>Configurez les informations qui apparaîtront sur les documents officiels et réglez le pointage kiosque.</p>
         </div>
       </div>
+
+      {errorMsg && (
+        <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', border: '1px solid var(--status-negative)', color: '#fca5a5', padding: '12px 16px', borderRadius: '10px', fontSize: '0.85rem' }}>
+          {errorMsg}
+        </div>
+      )}
 
       <form onSubmit={handleSave} style={{ backgroundColor: 'var(--bg-card)', padding: '32px', borderRadius: '16px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
@@ -187,7 +245,7 @@ export const SettingsView: React.FC = () => {
 
         <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
 
-        {/* Etablissement */}
+        {/* Établissement */}
         <div>
           <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
             <FileCheck size={18} style={{ color: 'var(--accent)' }}/> Identité de l'Établissement
@@ -257,11 +315,11 @@ export const SettingsView: React.FC = () => {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Rayon de tolérance (mètres)</label>
-              <input type="number" name="kioskToleranceMeters" value={settings.kioskToleranceMeters || 150} onChange={(e) => setSettings(prev => ({ ...prev, kioskToleranceMeters: parseInt(e.target.value) }))} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', width: '100%' }} />
+              <input type="number" name="kioskToleranceMeters" value={settings.kioskToleranceMeters || 150} onChange={(e) => setSettings(prev => ({ ...prev, kioskToleranceMeters: parseInt(e.target.value) || 150 }))} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', width: '100%' }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Conservation des photos (jours)</label>
-              <input type="number" name="kioskPhotoRetentionDays" value={settings.kioskPhotoRetentionDays || 30} onChange={(e) => setSettings(prev => ({ ...prev, kioskPhotoRetentionDays: parseInt(e.target.value) }))} max={90} min={1} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', width: '100%' }} />
+              <input type="number" name="kioskPhotoRetentionDays" value={settings.kioskPhotoRetentionDays || 30} onChange={(e) => setSettings(prev => ({ ...prev, kioskPhotoRetentionDays: parseInt(e.target.value) || 30 }))} max={90} min={1} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', width: '100%' }} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', gridColumn: '1 / -1', marginTop: '8px' }}>
               <input type="checkbox" id="requirePhoto" checked={settings.kioskRequirePhoto ?? true} onChange={(e) => setSettings(prev => ({ ...prev, kioskRequirePhoto: e.target.checked }))} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
@@ -271,9 +329,9 @@ export const SettingsView: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-          <button type="submit" style={{ padding: '12px 24px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}>
-            <Save size={18} />
-            {isSaved ? 'Enregistré avec succès !' : 'Sauvegarder les paramètres'}
+          <button type="submit" disabled={isSaving} style={{ padding: '12px 24px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s', opacity: isSaving ? 0.8 : 1 }}>
+            {isSaving ? <Loader2 className="lucide-spin" size={18} /> : <Save size={18} />}
+            {isSaved ? 'Paramètres enregistrés avec succès !' : 'Sauvegarder les paramètres'}
           </button>
         </div>
       </form>

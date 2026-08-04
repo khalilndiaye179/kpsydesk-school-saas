@@ -141,7 +141,7 @@ const TenantApp = () => {
           {activeTenantView === 'Finance - Comptabilité' && <FinancesView />}
           {activeTenantView === 'Mon Abonnement' && <TenantBillingView />}
           {activeTenantView === 'Guide d\'utilisation' && <TenantGuideView />}
-          {activeTenantView === 'Paramètres' && <SettingsView />}
+          {(activeTenantView === 'Paramètres' || activeTenantView === 'Configuration') && <SettingsView />}
           {activeTenantView === 'À Propos' && <TenantAboutView />}
 
         </div>

@@ -56,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { label: 'Finance - Comptabilité', icon: DollarSign, roles: ['DIRECTOR', 'ACCOUNTANT'] },
     { label: 'Mon Abonnement', icon: CreditCard, roles: ['DIRECTOR'] },
     { label: 'Guide d\'utilisation', icon: BookOpen, roles: ['DIRECTOR', 'CENSOR', 'TEACHER', 'ACCOUNTANT', 'LIBRARIAN', 'DRIVER', 'STUDENT', 'PARENT'] },
-    { label: 'Paramètres', icon: Settings, roles: ['DIRECTOR'] },
+    { label: 'Configuration', icon: Settings, roles: ['DIRECTOR'] },
     { label: 'À Propos', icon: Info, roles: ['DIRECTOR', 'CENSOR', 'TEACHER', 'ACCOUNTANT', 'LIBRARIAN', 'DRIVER', 'STUDENT', 'PARENT'] },
   ];
 
@@ -206,21 +206,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
         flexDirection: 'column',
         gap: '6px'
       }}>
-        <button style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-          gap: '12px',
-          width: '100%',
-          padding: '12px',
-          borderRadius: '8px',
-          border: 'none',
-          backgroundColor: 'transparent',
-          color: '#8A8D98',
-          cursor: 'pointer'
-        }}>
-          <Settings size={20} />
-          {!collapsed && <span style={{ fontSize: '0.9rem' }}>Configuration</span>}
+        <button 
+          onClick={() => setActiveView('Configuration')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            gap: '12px',
+            width: '100%',
+            padding: '12px',
+            borderRadius: '8px',
+            border: 'none',
+            backgroundColor: (activeView === 'Configuration' || activeView === 'Paramètres') ? 'var(--bg-sidebar-active)' : 'transparent',
+            color: (activeView === 'Configuration' || activeView === 'Paramètres') ? '#FFFFFF' : '#8A8D98',
+            cursor: 'pointer',
+            transition: 'all 200ms ease-out'
+          }}
+        >
+          <Settings size={20} style={{ color: (activeView === 'Configuration' || activeView === 'Paramètres') ? 'var(--accent)' : 'inherit' }} />
+          {!collapsed && <span style={{ fontSize: '0.9rem', fontWeight: (activeView === 'Configuration' || activeView === 'Paramètres') ? 600 : 400 }}>Configuration</span>}
         </button>
       </div>
     </div>
