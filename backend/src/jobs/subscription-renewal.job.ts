@@ -8,6 +8,18 @@
 
 import { formatCurrency } from '../common/countries.config';
 
+export interface SubscriptionItem {
+  id: string;
+  tenant_id: string;
+  plan_id: string;
+  prix_verrouille: number;
+  date_prochain_renouvellement: string;
+  country?: string;
+  tenant?: {
+    country: string;
+  };
+}
+
 export interface SubscriptionRenewalResult {
   processedCount: number;
   updatedPricesCount: number;
@@ -15,7 +27,7 @@ export interface SubscriptionRenewalResult {
 }
 
 export async function processSubscriptionRenewals(
-  subscriptions: any[],
+  subscriptions: SubscriptionItem[],
   plans: any[],
   updateSubscription: (id: string, updates: any) => Promise<void>,
   sendNotification: (tenantId: string, message: string) => Promise<void>
@@ -38,6 +50,9 @@ export async function processSubscriptionRenewals(
         const newLivePrice = Number(livePlan.prix || livePlan.price);
         const priceChanged = oldLockedPrice !== newLivePrice;
 
+        // Détermination explicite du pays du tenant (via relation sub.tenant.country ou propriété directe)
+        const tenantCountry = sub.tenant?.country || sub.country || 'SN';
+
         // Calcul de la nouvelle date de renouvellement (+ 1 mois par défaut ou selon périodicité)
         const nextCycleDate = new Date(nextRenewal);
         if (livePlan.periodicite === 'ANNUEL') {
@@ -58,7 +73,7 @@ export async function processSubscriptionRenewals(
           updatedPricesCount++;
           await sendNotification(
             sub.tenant_id,
-            `Votre abonnement au plan ${livePlan.nom || livePlan.name} a été renouvelé. Votre nouveau tarif contractuel est de ${formatCurrency(newLivePrice, sub.country || sub.tenant_country || sub.tenant?.country || 'SN')} / cycle.`
+            `Votre abonnement au plan ${livePlan.nom || livePlan.name} a été renouvelé. Votre nouveau tarif contractuel est de ${formatCurrency(newLivePrice, tenantCountry)} / cycle.`
           );
           notificationsSent++;
         }
