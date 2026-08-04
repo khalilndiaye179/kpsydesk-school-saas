@@ -197,36 +197,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </div>
-
-      {/* Préférences en bas */}
-      <div style={{
-        padding: '20px 10px',
-        borderTop: '1px solid var(--bg-sidebar-active)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px'
-      }}>
-        <button 
-          onClick={() => setActiveView('Configuration')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            gap: '12px',
-            width: '100%',
-            padding: '12px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: (activeView === 'Configuration' || activeView === 'Paramètres') ? 'var(--bg-sidebar-active)' : 'transparent',
-            color: (activeView === 'Configuration' || activeView === 'Paramètres') ? '#FFFFFF' : '#8A8D98',
-            cursor: 'pointer',
-            transition: 'all 200ms ease-out'
-          }}
-        >
-          <Settings size={20} style={{ color: (activeView === 'Configuration' || activeView === 'Paramètres') ? 'var(--accent)' : 'inherit' }} />
-          {!collapsed && <span style={{ fontSize: '0.9rem', fontWeight: (activeView === 'Configuration' || activeView === 'Paramètres') ? 600 : 400 }}>Configuration</span>}
-        </button>
-      </div>
     </div>
   );
 };
