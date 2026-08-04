@@ -101,6 +101,22 @@ export class PublicSignupService {
       );
     }
 
+    // 6b. Vérification que l'email n'est pas déjà enregistré sur un autre établissement (TenantUser) ou compte Platform
+    const [existingTenantUser, existingPlatformUser] = await Promise.all([
+      this.prisma.tenantUser.findFirst({
+        where: { email: { equals: dto.email, mode: 'insensitive' } },
+      }),
+      this.prisma.platformUser.findUnique({
+        where: { email: dto.email.toLowerCase() },
+      }),
+    ]);
+
+    if (existingTenantUser || existingPlatformUser) {
+      throw new ConflictException(
+        "Cette adresse email est déjà associée à un compte utilisateur sur la plateforme KPSySchool. Veuillez utiliser une autre adresse email.",
+      );
+    }
+
     // 7. Génération de l'OTP (6 chiffres)
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
