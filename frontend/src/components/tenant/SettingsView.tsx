@@ -16,6 +16,7 @@ export interface SchoolSettings {
   phone: string;
   email: string;
   logo: string;
+  country?: string;
   kioskLatitude?: string;
   kioskLongitude?: string;
   kioskToleranceMeters?: number;

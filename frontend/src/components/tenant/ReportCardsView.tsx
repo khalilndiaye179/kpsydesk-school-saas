@@ -26,6 +26,7 @@ interface SchoolSettings {
   phone: string;
   email: string;
   logo: string;
+  country?: string;
 }
 
 export const ReportCardsView: React.FC = () => {

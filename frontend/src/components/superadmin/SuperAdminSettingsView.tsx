@@ -199,9 +199,9 @@ export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ 
               {/* Sélecteur de Pays pour les Clés API */}
               <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
                 {[
-                  { code: 'SN', flag: '🇸🇳', name: 'Sénégal' },
-                  { code: 'CI', flag: '🇨🇮', name: "Côte d'Ivoire" },
-                  { code: 'ML', flag: '🇲🇱', name: 'Mali' }
+                  { code: 'SN' as const, flag: '🇸🇳', name: 'Sénégal' },
+                  { code: 'CI' as const, flag: '🇨🇮', name: "Côte d'Ivoire" },
+                  { code: 'ML' as const, flag: '🇲🇱', name: 'Mali' }
                 ].map(c => (
                   <button
                     key={c.code}
