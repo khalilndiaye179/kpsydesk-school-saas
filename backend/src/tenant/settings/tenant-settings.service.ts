@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
+import { getCountryDefaultSettings } from '../../config/country-defaults';
 
 export interface SaveTenantSettingsDto {
   schoolName?: string;
@@ -31,12 +32,16 @@ export class TenantSettingsService {
       throw new NotFoundException(`Établissement non trouvé (ID: ${tenantId})`);
     }
 
+    const countryDefaults = getCountryDefaultSettings(tenant.country);
+
     // Récupération ou initialisation automatique des paramètres
     let settings = tenant.settings;
     if (!settings) {
       settings = await this.prisma.tenantSettings.create({
         data: {
           tenantId,
+          ministry: countryDefaults.ministry,
+          ia: countryDefaults.ia,
           kioskToleranceMeters: 150,
           kioskRequirePhoto: true,
           kioskPhotoRetentionDays: 30,
@@ -47,8 +52,8 @@ export class TenantSettingsService {
     return {
       schoolName: tenant.name,
       country: tenant.country,
-      ministry: settings.ministry || '',
-      ia: settings.ia || '',
+      ministry: settings.ministry || countryDefaults.ministry,
+      ia: settings.ia || countryDefaults.ia,
       motto: settings.motto || '',
       address: settings.address || '',
       phone: settings.phone || '',
@@ -75,7 +80,7 @@ export class TenantSettingsService {
     const kioskLat = dto.kioskLatitude !== undefined && dto.kioskLatitude !== '' ? parseFloat(String(dto.kioskLatitude)) : null;
     const kioskLng = dto.kioskLongitude !== undefined && dto.kioskLongitude !== '' ? parseFloat(String(dto.kioskLongitude)) : null;
 
-    const settings = await this.prisma.tenantSettings.upsert({
+    await this.prisma.tenantSettings.upsert({
       where: { tenantId },
       update: {
         ministry: dto.ministry,

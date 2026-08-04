@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, Trash2, FileSpreadsheet, User, MapPin, Phone, Mail, Calendar as CalendarIcon, Printer, BadgeInfo, FileText } from 'lucide-react';
 import { api } from '../../lib/api';
+import { getCountryConfig } from '../../config/countries.config';
 
 interface StudentData {
   id: string;
@@ -241,7 +242,14 @@ export const StudentView: React.FC = () => {
     }
   };
 
-  const getSchoolSettings = () => {
+  const getSchoolSettings = async () => {
+    try {
+      const res = await api.get('/tenant/settings');
+      if (res.data) {
+        localStorage.setItem('kpsydesk_school_settings', JSON.stringify(res.data));
+        return res.data;
+      }
+    } catch (e) {}
     const saved = localStorage.getItem('kpsydesk_school_settings');
     if (saved) return JSON.parse(saved);
     return {
@@ -252,8 +260,9 @@ export const StudentView: React.FC = () => {
     };
   };
 
-  const generateDocument = (std: StudentData, type: 'IDCARD' | 'CERTIFICATE') => {
-    const settings = getSchoolSettings();
+  const generateDocument = async (std: StudentData, type: 'IDCARD' | 'CERTIFICATE') => {
+    const settings = await getSchoolSettings();
+    const countryConfig = getCountryConfig(settings.country);
     const qrData = encodeURIComponent(`Authentification KPSyDesk | Matricule: ${std.matricule} | Nom: ${std.firstName} ${std.lastName} | Classe: ${std.className}`);
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
 
@@ -327,10 +336,12 @@ export const StudentView: React.FC = () => {
         <div class="doc">
           <div class="watermark">${settings.schoolName}</div>
           <div class="header">
+            <div style="font-size: 13px; font-weight: bold; text-transform: uppercase;">${countryConfig.officialHeader.republicName}</div>
+            <div style="font-size: 11px; font-style: italic; margin-bottom: 10px;">${countryConfig.officialHeader.motto}</div>
             ${settings.logo ? `<img src="${settings.logo}" class="logo" alt="Logo"/>` : ''}
             <h1>${settings.schoolName}</h1>
             <p>${settings.address} | Tél: ${settings.phone}</p>
-            <p><em>${settings.motto}</em></p>
+            ${settings.motto ? `<p><em>« ${settings.motto} »</em></p>` : ''}
           </div>
           
           <div class="title">CERTIFICAT DE SCOLARITÉ</div>

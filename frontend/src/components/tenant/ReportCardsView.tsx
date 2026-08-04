@@ -41,13 +41,23 @@ export const ReportCardsView: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-    const savedSettings = localStorage.getItem('kpsydesk_school_settings');
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
-    }
   }, []);
 
   const fetchData = async () => {
+    // 0. Charger les paramètres d'établissement depuis le backend (avec country, ministry, ia, schoolName)
+    try {
+      const setRes = await api.get('/tenant/settings');
+      if (setRes.data) {
+        setSettings(setRes.data);
+        localStorage.setItem('kpsydesk_school_settings', JSON.stringify(setRes.data));
+      }
+    } catch (err) {
+      const savedSettings = localStorage.getItem('kpsydesk_school_settings');
+      if (savedSettings) {
+        try { setSettings(JSON.parse(savedSettings)); } catch (e) {}
+      }
+    }
+
     // 1. Charger les étudiants
     try {
       const stdRes = await api.get('/tenant/students');

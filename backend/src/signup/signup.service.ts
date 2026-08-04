@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { MailService } from '../mail/mail.service';
+import { getCountryDefaultSettings } from '../config/country-defaults';
 import * as bcrypt from 'bcryptjs';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
@@ -276,10 +277,13 @@ export class PublicSignupService {
         },
       });
 
-      // Créer les TenantSettings par défaut
+      // Créer les TenantSettings par défaut adaptés au pays du tenant
+      const countryDefaults = getCountryDefaultSettings(pending.country);
       await tx.tenantSettings.create({
         data: {
           tenantId: tenant.id,
+          ministry: countryDefaults.ministry,
+          ia: countryDefaults.ia,
         },
       });
 
