@@ -50,7 +50,10 @@ export const LoginView: React.FC = () => {
     { icon: Users, label: 'Élèves & Inscriptions', top: '60%', left: '65%', delay: '0.5s' },
     { icon: Calendar, label: 'Tableau de Bord', top: '70%', left: '80%', delay: '2.5s' },
     { icon: AlertTriangle, label: 'Absences & Retards', top: '80%', left: '45%', delay: '1s' },
-    { icon: FileText, label: 'Pointage', top: '85%', left: '65%',   return (
+    { icon: FileText, label: 'Pointage', top: '85%', left: '65%', delay: '0s' },
+  ];
+
+  return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#03140e', fontFamily: 'var(--font-main)' }}>
       
       {/* LEFT SECTION - Background & Branding avec l'illustration de refonte */}
