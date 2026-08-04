@@ -166,21 +166,32 @@ model Class {
 }
 
 model Student {
-  id              String         @id @default(uuid()) @db.Uuid
-  tenantId        String         @db.Uuid
-  classId         String         @db.Uuid
-  firstName       String
-  lastName        String
-  email           String?
-  birthDate       DateTime
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id               String         @id @default(uuid()) @db.Uuid
+  tenantId         String         @db.Uuid
+  classId          String         @db.Uuid
+  matricule        String?
+  firstName        String
+  lastName         String
+  email            String?
+  studentPhone     String?
+  studentEmail     String?
+  birthDate        DateTime
+  birthPlace       String?
+  previousSchool   String?
+  address          String?
+  guardianName     String?
+  guardianRelation String?
+  guardianPhone    String?
+  guardianEmail    String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
-  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  class           Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
-  attendances     Attendance[]
+  tenant           Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  class            Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
+  attendances      Attendance[]
 
   @@unique([tenantId, email])
+  @@unique([tenantId, matricule])
 }
 
 model Teacher {
