@@ -99,35 +99,43 @@ export const LoginView: React.FC = () => {
           </div>
         </div>
 
-        {/* Texte Marketing Central */}
-        <div style={{ position: 'absolute', top: '16%', left: '7%', maxWidth: '620px', zIndex: 2, pointerEvents: 'none' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(245, 158, 11, 0.12)', padding: '8px 18px', borderRadius: '20px', border: '1px solid rgba(245, 158, 11, 0.35)', marginBottom: '24px', backdropFilter: 'blur(8px)' }}>
-            <span style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '50%', boxShadow: '0 0 10px #f59e0b' }}></span>
-            <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.82rem', letterSpacing: '1.5px', textTransform: 'uppercase' }}>• LA RÉFÉRENCE SAAS ÉDUCATION</span>
+        {/* Texte Marketing Central - Orientation Pan-Africaine */}
+        <div style={{ position: 'absolute', top: '15%', left: '7%', maxWidth: '640px', zIndex: 2, pointerEvents: 'none' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', backgroundColor: 'rgba(245, 158, 11, 0.15)', padding: '8px 20px', borderRadius: '24px', border: '1px solid rgba(245, 158, 11, 0.4)', marginBottom: '24px', backdropFilter: 'blur(10px)' }}>
+            <span style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '50%', boxShadow: '0 0 12px #f59e0b' }}></span>
+            <span style={{ color: '#f59e0b', fontWeight: 800, fontSize: '0.85rem', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+              🌍 LA RÉFÉRENCE SAAS ÉDUCATION PANAFRICAINE
+            </span>
           </div>
           
-          <h1 style={{ fontSize: '3.6rem', fontWeight: 900, color: '#ffffff', lineHeight: 1.1, marginBottom: '24px', fontFamily: 'var(--font-title)', textShadow: '0 4px 20px rgba(0,0,0,0.6)' }}>
+          <h1 style={{ fontSize: '3.6rem', fontWeight: 900, color: '#ffffff', lineHeight: 1.1, marginBottom: '20px', fontFamily: 'var(--font-title)', textShadow: '0 4px 25px rgba(0,0,0,0.8)' }}>
             Le pilotage de votre école <span style={{ color: '#f59e0b', background: 'linear-gradient(135deg, #fbbf24, #d97706)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>réinventé.</span>
           </h1>
           
-          <p style={{ fontSize: '1.15rem', color: '#cbd5e1', lineHeight: 1.6, marginBottom: '36px', maxWidth: '540px', fontWeight: 400 }}>
-            KPSySchool centralise toute votre gestion scolaire sur une plateforme cloud sécurisée, intuitive et ultra-performante.
+          <p style={{ fontSize: '1.15rem', color: '#cbd5e1', lineHeight: 1.6, marginBottom: '32px', maxWidth: '560px', fontWeight: 400 }}>
+            KPSySchool centralise et sécurise la gestion de vos établissements scolaires à travers l'Afrique (Sénégal, Côte d'Ivoire, Cameroun, Gabon, Guinée, Mali, Togo, Bénin, Nigéria, Kenya...).
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
             {[
-              "Authentification Séquentielle 2FA à Défi OTP",
-              "Gestion Scolaire 360° (Élèves, RH, Finances)",
-              "Sécurité maximale & Données cloud 100% isolées",
-              "Accessible partout, sur PC, Tablette et Mobile"
+              "Authentification Séquentielle 2FA à Défi OTP & Sécurité Renforcée",
+              "Gestion Scolaire 360° Cloisonnée Multi-Tenant (Élèves, RH, Finances)",
+              "Multi-Devises (FCFA XOF/XAF, GHS, NGN, KES) & Conforme aux Normes Africaines",
+              "Accessible partout sur PC, Tablette et Mobile sans installation"
             ].map((point, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ padding: '5px', backgroundColor: 'rgba(245, 158, 11, 0.2)', borderRadius: '50%', border: '1px solid rgba(245, 158, 11, 0.4)' }}>
+                <div style={{ padding: '5px', backgroundColor: 'rgba(245, 158, 11, 0.22)', borderRadius: '50%', border: '1px solid rgba(245, 158, 11, 0.5)' }}>
                   <Shield size={16} color="#f59e0b" />
                 </div>
-                <span style={{ color: '#f1f5f9', fontSize: '1.02rem', fontWeight: 600 }}>{point}</span>
+                <span style={{ color: '#f8fafc', fontSize: '1.02rem', fontWeight: 600 }}>{point}</span>
               </div>
             ))}
+          </div>
+
+          {/* Badge Drapeaux Africains */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'rgba(5, 25, 18, 0.8)', padding: '10px 18px', borderRadius: '16px', border: '1px solid rgba(245, 158, 11, 0.25)', width: 'fit-content', backdropFilter: 'blur(10px)' }}>
+            <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>Présence & Conformité :</span>
+            <span style={{ fontSize: '1.1rem', letterSpacing: '4px' }}>🇸🇳 🇨🇮 🇨🇲 🇬🇦 🇬🇳 🇲🇱 🇹🇬 🇧🇯 🇨🇬 🇰🇪 🇳🇬 🇬🇭</span>
           </div>
         </div>
 
