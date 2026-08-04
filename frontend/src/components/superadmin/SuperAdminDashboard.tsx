@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Building2, TrendingUp, Activity, BarChart3, DollarSign, Wallet, LineChart, Server, Globe2, MousePointerClick, ShieldCheck, AlertCircle, MapPin, CreditCard, Target, UserMinus, ShieldAlert, ArrowRight } from 'lucide-react';
 import { api } from '../../lib/api';
+import { getCountryConfig } from '../../config/countries.config';
 
 export const SuperAdminDashboard: React.FC = () => {
   const [mrr, setMrr] = useState(0);
@@ -99,14 +100,14 @@ export const SuperAdminDashboard: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'flex-end' }}>
             <div>
               <span style={{ fontSize: '1.8rem', fontWeight: 700, color: 'white', fontFamily: 'var(--font-data)' }}>{(mrr / 1000000).toFixed(2)}M</span>
-              <span style={{ color: '#94a3b8', fontSize: '1rem', marginLeft: '8px' }}>/ 1.50M FCFA</span>
+              <span style={{ color: '#94a3b8', fontSize: '1rem', marginLeft: '8px' }}>/ 1.50M {getCountryConfig().currency.symbol}</span>
             </div>
             <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: '1.2rem' }}>{Math.min(100, Math.round((mrr / 1500000) * 100))}%</span>
           </div>
           <div style={{ width: '100%', height: '12px', backgroundColor: '#0f172a', borderRadius: '6px', overflow: 'hidden', border: '1px solid #334155' }}>
             <div style={{ width: `${Math.min(100, (mrr / 1500000) * 100)}%`, height: '100%', backgroundColor: '#f59e0b', borderRadius: '6px' }}></div>
           </div>
-          <p style={{ margin: '16px 0 0 0', color: '#94a3b8', fontSize: '0.9rem' }}>Encore {Math.max(0, 1500000 - mrr).toLocaleString('fr-FR')} F pour atteindre l'objectif.</p>
+          <p style={{ margin: '16px 0 0 0', color: '#94a3b8', fontSize: '0.9rem' }}>Encore {Math.max(0, 1500000 - mrr).toLocaleString('fr-FR')} {getCountryConfig().currency.symbol} pour atteindre l'objectif.</p>
         </div>
 
         {/* Dernières Transactions */}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FileText, Download, Printer, Award, Star, UserCheck } from 'lucide-react';
 import { api } from '../../lib/api';
+import { getCountryConfig } from '../../config/countries.config';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 
@@ -346,7 +347,10 @@ export const ReportCardsView: React.FC = () => {
                 <div style={{ fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>{settings?.ministry || "Ministère de l'Éducation Nationale"}</div>
                 <div style={{ fontWeight: 600 }}>{settings?.ia || "Inspection d'Académie"}</div>
                 <div style={{ width: '40px', height: '1px', backgroundColor: 'var(--text-primary)', margin: '8px auto' }}></div>
-                <div style={{ fontStyle: 'italic', fontSize: '0.75rem' }}>RÉPUBLIQUE DU SÉNÉGAL<br/>Un Peuple - Un But - Une Foi</div>
+                <div style={{ fontStyle: 'italic', fontSize: '0.75rem' }}>
+                  {getCountryConfig(settings?.country).officialHeader.republicName}<br/>
+                  {getCountryConfig(settings?.country).officialHeader.motto}
+                </div>
               </div>
 
               {/* Centre: Logo */}

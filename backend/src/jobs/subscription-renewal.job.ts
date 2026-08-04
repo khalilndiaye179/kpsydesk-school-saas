@@ -6,6 +6,8 @@
  * met à jour le prix_verrouille pour le prochain cycle et notifie l'organisation.
  */
 
+import { formatCurrency } from '../common/countries.config';
+
 export interface SubscriptionRenewalResult {
   processedCount: number;
   updatedPricesCount: number;
@@ -56,7 +58,7 @@ export async function processSubscriptionRenewals(
           updatedPricesCount++;
           await sendNotification(
             sub.tenant_id,
-            `Votre abonnement au plan ${livePlan.nom || livePlan.name} a été renouvelé. Votre nouveau tarif contractuel est de ${newLivePrice.toLocaleString('fr-FR')} FCFA / cycle.`
+            `Votre abonnement au plan ${livePlan.nom || livePlan.name} a été renouvelé. Votre nouveau tarif contractuel est de ${formatCurrency(newLivePrice, sub.country || sub.tenant_country || sub.tenant?.country || 'SN')} / cycle.`
           );
           notificationsSent++;
         }

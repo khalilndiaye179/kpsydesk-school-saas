@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, CreditCard, Download, Search } from 'lucide-react';
+import { formatCurrency } from '../../config/countries.config';
 
 interface Invoice {
   id: string;
@@ -81,9 +82,9 @@ export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGat
       {/* KPI Financiers */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
         {[
-          { title: 'MRR (Revenu Mensuel)', value: `${mrr.toLocaleString('fr-FR')} FCFA`, trend: '+12%', icon: TrendingUp, color: '#10b981' },
-          { title: 'ARR Estimé', value: `${(mrr * 12).toLocaleString('fr-FR')} FCFA`, trend: '+12%', icon: DollarSign, color: '#38bdf8' },
-          { title: 'Impayés', value: '150 000 FCFA', trend: '-2%', icon: TrendingDown, color: '#ef4444' },
+          { title: 'MRR (Revenu Mensuel)', value: formatCurrency(mrr), trend: '+12%', icon: TrendingUp, color: '#10b981' },
+          { title: 'ARR Estimé', value: formatCurrency(mrr * 12), trend: '+12%', icon: DollarSign, color: '#38bdf8' },
+          { title: 'Impayés', value: formatCurrency(150000), trend: '-2%', icon: TrendingDown, color: '#ef4444' },
           { title: 'Comptes en Essai', value: '1', trend: '+1', icon: Clock, color: '#f59e0b' },
         ].map((kpi, i) => (
           <div key={i} style={{ backgroundColor: '#1e293b', padding: '24px', borderRadius: '16px', border: '1px solid #334155' }}>

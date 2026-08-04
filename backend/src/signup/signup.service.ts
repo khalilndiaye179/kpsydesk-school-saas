@@ -240,6 +240,7 @@ export class PublicSignupService {
           name: pending.schoolName,
           subdomain: pending.subdomain,
           plan: pending.plan,
+          country: pending.country || 'SN',
           status: 'TRIAL',
         },
       });

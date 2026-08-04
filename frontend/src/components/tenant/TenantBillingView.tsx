@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CreditCard, CheckCircle2, ShieldCheck, Zap, AlertCircle, Smartphone, Clock } from 'lucide-react';
 import { useSubscriptionPricing } from '../../hooks/useSubscriptionPricing';
+import { formatCurrency } from '../../config/countries.config';
 
 export const TenantBillingView: React.FC = () => {
   const [currentPlan, setCurrentPlan] = useState('ESSAI');
@@ -138,7 +139,7 @@ export const TenantBillingView: React.FC = () => {
           <div style={{ textAlign: 'right' }}>
             <p style={{ margin: '0 0 4px 0', color: '#64748b', fontSize: '0.9rem' }}>Votre tarif actuel (jusqu'au {formattedRenewalDate}) :</p>
             <strong style={{ color: '#2563eb', fontSize: '1.6rem', fontWeight: 800 }}>
-              {currentPlan === 'ESSAI' ? '0 FCFA' : `${currentLockedPrice.toLocaleString('fr-FR')} FCFA / mois`}
+              {currentPlan === 'ESSAI' ? formatCurrency(0) : `${formatCurrency(currentLockedPrice)} / mois`}
             </strong>
           </div>
         </div>
@@ -154,7 +155,7 @@ export const TenantBillingView: React.FC = () => {
               </div>
             </div>
             <span style={{ padding: '6px 14px', backgroundColor: '#2563eb', color: 'white', borderRadius: '20px', fontWeight: 700, fontSize: '0.95rem' }}>
-              {livePlanPrice.toLocaleString('fr-FR')} FCFA / mois
+              {formatCurrency(livePlanPrice)} / mois
             </span>
           </div>
         )}

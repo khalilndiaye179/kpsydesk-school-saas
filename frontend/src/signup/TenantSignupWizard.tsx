@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Building2, ShieldCheck, Mail, Smartphone, Check, ArrowRight, ArrowLeft, Loader2, CheckCircle2, Lock, Sparkles, AlertTriangle } from 'lucide-react';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { api } from '../lib/api';
+import { ACTIVE_COUNTRIES, COUNTRY_REGISTRY } from '../config/countries.config';
+
 
 export const TenantSignupWizard: React.FC = () => {
   const navigate = useNavigate();
@@ -480,17 +482,21 @@ export const TenantSignupWizard: React.FC = () => {
                   value={country} onChange={e => setCountry(e.target.value)}
                   style={{ width: '100%', padding: '10px 10px', backgroundColor: '#020617', border: '1px solid #334155', borderRadius: '10px', color: 'white', outline: 'none' }}
                 >
-                  <option value="SN">🇸🇳 Sénégal (+221)</option>
-                  <option value="CI">🇨🇮 Côte d'Ivoire (+225)</option>
-                  <option value="ML">🇲🇱 Mali (+223)</option>
-                  <option value="GN">🇬🇳 Guinée (+224)</option>
-                  <option value="FR">🇫🇷 France (+33)</option>
+                  {ACTIVE_COUNTRIES.map(c => (
+                    <option key={c.code} value={c.code}>
+                      {c.flag} {c.name} ({c.callingCode})
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.8rem', marginBottom: '4px' }}>Téléphone Mobile *</label>
                 <input 
-                  type="tel" placeholder="77 123 45 67" value={phoneRaw} onChange={e => setPhoneRaw(e.target.value)} required
+                  type="tel" 
+                  placeholder={COUNTRY_REGISTRY[country]?.phone.placeholder || '77 123 45 67'} 
+                  value={phoneRaw} 
+                  onChange={e => setPhoneRaw(e.target.value)} 
+                  required
                   style={{ width: '100%', padding: '10px 14px', backgroundColor: '#020617', border: `1px solid ${phoneError ? '#ef4444' : normalizedPhone ? '#10b981' : '#334155'}`, borderRadius: '10px', color: 'white', outline: 'none' }}
                 />
               </div>

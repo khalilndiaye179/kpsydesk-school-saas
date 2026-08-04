@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, Search, Filter, Plus, FileText, CheckCircle, Clock, AlertCircle, Briefcase, FileMinus } from 'lucide-react';
 import { api } from '../../lib/api';
+import { getCountryConfig, formatCurrency } from '../../config/countries.config';
 
 interface Payment {
   id: string;
@@ -339,7 +340,7 @@ export const FinancesView: React.FC = () => {
               <option value="">-- Sélectionner l'élève --</option>
               {mockStudents.map(s => <option key={s.id} value={s.id}>{s.firstName} {s.lastName}</option>)}
             </select>
-            <input type="number" placeholder="Montant (FCFA)" value={newPayment.amount} onChange={e => setNewPayment({...newPayment, amount: e.target.value})} style={{ width: '100%', padding: '12px', marginBottom: '16px', borderRadius: '8px', border: '1px solid var(--border)' }} />
+            <input type="number" placeholder={`Montant (${getCountryConfig().currency.symbol})`} value={newPayment.amount} onChange={e => setNewPayment({...newPayment, amount: e.target.value})} style={{ width: '100%', padding: '12px', marginBottom: '16px', borderRadius: '8px', border: '1px solid var(--border)' }} />
             <div style={{ display: 'flex', gap: '12px' }}>
               <button onClick={() => setShowPaymentModal(false)} style={{ flex: 1, padding: '12px', border: '1px solid var(--border)', background: 'transparent', borderRadius: '12px', cursor: 'pointer' }}>Annuler</button>
               <button onClick={handleAddPayment} style={{ flex: 1, padding: '12px', background: '#0f172a', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer' }}>Valider</button>
@@ -360,7 +361,7 @@ export const FinancesView: React.FC = () => {
               <option value="OTHER">Autre</option>
             </select>
             <input type="text" placeholder="Description / Motif de la dépense" value={newExpense.description} onChange={e => setNewExpense({...newExpense, description: e.target.value})} style={{ width: '100%', padding: '12px', marginBottom: '16px', borderRadius: '8px', border: '1px solid var(--border)' }} />
-            <input type="number" placeholder="Montant (FCFA)" value={newExpense.amount} onChange={e => setNewExpense({...newExpense, amount: e.target.value})} style={{ width: '100%', padding: '12px', marginBottom: '24px', borderRadius: '8px', border: '1px solid var(--border)' }} />
+            <input type="number" placeholder={`Montant (${getCountryConfig().currency.symbol})`} value={newExpense.amount} onChange={e => setNewExpense({...newExpense, amount: e.target.value})} style={{ width: '100%', padding: '12px', marginBottom: '24px', borderRadius: '8px', border: '1px solid var(--border)' }} />
             <div style={{ display: 'flex', gap: '12px' }}>
               <button onClick={() => setShowExpenseModal(false)} style={{ flex: 1, padding: '12px', border: '1px solid var(--border)', background: 'transparent', borderRadius: '12px', cursor: 'pointer' }}>Annuler</button>
               <button onClick={handleAddExpense} style={{ flex: 1, padding: '12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer' }}>Enregistrer</button>
@@ -392,7 +393,7 @@ export const FinancesView: React.FC = () => {
               </>
             )}
 
-            <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Montant calculé à verser (FCFA) :</label>
+            <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Montant calculé à verser ({getCountryConfig().currency.symbol}) :</label>
             <input type="number" placeholder="Montant" value={salaryAmount} onChange={e => setSalaryAmount(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '24px', borderRadius: '8px', border: '1px solid var(--border)' }} />
             
             <div style={{ display: 'flex', gap: '12px' }}>

@@ -12,8 +12,12 @@ export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ 
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [smtpHost, setSmtpHost] = useState('smtp.mailgun.org');
   const [smtpPort, setSmtpPort] = useState('587');
-  const [waveApiKey, setWaveApiKey] = useState('wave_live_xxxxxxxx');
-  const [orangeApiKey, setOrangeApiKey] = useState('orange_prod_xxxxxxxx');
+  const [selectedPaymentCountry, setSelectedPaymentCountry] = useState<'SN' | 'CI' | 'ML'>('SN');
+  const [countryApiKeys, setCountryApiKeys] = useState<Record<string, { wave: string; orange: string }>>({
+    SN: { wave: 'wave_live_sn_xxxxxxxx', orange: 'orange_prod_sn_xxxxxxxx' },
+    CI: { wave: 'wave_live_ci_xxxxxxxx', orange: 'orange_prod_ci_xxxxxxxx' },
+    ML: { wave: 'wave_live_ml_xxxxxxxx', orange: 'orange_prod_ml_xxxxxxxx' },
+  });
   const [defaultSubscriptionMonths, setDefaultSubscriptionMonths] = useState(9);
 
   // Gestion des plans tarifaires
@@ -190,21 +194,64 @@ export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ 
 
           {activeTab === 'PAYMENT' && (
             <>
-              <p style={{ color: '#94a3b8', fontSize: '0.95rem' }}>Ces clés API sont utilisées pour prélever les abonnements mensuels/annuels des locataires (Tenants).</p>
+              <p style={{ color: '#94a3b8', fontSize: '0.95rem' }}>Configuration des passerelles Mobile Money par territoire national (UEMOA / FCFA).</p>
               
+              {/* Sélecteur de Pays pour les Clés API */}
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                {[
+                  { code: 'SN', flag: '🇸🇳', name: 'Sénégal' },
+                  { code: 'CI', flag: '🇨🇮', name: "Côte d'Ivoire" },
+                  { code: 'ML', flag: '🇲🇱', name: 'Mali' }
+                ].map(c => (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => setSelectedPaymentCountry(c.code)}
+                    style={{
+                      padding: '10px 18px', borderRadius: '10px',
+                      backgroundColor: selectedPaymentCountry === c.code ? '#38bdf8' : '#1e293b',
+                      color: selectedPaymentCountry === c.code ? '#0f172a' : '#cbd5e1',
+                      border: '1px solid #334155', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px'
+                    }}
+                  >
+                    <span>{c.flag}</span> <span>{c.name}</span>
+                  </button>
+                ))}
+              </div>
+
               <div style={{ padding: '24px', backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid #334155', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <h3 style={{ margin: 0, color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', backgroundColor: '#38bdf8', borderRadius: '50%' }}></div> Wave API</h3>
+                <h3 style={{ margin: 0, color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '12px', height: '12px', backgroundColor: '#38bdf8', borderRadius: '50%' }}></div> Wave API ({selectedPaymentCountry})
+                </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>Clé Secrète (Live)</label>
-                  <input type="text" value={waveApiKey} onChange={(e)=>setWaveApiKey(e.target.value)} style={{ padding: '12px', borderRadius: '8px', backgroundColor: '#1e293b', border: '1px solid #334155', color: 'white', outline: 'none', fontFamily: 'monospace' }} />
+                  <label style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>Clé Secrète Live — {selectedPaymentCountry}</label>
+                  <input 
+                    type="text" 
+                    value={countryApiKeys[selectedPaymentCountry]?.wave || ''} 
+                    onChange={(e) => setCountryApiKeys({
+                      ...countryApiKeys,
+                      [selectedPaymentCountry]: { ...countryApiKeys[selectedPaymentCountry], wave: e.target.value }
+                    })} 
+                    style={{ padding: '12px', borderRadius: '8px', backgroundColor: '#1e293b', border: '1px solid #334155', color: 'white', outline: 'none', fontFamily: 'monospace' }} 
+                  />
                 </div>
               </div>
 
               <div style={{ padding: '24px', backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid #334155', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <h3 style={{ margin: 0, color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '12px', height: '12px', backgroundColor: '#f97316', borderRadius: '50%' }}></div> Orange Money API</h3>
+                <h3 style={{ margin: 0, color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '12px', height: '12px', backgroundColor: '#f97316', borderRadius: '50%' }}></div> Orange Money API ({selectedPaymentCountry})
+                </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>Clé Marchand</label>
-                  <input type="text" value={orangeApiKey} onChange={(e)=>setOrangeApiKey(e.target.value)} style={{ padding: '12px', borderRadius: '8px', backgroundColor: '#1e293b', border: '1px solid #334155', color: 'white', outline: 'none', fontFamily: 'monospace' }} />
+                  <label style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>Clé Marchand — {selectedPaymentCountry}</label>
+                  <input 
+                    type="text" 
+                    value={countryApiKeys[selectedPaymentCountry]?.orange || ''} 
+                    onChange={(e) => setCountryApiKeys({
+                      ...countryApiKeys,
+                      [selectedPaymentCountry]: { ...countryApiKeys[selectedPaymentCountry], orange: e.target.value }
+                    })} 
+                    style={{ padding: '12px', borderRadius: '8px', backgroundColor: '#1e293b', border: '1px solid #334155', color: 'white', outline: 'none', fontFamily: 'monospace' }} 
+                  />
                 </div>
               </div>
             </>

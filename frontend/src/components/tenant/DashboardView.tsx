@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, TrendingUp, CheckCircle, GraduationCap, DollarSign, Calendar, Activity, Briefcase } from 'lucide-react';
+import { getCountryConfig } from '../../config/countries.config';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -118,7 +119,7 @@ export const DashboardView: React.FC = () => {
     labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
     datasets: [
       {
-        label: 'Revenus (FCFA)',
+        label: `Revenus (${getCountryConfig().currency.symbol})`,
         data: monthlyRevenue,
         backgroundColor: 'rgba(56, 189, 248, 0.8)',
         borderRadius: 8,

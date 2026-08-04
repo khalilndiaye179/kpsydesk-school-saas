@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { CardKPI } from '../shared/CardKPI';
 import { api } from '../../lib/api';
+import { formatCurrency } from '../../config/countries.config';
 
 interface TenantData {
   id: string;
@@ -575,7 +576,7 @@ export const FleetView: React.FC = () => {
                 <select value={newPlanId} onChange={e => setNewPlanId(e.target.value)} style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}>
                   {publishedPlans.map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.name || p.nom} — {(p.price || p.prix || 0).toLocaleString('fr-FR')} FCFA / mois
+                      {p.name || p.nom} — {formatCurrency(p.price || p.prix || 0)} / mois
                     </option>
                   ))}
                 </select>

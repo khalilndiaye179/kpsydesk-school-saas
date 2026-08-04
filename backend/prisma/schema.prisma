@@ -16,6 +16,7 @@ model Tenant {
   subdomain       String         @unique
   status          TenantStatus   @default(TRIAL)
   plan            SaaSPlan       @default(TRIAL_7D)
+  country         String         @default("SN")
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   
