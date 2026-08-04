@@ -1,5 +1,6 @@
 import React from 'react';
 import { LayoutDashboard, Building2, CreditCard, Settings, LogOut, ShieldAlert, Activity, Users, DollarSign, Info } from 'lucide-react';
+import { WatermarkOverlay } from '../shared/WatermarkOverlay';
 
 interface SuperAdminLayoutProps {
   children: React.ReactNode;
@@ -73,8 +74,9 @@ export const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({ children, cu
       </aside>
 
       {/* Main Content Area */}
-      <main style={{ flex: 1, padding: '32px 48px', overflowY: 'auto' }}>
-        <div style={{ marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid #334155' }}>
+      <main style={{ flex: 1, padding: '32px 48px', overflowY: 'auto', position: 'relative' }}>
+        <WatermarkOverlay color="#D4A853" opacity={0.04} />
+        <div style={{ marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid #334155', position: 'relative', zIndex: 1 }}>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 800, margin: '0', color: '#f8fafc', fontFamily: 'var(--font-title)', display: 'flex', alignItems: 'center', gap: '12px' }}>
             🛠️ Console de Pilotage SaaS
           </h1>

@@ -18,6 +18,17 @@
   --text-secondary: #9CA3AF;
   --border: #1F2937;
 
+  /* Design Tokens Charte Graphique KPSySchool Refonte */
+  --kpsy-green-forest: #1B3B2F;
+  --kpsy-gold-amber: #D4A853;
+  --kpsy-bordeaux: #8B2635;
+  --kpsy-cream-bg: #F5F1E8;
+
+  /* Couleurs Drapeau Sénégal / Panafricaines */
+  --sn-green: #00853F;
+  --sn-yellow: #FDEF42;
+  --sn-red: #E31B23;
+
   /* Font stacks */
   --font-title: 'Space Grotesk', sans-serif;
   --font-sans: 'Inter', sans-serif;

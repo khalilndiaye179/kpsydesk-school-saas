@@ -25,7 +25,6 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
       // Déterminer si l'authentification cible la plateforme globale (SuperAdmin) ou un tenant
       const isPlatformAccount = email.toLowerCase() === 'admin@kpsydesk.com' || email.toLowerCase().endsWith('@kpsydesk.com') || email.toLowerCase().includes('superadmin@');
 
-      
       if (isPlatformAccount) {
         // Flux SuperAdmin / Platform
         try {
@@ -48,7 +47,6 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
             setError("Identifiants invalides.");
           }
         } catch (apiErr: any) {
-          // Fallback direct pour le compte SuperAdmin démo si le backend n'est pas démarré
           if (email === 'admin@kpsydesk.com' || email.includes('superadmin')) {
             onDirectLogin({
               id: 'super-admin-1',
@@ -68,11 +66,9 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
             headers: activeTenantId ? { 'x-tenant-id': activeTenantId } : {}
           });
 
-          // Succès direct si pas de MFA tenant configuré
           if (res.data.access_token) {
             localStorage.setItem('kpsydesk_access_token', res.data.access_token);
 
-            // ✅ CRITIQUE : sauvegarder le vrai tenantId retourné par le backend
             const realTenantId = res.data.user?.tenantId || res.data.tenantId;
             if (realTenantId) {
               localStorage.setItem('kpsydesk_active_tenant_id', realTenantId);
@@ -87,7 +83,6 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
             });
           }
         } catch (apiErr: any) {
-          // Relancer l'erreur pour que l'interface affiche l'erreur réelle du backend sans créer de session sans token JWT
           throw apiErr;
         }
       }
@@ -103,9 +98,9 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
         <h2 style={{ margin: '0 0 4px 0', fontSize: '1.65rem', color: '#f8fafc', fontWeight: 700, fontFamily: 'var(--font-title)' }}>
-          Bienvenue <span style={{ color: '#64748b', fontWeight: 400, fontSize: '1.25rem' }}>/ Welcome</span>
+          Bienvenue <span style={{ color: '#9CA3AF', fontWeight: 400, fontSize: '1.25rem' }}>/ Welcome</span>
         </h2>
-        <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.85rem' }}>Connexion sécurisée — Étape 1/2</p>
+        <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.85rem' }}>Connexion sécurisée — Étape 1/2</p>
       </div>
 
       {error && (
@@ -116,7 +111,7 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
 
       {/* Identifiant */}
       <div>
-        <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.85rem', marginBottom: '8px', fontWeight: 500 }}>Adresse Email</label>
+        <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.85rem', marginBottom: '8px', fontWeight: 500 }}>Adresse Email</label>
         <input 
           type="email" 
           placeholder="votre.email@kpsyschool.com"
@@ -125,18 +120,18 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
           required
           style={{
             width: '100%', padding: '13px 16px', backgroundColor: 'rgba(5, 25, 18, 0.75)',
-            border: '1px solid rgba(217, 119, 6, 0.35)', borderRadius: '12px', color: '#ffffff', outline: 'none',
+            border: '1px solid rgba(212, 168, 83, 0.4)', borderRadius: '12px', color: '#ffffff', outline: 'none',
             fontSize: '0.95rem', boxSizing: 'border-box', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
             transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
           }}
-          onFocus={e => e.target.style.borderColor = '#f59e0b'}
-          onBlur={e => e.target.style.borderColor = 'rgba(217, 119, 6, 0.35)'}
+          onFocus={e => e.target.style.borderColor = '#D4A853'}
+          onBlur={e => e.target.style.borderColor = 'rgba(212, 168, 83, 0.4)'}
         />
       </div>
 
       {/* Mot de passe */}
       <div>
-        <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.85rem', marginBottom: '8px', fontWeight: 500 }}>Mot de Passe</label>
+        <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.85rem', marginBottom: '8px', fontWeight: 500 }}>Mot de Passe</label>
         <input 
           type="password" 
           placeholder="••••••••••••"
@@ -145,44 +140,43 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
           required
           style={{
             width: '100%', padding: '13px 16px', backgroundColor: 'rgba(5, 25, 18, 0.75)',
-            border: '1px solid rgba(217, 119, 6, 0.35)', borderRadius: '12px', color: '#ffffff', outline: 'none',
+            border: '1px solid rgba(212, 168, 83, 0.4)', borderRadius: '12px', color: '#ffffff', outline: 'none',
             fontSize: '0.95rem', boxSizing: 'border-box', letterSpacing: '2px', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
             transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
           }}
-          onFocus={e => e.target.style.borderColor = '#f59e0b'}
-          onBlur={e => e.target.style.borderColor = 'rgba(217, 119, 6, 0.35)'}
+          onFocus={e => e.target.style.borderColor = '#D4A853'}
+          onBlur={e => e.target.style.borderColor = 'rgba(212, 168, 83, 0.4)'}
         />
       </div>
 
-      {/* Sélecteur de Rôle */}
+      {/* Sélecteur de Rôle (3 pilules côte à côte) */}
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '4px 0' }}>
         {(['DIRECTOR', 'PROFESSEUR', 'ADMINISTRATEUR'] as const).map(r => (
           <div key={r} onClick={() => setRole(r)} style={{
             display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
-            backgroundColor: role === r ? 'linear-gradient(135deg, #d97706, #b45309)' : 'rgba(255, 255, 255, 0.05)',
-            background: role === r ? 'linear-gradient(135deg, #d97706, #b45309)' : 'rgba(255, 255, 255, 0.05)',
-            padding: '7px 14px', borderRadius: '14px',
-            border: `1px solid ${role === r ? '#f59e0b' : 'rgba(255, 255, 255, 0.15)'}`,
-            boxShadow: role === r ? '0 4px 12px rgba(217, 119, 6, 0.35)' : 'none',
+            backgroundColor: role === r ? '#D4A853' : 'rgba(255, 255, 255, 0.08)',
+            padding: '8px 14px', borderRadius: '16px',
+            border: `1px solid ${role === r ? '#D4A853' : 'rgba(255, 255, 255, 0.2)'}`,
+            boxShadow: role === r ? '0 4px 12px rgba(212, 168, 83, 0.35)' : 'none',
             transition: 'all 0.2s ease'
           }}>
-            <div style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: role === r ? '#ffffff' : '#f59e0b' }}></div>
-            <span style={{ fontSize: '0.7rem', color: role === r ? '#ffffff' : '#cbd5e1', fontWeight: 700, letterSpacing: '0.5px' }}>{r}</span>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: role === r ? '#1B3B2F' : '#D4A853' }}></div>
+            <span style={{ fontSize: '0.7rem', color: role === r ? '#1B3B2F' : '#E5E7EB', fontWeight: 800, letterSpacing: '0.5px' }}>{r}</span>
           </div>
         ))}
       </div>
 
-      {/* Bouton Se Connecter (Bouton Rouge Cramoisi d'après la maquette) */}
+      {/* Bouton Principal Se Connecter (Bordeaux/Maroon #8B2635) */}
       <button 
         type="submit" 
         disabled={isLoading}
         style={{
           marginTop: '6px', padding: '15px', 
-          background: 'linear-gradient(135deg, #990000 0%, #cc0000 50%, #800000 100%)', 
-          color: '#ffffff', border: '1px solid #ff3333', borderRadius: '14px', fontSize: '1rem', fontWeight: 800,
+          backgroundColor: '#8B2635', 
+          color: '#ffffff', border: 'none', borderRadius: '14px', fontSize: '1rem', fontWeight: 800,
           letterSpacing: '1px', textTransform: 'uppercase', cursor: isLoading ? 'not-allowed' : 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-          opacity: isLoading ? 0.8 : 1, boxShadow: '0 6px 20px rgba(204, 0, 0, 0.4)',
+          opacity: isLoading ? 0.8 : 1, boxShadow: '0 6px 20px rgba(139, 38, 53, 0.4)',
           transition: 'transform 0.15s ease, box-shadow 0.15s ease'
         }}
       >
@@ -194,20 +188,20 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
         <a 
           href="/signup"
           style={{
-            color: '#f8fafc', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none', cursor: 'pointer',
-            backgroundColor: 'rgba(153, 0, 0, 0.25)', padding: '12px', borderRadius: '12px',
-            border: '1px solid rgba(220, 38, 38, 0.6)', boxShadow: '0 4px 15px rgba(153, 0, 0, 0.2)',
+            color: '#FFFFFF', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none', cursor: 'pointer',
+            backgroundColor: 'rgba(139, 38, 53, 0.25)', padding: '12px', borderRadius: '12px',
+            border: '1px solid #8B2635', boxShadow: '0 4px 15px rgba(139, 38, 53, 0.2)',
             transition: 'background-color 0.2s ease'
           }}
         >
           + Inscrire mon Établissement Scolaire
         </a>
 
-        <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.78rem' }}>
+        <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.78rem' }}>
           Vous avez reçu une invitation ?{' '}
           <a 
             href="/activate-account"
-            style={{ color: '#f59e0b', textDecoration: 'underline', fontWeight: 600, cursor: 'pointer' }}
+            style={{ color: '#D4A853', textDecoration: 'underline', fontWeight: 600, cursor: 'pointer' }}
           >
             Activer votre compte
           </a>
@@ -215,5 +209,4 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
       </div>
     </form>
   );
-
 };

@@ -21,6 +21,7 @@ import { KioskView } from './components/tenant/KioskView';
 import { TenantAboutView } from './components/tenant/TenantAboutView';
 import { TenantBillingView } from './components/tenant/TenantBillingView';
 import { TenantGuideView } from './components/tenant/TenantGuideView';
+import { WatermarkOverlay } from './components/shared/WatermarkOverlay';
 
 // SuperAdmin
 import { SuperAdminLayout } from './components/superadmin/SuperAdminLayout';
@@ -106,6 +107,7 @@ const TenantApp = () => {
           isSuperAdmin={false} setIsSuperAdmin={() => {}}
         />
         <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '32px', position: 'relative' }}>
+          <WatermarkOverlay color="#D4A853" opacity={0.04} />
           
           <div style={{ position: 'absolute', top: '20px', right: '40px', opacity: 0.06, pointerEvents: 'none', color: 'var(--accent)' }}>
             <GraduationCap size={160} strokeWidth={1} />
