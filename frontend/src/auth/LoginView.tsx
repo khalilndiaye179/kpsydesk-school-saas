@@ -7,6 +7,7 @@ import {
 import { useAuth } from './AuthContext';
 import { PasswordStep } from './PasswordStep';
 import { OtpStep } from './OtpStep';
+import { GraduationIllustration } from '../components/shared/GraduationIllustration';
 
 export const LoginView: React.FC = () => {
   const navigate = useNavigate();
@@ -134,28 +135,10 @@ export const LoginView: React.FC = () => {
 
         </div>
 
-        {/* Illustration Héro & Badges Flottants de Modules */}
-        <div style={{ position: 'absolute', top: '18%', right: '4%', width: '42%', height: '62%', pointerEvents: 'none', zIndex: 1 }}>
+        {/* Illustration Héro SVG (Diplômés, toges, toques lancées en l'air & drapeaux UEMOA) */}
+        <div style={{ position: 'absolute', top: '15%', right: '2%', width: '46%', height: '68%', pointerEvents: 'none', zIndex: 1 }}>
           
-          {/* Drapeau Sénégal Stylisé en Arrière-Plan de l'Illustration */}
-          <div style={{
-            position: 'absolute', bottom: '10%', right: '10%', width: '280px', height: '180px',
-            borderRadius: '24px', overflow: 'hidden', opacity: 0.25, display: 'flex',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.1)', transform: 'rotate(-4deg)'
-          }}>
-            <div style={{ flex: 1, backgroundColor: '#00853F' }}></div>
-            <div style={{ flex: 1, backgroundColor: '#FDEF42', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#00853F', fontSize: '2rem' }}>★</span>
-            </div>
-            <div style={{ flex: 1, backgroundColor: '#E31B23' }}></div>
-          </div>
-
-          {/* Arrière-Plan Diplômés Héro HD */}
-          <div style={{
-            position: 'absolute', bottom: '5%', right: '5%', width: '100%', height: '85%',
-            backgroundImage: 'url("/african_graduation_hero_bg.png")', backgroundSize: 'contain',
-            backgroundPosition: 'right bottom', backgroundRepeat: 'no-repeat', filter: 'drop-shadow(0 15px 25px rgba(27, 59, 47, 0.15))'
-          }}></div>
+          <GraduationIllustration style={{ width: '100%', height: '100%' }} />
 
           {/* Badges Flottants des Modules */}
           {floatingModules.map((mod, idx) => (
