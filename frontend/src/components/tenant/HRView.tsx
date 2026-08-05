@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Shield, Mail, Key, AlertTriangle, Edit2, Trash2, Briefcase, Clock, Camera } from 'lucide-react';
+import { Users, Plus, Shield, Mail, Key, AlertTriangle, Edit2, Trash2, Briefcase, Clock, Camera, Check } from 'lucide-react';
 import { api } from '../../lib/api';
 
 type TenantRole = 'DIRECTOR' | 'CENSOR' | 'TEACHER' | 'ACCOUNTANT' | 'LIBRARIAN' | 'DRIVER' | 'PARENT' | 'STUDENT';
@@ -7,6 +7,7 @@ type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 
 interface StaffUser {
   id: string;
+  username?: string;
   email: string;
   firstName?: string;
   lastName?: string;
@@ -23,9 +24,13 @@ interface StaffUser {
 export const HRView: React.FC = () => {
   const [staff, setStaff] = useState<StaffUser[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<StaffUser | null>(null);
   const [activeTab, setActiveTab] = useState<'EMPLOYEES' | 'PARENTS_STUDENTS' | 'CLOCK_EVENTS'>('EMPLOYEES');
   const [clockEvents, setClockEvents] = useState<any[]>([]);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+
+  // Tenant Info (Code établissement)
+  const [tenantCode, setTenantCode] = useState<string>('TENANT');
 
   // Form State
   const [firstName, setFirstName] = useState('');
@@ -37,13 +42,25 @@ export const HRView: React.FC = () => {
   const [newContractType, setNewContractType] = useState('CDI');
   const [newBaseSalary, setNewBaseSalary] = useState('');
   const [newHourlyRate, setNewHourlyRate] = useState('');
-  
-  // Generated password for demo
+  const [generatedUsername, setGeneratedUsername] = useState('');
   const [generatedPassword, setGeneratedPassword] = useState('');
 
   useEffect(() => {
+    fetchTenantInfo();
     fetchStaff();
   }, []);
+
+  const fetchTenantInfo = async () => {
+    try {
+      const res = await api.get('/tenant/settings');
+      if (res.data?.code) {
+        setTenantCode(res.data.code.toUpperCase());
+      }
+    } catch {
+      const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || 'TENANT';
+      setTenantCode(activeTenantId.substring(0, 7).toUpperCase());
+    }
+  };
 
   const fetchStaff = async () => {
     const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
@@ -57,7 +74,6 @@ export const HRView: React.FC = () => {
     } catch (err) {
       const saved = localStorage.getItem(USERS_STORAGE_KEY);
       if (saved) {
-        // Purge automatique des 3 utilisateurs de test (Amadou DIOP, Awa FALL, Ousmane SOW)
         let users: StaffUser[] = JSON.parse(saved);
         users = users.filter(u => !['directeur@kpsydesk.com', 'censeur@kpsydesk.com', 'compta@kpsydesk.com'].includes(u.email));
         setStaff(users);
@@ -68,7 +84,6 @@ export const HRView: React.FC = () => {
       }
     }
 
-    // Charger les pointages isolés par tenant
     const savedEvents = localStorage.getItem(CLOCK_STORAGE_KEY);
     if (savedEvents) {
       setClockEvents(JSON.parse(savedEvents));
@@ -82,7 +97,13 @@ export const HRView: React.FC = () => {
     return pwd;
   };
 
-  const handleOpenModal = () => {
+  const generateUniqueUsername = (count: number) => {
+    const nextSeq = String(count + 1).padStart(4, '0');
+    return `${tenantCode}-${nextSeq}`;
+  };
+
+  const handleOpenCreateModal = () => {
+    setEditingUser(null);
     setFirstName('');
     setLastName('');
     setEmail('');
@@ -92,57 +113,118 @@ export const HRView: React.FC = () => {
     setNewContractType('CDI');
     setNewBaseSalary('');
     setNewHourlyRate('');
+    setGeneratedUsername(generateUniqueUsername(staff.length));
     setGeneratedPassword(generatePassword());
     setShowModal(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const payload = {
-      email,
-      pass: generatedPassword || 'KPsySchool2026!',
-      firstName,
-      lastName,
-      phone,
-      title: newTitle,
-      role: newRole,
-      contractType: newContractType,
-      baseSalary: newBaseSalary ? parseFloat(newBaseSalary) : undefined,
-      hourlyRate: newHourlyRate ? parseFloat(newHourlyRate) : undefined,
-    };
+  const handleOpenEditModal = (user: StaffUser) => {
+    setEditingUser(user);
+    setFirstName(user.firstName || '');
+    setLastName(user.lastName || '');
+    setEmail(user.email || '');
+    setPhone(user.phone || '');
+    setNewTitle(user.title || '');
+    setNewRole(user.role);
+    setNewContractType(user.contractType || 'CDI');
+    setNewBaseSalary(user.baseSalary ? String(user.baseSalary) : '');
+    setNewHourlyRate(user.hourlyRate ? String(user.hourlyRate) : '');
+    setGeneratedUsername(user.username || `${tenantCode}-0000`);
+    setGeneratedPassword('••••••••');
+    setShowModal(true);
+  };
+
+  const handleDeleteUser = async (user: StaffUser) => {
+    const confirmMsg = `Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.firstName || ''} ${user.lastName || ''} (${user.email}) ?`;
+    if (!window.confirm(confirmMsg)) return;
 
     try {
-      // Appel API backend réél
-      const response = await api.post('/tenant/users', payload);
-      const createdUser = response.data;
-      
-      const updated = [createdUser, ...staff];
-      setStaff(updated);
-      const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
-      const USERS_STORAGE_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
-    } catch (error) {
-      console.warn('Fallback sauvegarde locale RH', error);
-      const newUser: StaffUser = {
-        id: `usr-${Date.now()}`,
+      await api.delete(`/tenant/users/${user.id}`);
+    } catch (err) {
+      console.warn('Suppression API échouée, suppression locale appliquée');
+    }
+
+    const updated = staff.filter(u => u.id !== user.id);
+    setStaff(updated);
+    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
+    localStorage.setItem(`kpsydesk_tenant_users_${activeTenantId}`, JSON.stringify(updated));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
+    const USERS_STORAGE_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
+
+    if (editingUser) {
+      // --------------------------------------------------
+      // MODE ÉDITION (PUT)
+      // --------------------------------------------------
+      const payload = {
+        firstName,
+        lastName,
         email,
+        phone,
+        title: newTitle,
+        role: newRole,
+        contractType: newContractType,
+        baseSalary: newBaseSalary ? parseFloat(newBaseSalary) : undefined,
+        hourlyRate: newHourlyRate ? parseFloat(newHourlyRate) : undefined,
+      };
+
+      try {
+        await api.put(`/tenant/users/${editingUser.id}`, payload);
+      } catch (err) {
+        console.warn('Fallback mise à jour locale RH');
+      }
+
+      const updated = staff.map(u => u.id === editingUser.id ? { ...u, ...payload } : u);
+      setStaff(updated);
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+    } else {
+      // --------------------------------------------------
+      // MODE CRÉATION (POST)
+      // --------------------------------------------------
+      const payload = {
+        username: generatedUsername,
+        email,
+        pass: generatedPassword || 'KPsySchool2026!',
         firstName,
         lastName,
         phone,
         title: newTitle,
         role: newRole,
-        status: 'ACTIVE',
         contractType: newContractType,
         baseSalary: newBaseSalary ? parseFloat(newBaseSalary) : undefined,
         hourlyRate: newHourlyRate ? parseFloat(newHourlyRate) : undefined,
-        createdAt: new Date().toISOString(),
       };
-      const updated = [newUser, ...staff];
-      setStaff(updated);
-      const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
-      const USERS_STORAGE_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+
+      try {
+        const response = await api.post('/tenant/users', payload);
+        const createdUser = response.data;
+        const updated = [createdUser, ...staff];
+        setStaff(updated);
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (error) {
+        console.warn('Fallback sauvegarde locale RH', error);
+        const newUser: StaffUser = {
+          id: `usr-${Date.now()}`,
+          username: generatedUsername,
+          email,
+          firstName,
+          lastName,
+          phone,
+          title: newTitle,
+          role: newRole,
+          status: 'ACTIVE',
+          contractType: newContractType,
+          baseSalary: newBaseSalary ? parseFloat(newBaseSalary) : undefined,
+          hourlyRate: newHourlyRate ? parseFloat(newHourlyRate) : undefined,
+          createdAt: new Date().toISOString(),
+        };
+        const updated = [newUser, ...staff];
+        setStaff(updated);
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+      }
     }
     
     setShowModal(false);
@@ -157,7 +239,7 @@ export const HRView: React.FC = () => {
       case 'LIBRARIAN': return 'Bibliothécaire';
       case 'DRIVER': return 'Chauffeur';
       case 'PARENT': return 'Parent';
-      case 'STUDENT': return 'Élève';
+      case 'STUDENT': return 'Élèves';
       default: return r;
     }
   };
@@ -167,8 +249,8 @@ export const HRView: React.FC = () => {
       case 'DIRECTOR': return { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' };
       case 'CENSOR': return { bg: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' };
       case 'ACCOUNTANT': return { bg: 'rgba(16, 185, 129, 0.1)', color: '#10b981' };
-      case 'LIBRARIAN': return { bg: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' }; // Violet
-      case 'DRIVER': return { bg: 'rgba(234, 179, 8, 0.1)', color: '#eab308' }; // Jaune
+      case 'LIBRARIAN': return { bg: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' };
+      case 'DRIVER': return { bg: 'rgba(234, 179, 8, 0.1)', color: '#eab308' };
       case 'TEACHER': return { bg: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8' };
       default: return { bg: 'rgba(100, 116, 139, 0.1)', color: '#64748b' };
     }
@@ -200,7 +282,7 @@ export const HRView: React.FC = () => {
           <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Gérez vos employés, collaborateurs et définissez leurs droits d'accès au système.</p>
         </div>
         <button 
-          onClick={handleOpenModal}
+          onClick={handleOpenCreateModal}
           style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}
         >
           <Plus size={20} /> Créer un Utilisateur
@@ -235,7 +317,7 @@ export const HRView: React.FC = () => {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ backgroundColor: 'var(--bg-page)', borderBottom: '1px solid var(--border)' }}>
             <tr>
-              <th style={{ padding: '16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Utilisateur</th>
+              <th style={{ padding: '16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Utilisateur / Identifiant</th>
               <th style={{ padding: '16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Fonction</th>
               <th style={{ padding: '16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Rôle d'Accès</th>
               <th style={{ padding: '16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Statut</th>
@@ -243,8 +325,9 @@ export const HRView: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredStaff.map(u => {
+            {filteredStaff.map((u, idx) => {
               const roleColor = getRoleColor(u.role);
+              const displayUsername = u.username || `${tenantCode}-${String(idx + 1).padStart(4, '0')}`;
               return (
                 <tr key={u.id} style={{ borderBottom: '1px solid var(--border)' }}>
                   <td style={{ padding: '16px' }}>
@@ -253,8 +336,14 @@ export const HRView: React.FC = () => {
                         {u.firstName?.charAt(0)}{u.lastName?.charAt(0)}
                       </div>
                       <div>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.firstName} {u.lastName}</div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>{u.firstName} {u.lastName}</span>
+                          {/* Badge Identifiant de connexion unique */}
+                          <span style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 800, fontFamily: 'monospace', border: '1px solid #bae6fd' }} title="Identifiant de connexion unique du tenant">
+                            🔑 {displayUsername}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                           <Mail size={12} /> {u.email}
                         </div>
                       </div>
@@ -280,8 +369,20 @@ export const HRView: React.FC = () => {
                   </td>
                   <td style={{ padding: '16px', textAlign: 'right' }}>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                      <button style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}><Edit2 size={16} /></button>
-                      <button style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={16} /></button>
+                      <button 
+                        onClick={() => handleOpenEditModal(u)}
+                        title="Modifier cet utilisateur"
+                        style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)', transition: 'all 0.2s' }}
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteUser(u)}
+                        title="Supprimer cet utilisateur"
+                        style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', color: '#ef4444', transition: 'all 0.2s' }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -357,11 +458,13 @@ export const HRView: React.FC = () => {
         </div>
       )}
 
-      {/* Modale de création */}
+      {/* Modale de création / Édition */}
       {showModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '24px', width: '600px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ margin: '0 0 24px 0', fontFamily: 'var(--font-title)', fontSize: '1.4rem' }}>Créer un nouvel utilisateur</h3>
+            <h3 style={{ margin: '0 0 24px 0', fontFamily: 'var(--font-title)', fontSize: '1.4rem' }}>
+              {editingUser ? `Modifier l'utilisateur : ${editingUser.firstName} ${editingUser.lastName}` : "Créer un nouvel utilisateur"}
+            </h3>
             
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
@@ -388,11 +491,25 @@ export const HRView: React.FC = () => {
               </div>
 
               <div style={{ padding: '24px', backgroundColor: 'var(--bg-page)', borderRadius: '16px', border: '1px solid var(--border)' }}>
-                <h4 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}><Key size={18} /> Paramètres d'Accès</h4>
+                <h4 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}><Key size={18} /> Paramètres d'Accès & Connexion</h4>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  
+                  {/* AFFICHAGE CLAIR DE L'IDENTIFIANT UNIQUE D'ÉTABLISSEMENT */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Email de connexion</label>
+                    <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                      Identifiant de Connexion (Username Établissement)
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px', border: '2px solid #bae6fd', backgroundColor: '#f0f9ff', fontWeight: 800, fontFamily: 'monospace', fontSize: '1.1rem', color: '#0369a1' }}>
+                      🔑 {generatedUsername}
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      Cet identifiant unique est utilisé par le collaborateur pour se connecter sur l'écran de login.
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Email de correspondance</label>
                     <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '12px', border: '2px solid var(--border)', outline: 'none' }} />
                   </div>
 
@@ -425,26 +542,29 @@ export const HRView: React.FC = () => {
                       )}
                     </div>
                     
-                    {/* Explication du rôle sélectionné */}
                     <div style={{ marginTop: '8px', padding: '12px', borderRadius: '8px', backgroundColor: 'rgba(56, 189, 248, 0.1)', color: '#0369a1', fontSize: '0.85rem', display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <AlertTriangle size={16} style={{ flexShrink: 0 }} />
                       <span>{getRoleAccessDescription(newRole)}</span>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Mot de passe provisoire</label>
-                    <div style={{ display: 'flex', alignItems: 'center', padding: '12px', borderRadius: '12px', border: '2px solid var(--border)', backgroundColor: 'white', fontFamily: 'monospace', fontSize: '1.2rem', letterSpacing: '2px' }}>
-                      {generatedPassword}
+                  {!editingUser && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Mot de passe provisoire</label>
+                      <div style={{ display: 'flex', alignItems: 'center', padding: '12px', borderRadius: '12px', border: '2px solid var(--border)', backgroundColor: 'white', fontFamily: 'monospace', fontSize: '1.2rem', letterSpacing: '2px' }}>
+                        {generatedPassword}
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>À communiquer à l'utilisateur. Il pourra le modifier lors de sa première connexion.</span>
                     </div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>À communiquer à l'utilisateur. Il pourra le modifier lors de sa première connexion.</span>
-                  </div>
+                  )}
                 </div>
               </div>
               
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                 <button type="button" onClick={() => setShowModal(false)} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: '2px solid var(--border)', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}>Annuler</button>
-                <button type="submit" style={{ flex: 1, padding: '14px', backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}>Créer l'Utilisateur</button>
+                <button type="submit" style={{ flex: 1, padding: '14px', backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}>
+                  {editingUser ? "Enregistrer les modifications" : "Créer l'Utilisateur"}
+                </button>
               </div>
             </form>
 
