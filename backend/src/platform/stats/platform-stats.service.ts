@@ -48,7 +48,6 @@ export class PlatformStatsService {
       this.prisma.tenant.groupBy({
         by: ['country'],
         _count: { id: true },
-        _sum: {},
       }),
 
       // Nouveaux tenants sur 30 jours (pour sparkline)
