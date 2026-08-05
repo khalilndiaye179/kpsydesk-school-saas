@@ -46,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const allTenantItems = [
     { label: 'Tableau de bord', icon: LayoutDashboard, roles: ['DIRECTOR', 'CENSOR', 'TEACHER', 'ACCOUNTANT', 'LIBRARIAN', 'DRIVER', 'STUDENT', 'PARENT'] },
     { label: 'Structure Pédago.', icon: GraduationCap, roles: ['DIRECTOR', 'CENSOR'] },
+    { label: 'Référentiel Académique', icon: BookOpen, roles: ['DIRECTOR', 'CENSOR'] },
     { label: 'Élèves & Inscriptions', icon: Users, roles: ['DIRECTOR', 'CENSOR'] },
     { label: 'Ressources Humaines', icon: ShieldCheck, roles: ['DIRECTOR'] },
     { label: 'Professeurs', icon: Briefcase, roles: ['DIRECTOR', 'CENSOR'] },

@@ -21,6 +21,7 @@ import { KioskView } from './components/tenant/KioskView';
 import { TenantAboutView } from './components/tenant/TenantAboutView';
 import { TenantBillingView } from './components/tenant/TenantBillingView';
 import { TenantGuideView } from './components/tenant/TenantGuideView';
+import { AcademicSettingsView } from './components/tenant/AcademicSettingsView';
 import { WatermarkOverlay } from './components/shared/WatermarkOverlay';
 
 // SuperAdmin
@@ -128,6 +129,7 @@ const TenantApp = () => {
 
           {activeTenantView === 'Tableau de bord' && <DashboardView />}
           {activeTenantView === 'Structure Pédago.' && <StructureView />}
+          {activeTenantView === 'Référentiel Académique' && <AcademicSettingsView />}
           {activeTenantView === 'Élèves & Inscriptions' && <StudentView />}
           {activeTenantView === 'Ressources Humaines' && <HRView />}
           {activeTenantView === 'Professeurs' && <TeacherView />}
