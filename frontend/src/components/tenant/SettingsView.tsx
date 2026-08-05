@@ -72,6 +72,8 @@ export interface TropicalizedSchoolSettings {
   showQrCodeOnDocuments?: boolean;
 }
 
+export type SchoolSettings = TropicalizedSchoolSettings;
+
 export const SettingsView: React.FC = () => {
   const { countryCode, countryConfig } = useCountryTheme();
   
