@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Save, UserCheck, BookOpen, AlertCircle } from 'lucide-react';
+import { Save, UserCheck, BookOpen, AlertCircle, RefreshCw, Award, CheckCircle2 } from 'lucide-react';
+import { getCountryAcademicConfig, getSubjectsForClassSeries } from '../../config/academic.config';
 
 interface Grade {
   studentId: string;
@@ -49,6 +50,8 @@ export const EvaluationsView: React.FC = () => {
   const [activeSubjects, setActiveSubjects] = useState<Record<string, boolean>>({});
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
+  const countryCode = localStorage.getItem('kpsydesk_active_tenant_country') || 'SN';
+
   useEffect(() => {
     const savedClasses = localStorage.getItem('kpsydesk_classes');
     if (savedClasses) setClasses(JSON.parse(savedClasses));
@@ -63,6 +66,53 @@ export const EvaluationsView: React.FC = () => {
     : students;
 
   const selectedStudent = students.find(s => s.id === selectedStudentId);
+
+  // ---------------------------------------------------------------------------
+  // AUTO-INJECTION DES COEFFICIENTS DYNAMIQUES DU MOTEUR ACADÉMIQUE CENTRAL
+  // ---------------------------------------------------------------------------
+  const applyAcademicEngineCoefficients = () => {
+    if (!selectedStudent) return;
+
+    // Déduire le niveau (ex: "Terminale" ou "3ème") et la série (ex: "S2", "L2", "A") depuis le nom de la classe
+    const className = selectedStudent.className || '';
+    let levelCode = '3EME';
+    let seriesCode: string | undefined = undefined;
+
+    if (className.toUpperCase().includes('TLE') || className.toUpperCase().includes('TERMINALE')) {
+      levelCode = 'TLE';
+      if (className.includes('S2')) seriesCode = 'S2';
+      else if (className.includes('S1')) seriesCode = 'S1';
+      else if (className.includes('L2')) seriesCode = 'L2';
+      else if (className.includes('L1')) seriesCode = 'L1';
+      else if (className.includes(' A')) seriesCode = 'A';
+      else if (className.includes(' C')) seriesCode = 'C';
+      else if (className.includes(' D')) seriesCode = 'D';
+    } else if (className.includes('2NDE') || className.includes('SECONDE')) {
+      levelCode = '2NDE';
+    }
+
+    // Récupérer la grille officielle du Moteur Académique
+    const officialSubjects = getSubjectsForClassSeries(countryCode, levelCode, seriesCode);
+    
+    if (officialSubjects.length > 0) {
+      const updatedCoefs: Record<string, number> = { ...subjectCoefs };
+      officialSubjects.forEach(sub => {
+        // Mapper les noms de matières
+        if (sub.subjectName.includes('Math')) updatedCoefs['Mathématiques'] = sub.coefficient;
+        if (sub.subjectName.includes('Français')) updatedCoefs['Français'] = sub.coefficient;
+        if (sub.subjectName.includes('Physique')) updatedCoefs['Physique-Chimie'] = sub.coefficient;
+        if (sub.subjectName.includes('SVT') || sub.subjectName.includes('Terre')) updatedCoefs['SVT'] = sub.coefficient;
+        if (sub.subjectName.includes('Philo')) updatedCoefs['Philosophie'] = sub.coefficient;
+        if (sub.subjectName.includes('Anglais')) updatedCoefs['Anglais'] = sub.coefficient;
+        if (sub.subjectName.includes('Histoire')) updatedCoefs['Histoire-Géographie'] = sub.coefficient;
+        if (sub.subjectName.includes('EPS')) updatedCoefs['EPS'] = sub.coefficient;
+      });
+
+      setSubjectCoefs(updatedCoefs);
+      setSaveStatus(`Coefficients officiels ${levelCode} ${seriesCode || ''} (${countryCode}) appliqués automatiquement !`);
+      setTimeout(() => setSaveStatus(null), 4000);
+    }
+  };
 
   useEffect(() => {
     if (!selectedStudent) {
@@ -178,14 +228,12 @@ export const EvaluationsView: React.FC = () => {
 
     let updatedEvaluations = [...evaluations];
 
-    // Helper pour sauvegarder une matière
     const saveSubject = (subjectName: string, gradeKey: string) => {
       const detail = studentGrades[gradeKey];
-      if (!detail) return; // Ne rien faire si vide
+      if (!detail) return;
       const avg = getAverage(detail);
-      if (avg === '') return; // Ne rien faire s'il n'y a aucune note
+      if (avg === '') return;
 
-      // Format: "moyenne|dev1|dev2|compo" pour que parseFloat(val) fonctionne côté bulletin
       const val = `${avg}|${detail.dev1}|${detail.dev2}|${detail.compo}`;
       const coef = subjectCoefs[gradeKey] || 1;
 
@@ -223,7 +271,6 @@ export const EvaluationsView: React.FC = () => {
       }
     };
 
-    // Helper pour retirer la note si la matière est désactivée
     const removeSubjectGrade = (subjectName: string) => {
       let evIndex = updatedEvaluations.findIndex(e => e.classId === selectedStudent.classId && e.subject === subjectName && e.name === `Moyenne ${selectedTerm}`);
       if (evIndex >= 0) {
@@ -233,7 +280,6 @@ export const EvaluationsView: React.FC = () => {
       }
     };
 
-    // Sauvegarder uniquement les matières actives, retirer les désactivées
     DEFAULT_SUBJECTS.forEach(subject => {
       if (activeSubjects[subject]) {
         saveSubject(subject, subject);
@@ -245,7 +291,6 @@ export const EvaluationsView: React.FC = () => {
     if (studentLv1 !== 'Aucune' && activeSubjects['LV1']) {
       saveSubject(`LV1 - ${studentLv1}`, 'LV1');
     } else {
-      // Retirer n'importe quelle LV1 existante
       LANGUAGES.forEach(l => {
         if (l !== 'Aucune') removeSubjectGrade(`LV1 - ${l}`);
       });
@@ -262,238 +307,178 @@ export const EvaluationsView: React.FC = () => {
     setEvaluations(updatedEvaluations);
     localStorage.setItem('kpsydesk_evaluations', JSON.stringify(updatedEvaluations));
     
-    setSaveStatus("Notes & Coefficients enregistrés !");
+    setSaveStatus("Notes enregistrées avec succès !");
     setTimeout(() => setSaveStatus(null), 3000);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
       
-      <div style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border)' }}>
-        <h2 style={{ margin: '0 0 16px 0', fontFamily: 'var(--font-title)', fontSize: '1.4rem' }}>Saisie des Bulletins (Par Élève)</h2>
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Sélectionnez un élève pour saisir ses moyennes. Laissez la note vide pour indiquer que la matière n'est pas évaluée.</p>
+      {/* En-tête de la vue Évaluations */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF', padding: '20px 24px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: '1.4rem', fontFamily: 'var(--font-title)', color: 'var(--text-primary)' }}>
+            Évaluations & Saisie des Notes
+          </h2>
+          <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+            Saisie rapide des devoirs, compositions et coefficients automatiques par série.
+          </p>
+        </div>
+
+        {/* Bouton d'Auto-Injection des Coefficients du Moteur Académique */}
+        {selectedStudent && (
+          <button
+            onClick={applyAcademicEngineCoefficients}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#f0fdf4', color: '#166534', border: '1px solid #86efac', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}
+            title="Charger les coefficients officiels ministériels de cette classe/série"
+          >
+            <Award size={16} /> Auto-Coefficients Ministériels ({countryCode})
+          </button>
+        )}
       </div>
 
-      <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+      {/* Barre de sélection : Trimestre, Classe, Élève */}
+      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
         
-        {/* Panneau Gauche : Filtres */}
-        <div style={{
-          backgroundColor: 'var(--bg-card)',
-          borderRadius: '16px',
-          padding: '24px',
-          border: '1px solid var(--border)',
-          flex: 1,
-          minWidth: '300px',
-          height: 'fit-content'
-        }}>
-          <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', fontFamily: 'var(--font-title)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <UserCheck size={20} color="var(--accent)" /> Filtres & Sélection
-          </h3>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>1. Choisir le trimestre</label>
-              <select 
-                value={selectedTerm} 
-                onChange={e => setSelectedTerm(e.target.value)}
-                style={{ padding: '10px 12px', borderRadius: '8px', border: '2px solid var(--border)', fontSize: '0.95rem', width: '100%', outline: 'none', backgroundColor: 'var(--bg-page)', color: 'var(--text-primary)' }}
+        {/* Trimestre */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: '150px' }}>
+          <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Période Académique</label>
+          <select 
+            value={selectedTerm} onChange={e => setSelectedTerm(e.target.value)}
+            style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none', backgroundColor: 'var(--bg-page)' }}
+          >
+            <option value="Trimestre 1">Trimestre 1</option>
+            <option value="Trimestre 2">Trimestre 2</option>
+            <option value="Trimestre 3">Trimestre 3</option>
+            <option value="Semestre 1">Semestre 1</option>
+            <option value="Semestre 2">Semestre 2</option>
+          </select>
+        </div>
+
+        {/* Classe */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1.5, minWidth: '200px' }}>
+          <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Filtrer par Classe</label>
+          <select 
+            value={selectedClassId} onChange={e => { setSelectedClassId(e.target.value); setSelectedStudentId(''); }}
+            style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none', backgroundColor: 'var(--bg-page)' }}
+          >
+            <option value="">Toutes les classes</option>
+            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+
+        {/* Élève */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 2, minWidth: '250px' }}>
+          <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Sélectionner l'Élève</label>
+          <select 
+            value={selectedStudentId} onChange={e => setSelectedStudentId(e.target.value)}
+            style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none', backgroundColor: 'var(--bg-page)', fontWeight: 600, color: 'var(--accent)' }}
+          >
+            <option value="">-- Choisir un élève --</option>
+            {filteredStudents.map(s => <option key={s.id} value={s.id}>{s.firstName} {s.lastName} ({s.className})</option>)}
+          </select>
+        </div>
+      </div>
+
+      {saveStatus && (
+        <div style={{ padding: '14px', backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', color: '#166534', fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <CheckCircle2 size={18} /> {saveStatus}
+        </div>
+      )}
+
+      {/* Formulaire de Saisie des Notes de l'Élève */}
+      {selectedStudent ? (
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '24px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.15rem', fontFamily: 'var(--font-title)', color: 'var(--text-primary)' }}>
+              Carnet de Notes : <span style={{ color: 'var(--accent)' }}>{selectedStudent.firstName} {selectedStudent.lastName}</span> ({selectedStudent.className})
+            </h3>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={applySubjectsToClass}
+                style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
               >
-                <option value="Trimestre 1">Trimestre 1</option>
-                <option value="Trimestre 2">Trimestre 2</option>
-                <option value="Trimestre 3">Trimestre 3</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>2. Filtrer par classe (Optionnel)</label>
-              <select 
-                value={selectedClassId} 
-                onChange={e => {
-                  setSelectedClassId(e.target.value);
-                  setSelectedStudentId(''); 
-                }}
-                style={{ padding: '10px 12px', borderRadius: '8px', border: '2px solid var(--border)', fontSize: '0.95rem', width: '100%', outline: 'none', backgroundColor: 'var(--bg-page)', color: 'var(--text-primary)' }}
+                Appliquer cette configuration à toute la classe
+              </button>
+              <button 
+                onClick={saveGrades}
+                style={{ padding: '8px 18px', borderRadius: '8px', border: 'none', backgroundColor: '#0f172a', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                <option value="">-- Toutes les classes --</option>
-                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>3. Sélectionner un élève</label>
-              <select 
-                value={selectedStudentId} 
-                onChange={e => setSelectedStudentId(e.target.value)}
-                style={{ padding: '10px 12px', borderRadius: '8px', border: '2px solid var(--accent)', fontSize: '0.95rem', width: '100%', outline: 'none', backgroundColor: 'var(--bg-page)', color: 'var(--text-primary)' }}
-              >
-                <option value="">-- Choisir un élève --</option>
-                {filteredStudents.map(s => <option key={s.id} value={s.id}>{s.firstName} {s.lastName} ({s.className || 'Sans classe'})</option>)}
-              </select>
+                <Save size={16} /> Enregistrer la Fiche
+              </button>
             </div>
           </div>
 
-          {students.length === 0 && (
-            <div style={{ marginTop: '16px', padding: '16px', backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid var(--status-warning)', borderRadius: '8px', display: 'flex', gap: '12px', color: 'var(--status-warning)' }}>
-              <AlertCircle size={20} />
-              <span style={{ fontSize: '0.9rem' }}>Aucun élève n'est inscrit.</span>
-            </div>
-          )}
+          {/* Grille des Matières & Devoirs */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ borderBottom: '2px solid var(--border)', backgroundColor: 'var(--bg-page)' }}>
+                <th style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', width: '60px' }}>Actif</th>
+                <th style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Matière</th>
+                <th style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Coeff</th>
+                <th style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Devoir 1 (/20)</th>
+                <th style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Devoir 2 (/20)</th>
+                <th style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Composition (/20)</th>
+                <th style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Moyenne Matière</th>
+              </tr>
+            </thead>
+            <tbody>
+              {DEFAULT_SUBJECTS.map(subject => {
+                const isActive = activeSubjects[subject] !== false;
+                const detail = studentGrades[subject] || { dev1: '', dev2: '', compo: '' };
+                const avg = getAverage(detail);
+                const coef = subjectCoefs[subject] || 1;
+
+                return (
+                  <tr key={subject} style={{ borderBottom: '1px solid var(--border)', opacity: isActive ? 1 : 0.45 }}>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      <input type="checkbox" checked={isActive} onChange={() => toggleSubject(subject)} />
+                    </td>
+                    <td style={{ padding: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>{subject}</td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      <input 
+                        type="number" min="1" max="15" value={coef} disabled={!isActive}
+                        onChange={e => handleCoefChange(subject, parseInt(e.target.value) || 1)}
+                        style={{ width: '50px', padding: '4px', borderRadius: '4px', border: '1px solid var(--border)', textAlign: 'center', fontWeight: 700 }}
+                      />
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      <input 
+                        type="number" step="0.25" min="0" max="20" value={detail.dev1} disabled={!isActive}
+                        onChange={e => handleGradeChange(subject, 'dev1', e.target.value)}
+                        placeholder="--" style={{ width: '70px', padding: '6px', borderRadius: '6px', border: '1px solid var(--border)', textAlign: 'center' }}
+                      />
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      <input 
+                        type="number" step="0.25" min="0" max="20" value={detail.dev2} disabled={!isActive}
+                        onChange={e => handleGradeChange(subject, 'dev2', e.target.value)}
+                        placeholder="--" style={{ width: '70px', padding: '6px', borderRadius: '6px', border: '1px solid var(--border)', textAlign: 'center' }}
+                      />
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      <input 
+                        type="number" step="0.25" min="0" max="20" value={detail.compo} disabled={!isActive}
+                        onChange={e => handleGradeChange(subject, 'compo', e.target.value)}
+                        placeholder="--" style={{ width: '70px', padding: '6px', borderRadius: '6px', border: '1px solid var(--border)', textAlign: 'center', fontWeight: 700 }}
+                      />
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'center', fontWeight: 800, color: parseFloat(avg) >= 10 ? '#10b981' : '#ef4444' }}>
+                      {avg ? `${avg} / 20` : '--'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-
-        {/* Panneau Droit : Saisie */}
-        <div style={{
-          flex: 2,
-          minWidth: '400px',
-          backgroundColor: 'var(--bg-card)',
-          borderRadius: '16px',
-          border: '1px solid var(--border)',
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          {!selectedStudent ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '300px', color: 'var(--text-secondary)' }}>
-              <BookOpen size={48} opacity={0.2} style={{ marginBottom: '16px' }} />
-              <p>Veuillez sélectionner un élève à gauche pour commencer la saisie de ses notes.</p>
-            </div>
-          ) : (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--border)' }}>
-                <div>
-                  <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-title)', margin: '0 0 4px 0' }}>{selectedStudent.firstName} {selectedStudent.lastName}</h3>
-                  <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Classe : {selectedStudent.className || 'Non assignée'}</span>
-                </div>
-                <div style={{ backgroundColor: 'var(--bg-page)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600 }}>
-                  {selectedTerm} (sur 20)
-                </div>
-              </div>
-
-              {/* LV1 / LV2 */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px', paddingBottom: '24px', borderBottom: '1px solid var(--border)' }}>
-                {/* LV1 */}
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--bg-page)', borderRadius: '12px', border: '1px solid var(--border)', opacity: activeSubjects['LV1'] ? 1 : 0.5 }}>
-                  <input type="checkbox" checked={!!activeSubjects['LV1']} onChange={() => toggleSubject('LV1')} title="Activer/Désactiver cette matière" style={{ transform: 'scale(1.2)', cursor: 'pointer' }} />
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>Langue Vivante 1</span>
-                    <select value={studentLv1} onChange={e => setStudentLv1(e.target.value)} style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', width: '100%' }}>
-                      {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
-                    </select>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Devoir 1</span>
-                      <input type="number" max={20} min={0} step="0.25" value={studentGrades['LV1']?.dev1 || ''} onChange={(e) => handleGradeChange('LV1', 'dev1', e.target.value)} disabled={studentLv1 === 'Aucune' || !activeSubjects['LV1']} style={{ width: '60px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Devoir 2</span>
-                      <input type="number" max={20} min={0} step="0.25" value={studentGrades['LV1']?.dev2 || ''} onChange={(e) => handleGradeChange('LV1', 'dev2', e.target.value)} disabled={studentLv1 === 'Aucune' || !activeSubjects['LV1']} style={{ width: '60px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Compo.</span>
-                      <input type="number" max={20} min={0} step="0.25" value={studentGrades['LV1']?.compo || ''} onChange={(e) => handleGradeChange('LV1', 'compo', e.target.value)} disabled={studentLv1 === 'Aucune' || !activeSubjects['LV1']} style={{ width: '60px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', marginLeft: '8px', paddingLeft: '16px', borderLeft: '1px dashed var(--border)' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Moyenne</span>
-                      <input type="text" value={getAverage(studentGrades['LV1'])} readOnly style={{ width: '60px', padding: '8px', borderRadius: '8px', border: '1px solid transparent', textAlign: 'center', backgroundColor: 'rgba(91, 108, 255, 0.1)', color: 'var(--accent)', fontWeight: 'bold' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', marginLeft: '8px' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Coef.</span>
-                      <input type="number" min={1} value={subjectCoefs['LV1'] || 1} onChange={(e) => handleCoefChange('LV1', parseFloat(e.target.value) || 1)} disabled={studentLv1 === 'Aucune'} style={{ width: '45px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* LV2 */}
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--bg-page)', borderRadius: '12px', border: '1px solid var(--border)', opacity: activeSubjects['LV2'] ? 1 : 0.5 }}>
-                  <input type="checkbox" checked={!!activeSubjects['LV2']} onChange={() => toggleSubject('LV2')} title="Activer/Désactiver cette matière" style={{ transform: 'scale(1.2)', cursor: 'pointer' }} />
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>Langue Vivante 2</span>
-                    <select value={studentLv2} onChange={e => setStudentLv2(e.target.value)} style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', width: '100%' }}>
-                      {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
-                    </select>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Devoir 1</span>
-                      <input type="number" max={20} min={0} step="0.25" value={studentGrades['LV2']?.dev1 || ''} onChange={(e) => handleGradeChange('LV2', 'dev1', e.target.value)} disabled={studentLv2 === 'Aucune' || !activeSubjects['LV2']} style={{ width: '60px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Devoir 2</span>
-                      <input type="number" max={20} min={0} step="0.25" value={studentGrades['LV2']?.dev2 || ''} onChange={(e) => handleGradeChange('LV2', 'dev2', e.target.value)} disabled={studentLv2 === 'Aucune' || !activeSubjects['LV2']} style={{ width: '60px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Compo.</span>
-                      <input type="number" max={20} min={0} step="0.25" value={studentGrades['LV2']?.compo || ''} onChange={(e) => handleGradeChange('LV2', 'compo', e.target.value)} disabled={studentLv2 === 'Aucune' || !activeSubjects['LV2']} style={{ width: '60px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', marginLeft: '8px', paddingLeft: '16px', borderLeft: '1px dashed var(--border)' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Moyenne</span>
-                      <input type="text" value={getAverage(studentGrades['LV2'])} readOnly style={{ width: '60px', padding: '8px', borderRadius: '8px', border: '1px solid transparent', textAlign: 'center', backgroundColor: 'rgba(91, 108, 255, 0.1)', color: 'var(--accent)', fontWeight: 'bold' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', marginLeft: '8px' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Coef.</span>
-                      <input type="number" min={1} value={subjectCoefs['LV2'] || 1} onChange={(e) => handleCoefChange('LV2', parseFloat(e.target.value) || 1)} disabled={studentLv2 === 'Aucune'} style={{ width: '45px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Autres Matières */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>Matières Générales</h4>
-                  <button 
-                    onClick={applySubjectsToClass}
-                    style={{ padding: '8px 16px', backgroundColor: 'transparent', border: '2px solid var(--accent)', color: 'var(--accent)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
-                    title="Sauvegarder ces matières (activées/désactivées) comme référence pour toute la classe."
-                  >
-                    Appliquer cette liste à toute la classe
-                  </button>
-                </div>
-                
-                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: '16px', gap: '8px' }}>
-                  <div style={{ width: '60px', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Devoir 1</div>
-                  <div style={{ width: '60px', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Devoir 2</div>
-                  <div style={{ width: '60px', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Compo.</div>
-                  <div style={{ width: '60px', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', marginLeft: '8px', paddingLeft: '16px' }}>Moyenne</div>
-                  <div style={{ width: '45px', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', marginLeft: '8px' }}>Coef.</div>
-                </div>
-                {DEFAULT_SUBJECTS.map(subject => (
-                  <div key={subject} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--bg-page)', borderRadius: '12px', border: '1px solid var(--border)', opacity: activeSubjects[subject] ? 1 : 0.5 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, overflow: 'hidden' }}>
-                      <input type="checkbox" checked={!!activeSubjects[subject]} onChange={() => toggleSubject(subject)} title="Activer/Désactiver cette matière" style={{ transform: 'scale(1.2)', cursor: 'pointer' }} />
-                      <span style={{ fontSize: '0.95rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={subject}>{subject}</span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <input type="number" max={20} min={0} step="0.25" value={studentGrades[subject]?.dev1 || ''} onChange={(e) => handleGradeChange(subject, 'dev1', e.target.value)} disabled={!activeSubjects[subject]} style={{ width: '60px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                      <input type="number" max={20} min={0} step="0.25" value={studentGrades[subject]?.dev2 || ''} onChange={(e) => handleGradeChange(subject, 'dev2', e.target.value)} disabled={!activeSubjects[subject]} style={{ width: '60px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                      <input type="number" max={20} min={0} step="0.25" value={studentGrades[subject]?.compo || ''} onChange={(e) => handleGradeChange(subject, 'compo', e.target.value)} disabled={!activeSubjects[subject]} style={{ width: '60px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                      
-                      <div style={{ marginLeft: '8px', paddingLeft: '16px', borderLeft: '1px dashed var(--border)' }}>
-                        <input type="text" value={getAverage(studentGrades[subject])} readOnly style={{ width: '60px', padding: '8px', borderRadius: '8px', border: '1px solid transparent', textAlign: 'center', backgroundColor: 'rgba(91, 108, 255, 0.1)', color: 'var(--accent)', fontWeight: 'bold' }} />
-                      </div>
-                      
-                      <div style={{ marginLeft: '8px' }}>
-                        <input type="number" min={1} value={subjectCoefs[subject] || 1} onChange={(e) => handleCoefChange(subject, parseFloat(e.target.value) || 1)} style={{ width: '45px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'center', outline: 'none', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                <span style={{ color: 'var(--status-positive)', fontWeight: 500, fontSize: '0.95rem' }}>
-                  {saveStatus}
-                </span>
-                
-                <button 
-                  onClick={saveGrades}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(91, 108, 255, 0.3)' }}
-                >
-                  <Save size={18} /> Enregistrer le bulletin
-                </button>
-              </div>
-            </>
-          )}
+      ) : (
+        <div style={{ textAlign: 'center', padding: '60px', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+          <BookOpen size={48} style={{ opacity: 0.3, marginBottom: '12px' }} />
+          <p style={{ margin: 0, fontSize: '1rem' }}>Veuillez sélectionner un élève ci-dessus pour ouvrir son carnet de notes et coefficients.</p>
         </div>
-      </div>
+      )}
+
     </div>
   );
 };
