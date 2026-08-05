@@ -15,27 +15,38 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StudentController = void 0;
 const common_1 = require("@nestjs/common");
 const student_service_1 = require("./student.service");
-const auth_guard_1 = require("../../common/guards/auth.guard");
+const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 let StudentController = class StudentController {
     constructor(studentService) {
         this.studentService = studentService;
     }
-    findAll() {
-        return this.studentService.findAll();
+    findAll(request) {
+        const tenantId = request.user.tenantId;
+        return this.studentService.findAll(tenantId);
     }
     create(createStudentDto, request) {
         const tenantId = request.user.tenantId;
         return this.studentService.create(createStudentDto, tenantId);
     }
-    findOne(id) {
-        return this.studentService.findOne(id);
+    findOne(id, request) {
+        const tenantId = request.user.tenantId;
+        return this.studentService.findOne(id, tenantId);
+    }
+    update(id, updateStudentDto, request) {
+        const tenantId = request.user.tenantId;
+        return this.studentService.update(id, updateStudentDto, tenantId);
+    }
+    remove(id, request) {
+        const tenantId = request.user.tenantId;
+        return this.studentService.remove(id, tenantId);
     }
 };
 exports.StudentController = StudentController;
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], StudentController.prototype, "findAll", null);
 __decorate([
@@ -49,13 +60,31 @@ __decorate([
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], StudentController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Put)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], StudentController.prototype, "update", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], StudentController.prototype, "remove", null);
 exports.StudentController = StudentController = __decorate([
-    (0, common_1.Controller)('api/v1/tenant/students'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, common_1.Controller)('tenant/students'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [student_service_1.StudentService])
 ], StudentController);
 //# sourceMappingURL=student.controller.js.map

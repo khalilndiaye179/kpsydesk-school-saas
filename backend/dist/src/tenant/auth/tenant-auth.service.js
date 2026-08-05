@@ -19,32 +19,39 @@ let TenantAuthService = class TenantAuthService {
         this.prisma = prisma;
         this.jwtService = jwtService;
     }
-    async login(email, pass, tenantId) {
-        const user = await this.prisma.runWithTenantContext(async (tx) => {
-            return await tx.tenantUser.findFirst({
-                where: { email, tenantId },
-            });
+    async login(usernameInput, pass) {
+        if (!usernameInput || !usernameInput.trim()) {
+            throw new common_1.UnauthorizedException("Veuillez fournir votre identifiant (ex: LYC-EDA-0001).");
+        }
+        const cleanUsername = usernameInput.trim().toUpperCase();
+        const user = await this.prisma.tenantUser.findFirst({
+            where: { username: cleanUsername },
         });
         if (!user) {
-            throw new common_1.UnauthorizedException('Identifiants invalides');
+            throw new common_1.UnauthorizedException("Identifiant invalide ou introuvable.");
         }
         const isMatch = await bcrypt.compare(pass, user.passwordHash);
         if (!isMatch) {
-            throw new common_1.UnauthorizedException('Identifiants invalides');
+            throw new common_1.UnauthorizedException("Mot de passe incorrect.");
         }
         const payload = {
             sub: user.id,
+            username: user.username,
             email: user.email,
             role: user.role,
-            tenantId: user.tenantId
+            tenantId: user.tenantId,
         };
         return {
             access_token: await this.jwtService.signAsync(payload),
             user: {
                 id: user.id,
+                username: user.username,
                 email: user.email,
                 role: user.role,
-            }
+                tenantId: user.tenantId,
+                firstName: user.firstName,
+                lastName: user.lastName,
+            },
         };
     }
 };

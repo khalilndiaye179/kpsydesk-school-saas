@@ -16,22 +16,19 @@ let TenantClassesService = class TenantClassesService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async findAll() {
-        return this.prisma.runWithTenantContext(async (tx) => {
-            return await tx.class.findMany({
-                include: { _count: { select: { students: true } } }
-            });
+    async findAll(tenantId) {
+        return this.prisma.class.findMany({
+            where: { tenantId },
+            include: { _count: { select: { students: true } } },
         });
     }
-    async create(name, code) {
-        return this.prisma.runWithTenantContext(async (tx) => {
-            const tenantId = tx.tenantId;
-            return await tx.class.create({
-                data: {
-                    name,
-                    code,
-                },
-            });
+    async create(name, code, tenantId) {
+        return this.prisma.class.create({
+            data: {
+                name,
+                code,
+                tenantId,
+            },
         });
     }
 };

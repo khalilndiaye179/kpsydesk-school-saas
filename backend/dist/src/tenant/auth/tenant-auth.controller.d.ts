@@ -3,14 +3,18 @@ export declare class TenantAuthController {
     private authService;
     constructor(authService: TenantAuthService);
     login(loginDto: {
-        email: string;
+        username: string;
         pass: string;
-    }, tenantId: string): Promise<{
+    }): Promise<{
         access_token: string;
         user: {
-            id: any;
-            email: any;
-            role: any;
+            id: string;
+            username: string;
+            email: string;
+            role: import(".prisma/client").$Enums.TenantRole;
+            tenantId: string;
+            firstName: string;
+            lastName: string;
         };
     }>;
 }

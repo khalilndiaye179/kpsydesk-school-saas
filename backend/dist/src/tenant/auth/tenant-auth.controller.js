@@ -19,20 +19,16 @@ let TenantAuthController = class TenantAuthController {
     constructor(authService) {
         this.authService = authService;
     }
-    async login(loginDto, tenantId) {
-        if (!tenantId) {
-            throw new common_1.UnauthorizedException('Tenant non spécifié dans les en-têtes');
-        }
-        return this.authService.login(loginDto.email, loginDto.pass, tenantId);
+    async login(loginDto) {
+        return this.authService.login(loginDto.username, loginDto.pass);
     }
 };
 exports.TenantAuthController = TenantAuthController;
 __decorate([
     (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Headers)('x-tenant-id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], TenantAuthController.prototype, "login", null);
 exports.TenantAuthController = TenantAuthController = __decorate([

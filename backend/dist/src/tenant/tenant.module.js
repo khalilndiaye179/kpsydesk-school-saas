@@ -14,6 +14,11 @@ const tenant_classes_controller_1 = require("./classes/tenant-classes.controller
 const tenant_classes_service_1 = require("./classes/tenant-classes.service");
 const prisma_service_1 = require("../prisma.service");
 const jwt_1 = require("@nestjs/jwt");
+const jwt_strategy_1 = require("./auth/jwt.strategy");
+const tenant_users_controller_1 = require("./users/tenant-users.controller");
+const tenant_users_service_1 = require("./users/tenant-users.service");
+const tenant_settings_controller_1 = require("./settings/tenant-settings.controller");
+const tenant_settings_service_1 = require("./settings/tenant-settings.service");
 let TenantModule = class TenantModule {
 };
 exports.TenantModule = TenantModule;
@@ -25,8 +30,20 @@ exports.TenantModule = TenantModule = __decorate([
                 signOptions: { expiresIn: '1d' },
             }),
         ],
-        controllers: [tenant_auth_controller_1.TenantAuthController, tenant_classes_controller_1.TenantClassesController],
-        providers: [tenant_auth_service_1.TenantAuthService, tenant_classes_service_1.TenantClassesService, prisma_service_1.PrismaService],
+        controllers: [
+            tenant_auth_controller_1.TenantAuthController,
+            tenant_classes_controller_1.TenantClassesController,
+            tenant_users_controller_1.TenantUsersController,
+            tenant_settings_controller_1.TenantSettingsController,
+        ],
+        providers: [
+            tenant_auth_service_1.TenantAuthService,
+            tenant_classes_service_1.TenantClassesService,
+            tenant_users_service_1.TenantUsersService,
+            tenant_settings_service_1.TenantSettingsService,
+            prisma_service_1.PrismaService,
+            jwt_strategy_1.JwtStrategy,
+        ],
     })
 ], TenantModule);
 //# sourceMappingURL=tenant.module.js.map

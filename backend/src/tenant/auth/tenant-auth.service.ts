@@ -52,9 +52,5 @@ export class TenantAuthService {
       },
     };
   }
-      }
-    };
-  }
-
 }
 

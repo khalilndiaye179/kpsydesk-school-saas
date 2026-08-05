@@ -251,10 +251,23 @@ export class PublicSignupService {
 
     // 8. Création atomique : Tenant + TenantUser (admin DIRECTOR) + TenantSettings
     const result = await this.prisma.$transaction(async (tx) => {
+      const { generateTenantCodeSlug } = require('../common/utils/tenant-code.util');
+      let baseCode = generateTenantCodeSlug(pending.schoolName);
+      let code = baseCode;
+      let codeIndex = 1;
+
+      while (await tx.tenant.findUnique({ where: { code } })) {
+        code = `${baseCode}${codeIndex}`;
+        codeIndex++;
+      }
+
+      const initialUsername = `${code}-0001`;
+
       // Créer le Tenant
       const tenant = await tx.tenant.create({
         data: {
           name: pending.schoolName,
+          code,
           subdomain: pending.subdomain,
           plan: pending.plan,
           country: pending.country || 'SN',
@@ -266,6 +279,7 @@ export class PublicSignupService {
       await tx.tenantUser.create({
         data: {
           tenantId: tenant.id,
+          username: initialUsername,
           email: pending.email,
           passwordHash: pending.passwordHash,
           firstName: pending.firstName,

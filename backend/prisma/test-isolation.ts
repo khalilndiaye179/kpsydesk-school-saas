@@ -18,6 +18,7 @@ async function testRLSIsolation() {
     const tenantA = await prisma.tenant.create({
       data: {
         name: 'Établissement A',
+        code: 'TNA',
         subdomain: 'tenant-a',
       },
     });
@@ -25,6 +26,7 @@ async function testRLSIsolation() {
     const tenantB = await prisma.tenant.create({
       data: {
         name: 'Établissement B',
+        code: 'TNB',
         subdomain: 'tenant-b',
       },
     });
@@ -41,6 +43,7 @@ async function testRLSIsolation() {
       await tx.tenantUser.create({
         data: {
           tenantId: tenantA.id,
+          username: 'TNA-0001',
           email: 'user@tenant-a.com',
           passwordHash: 'secret-a',
         },
@@ -53,6 +56,7 @@ async function testRLSIsolation() {
       await tx.tenantUser.create({
         data: {
           tenantId: tenantB.id,
+          username: 'TNB-0001',
           email: 'user@tenant-b.com',
           passwordHash: 'secret-b',
         },
@@ -90,6 +94,7 @@ async function testRLSIsolation() {
           data: {
             tenantId: tenantB.id, // ID différent de la session !
             email: 'malicious@tenant-b.com',
+            username: 'TNB-9999',
             passwordHash: 'hack',
           },
         });

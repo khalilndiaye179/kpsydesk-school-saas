@@ -4,12 +4,16 @@ export declare class TenantAuthService {
     private prisma;
     private jwtService;
     constructor(prisma: PrismaService, jwtService: JwtService);
-    login(email: string, pass: string, tenantId: string): Promise<{
+    login(usernameInput: string, pass: string): Promise<{
         access_token: string;
         user: {
-            id: any;
-            email: any;
-            role: any;
+            id: string;
+            username: string;
+            email: string;
+            role: import(".prisma/client").$Enums.TenantRole;
+            tenantId: string;
+            firstName: string;
+            lastName: string;
         };
     }>;
 }
