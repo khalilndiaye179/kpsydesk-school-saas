@@ -31,6 +31,16 @@ export const LoginView: React.FC = () => {
     setUserEmail(email);
   };
 
+  // Étape 1C Réussie (Direct login sans OTP) : Création directe de la session
+  const handleDirectLoginSuccess = (userData: any) => {
+    login(userData);
+    if (userData.role === 'SUPER_ADMIN') {
+      navigate('/superadmin');
+    } else {
+      navigate('/tenant');
+    }
+  };
+
   // Étape 2 Réussie : Validation de l'OTP et création de la session complète
   const handleOtpVerifySuccess = (userData: any) => {
     login(userData);
@@ -82,7 +92,7 @@ export const LoginView: React.FC = () => {
         padding: '48px',
         display: 'flex',
         flexDirection: 'column',
-        justify: 'space-between',
+        justifyContent: 'space-between',
         position: 'relative',
         overflow: 'hidden',
         borderRight: '1px solid rgba(212, 168, 83, 0.15)',
@@ -118,7 +128,7 @@ export const LoginView: React.FC = () => {
               background: 'linear-gradient(135deg, #D4A853 0%, #B8860B 100%)',
               display: 'flex',
               alignItems: 'center',
-              justify: 'center',
+              justifyContent: 'center',
               boxShadow: designTokens.shadows.glowGold,
             }}>
               <GraduationCap size={28} color="#051C14" strokeWidth={2.2} />
@@ -186,7 +196,7 @@ export const LoginView: React.FC = () => {
                   border: '1px solid #10B981',
                   display: 'flex',
                   alignItems: 'center',
-                  justify: 'center',
+                  justifyContent: 'center',
                   flexShrink: 0,
                 }}>
                   <CheckCircle2 size={13} color="#10B981" />
@@ -203,14 +213,14 @@ export const LoginView: React.FC = () => {
           height: '340px',
           display: 'flex',
           alignItems: 'center',
-          justify: 'center',
+          justifyContent: 'center',
           margin: '20px 0',
           zIndex: 2,
         }}>
           {/* TODO_ILLUSTRATION: Remplaçable par un composant d'illustration SVG personnalisé si souhaité */}
           <GraduationIllustration style={{ width: '85%', height: '85%', filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.5))' }} />
 
-          {/* Badges Flottants Autour de l'Illustration (Cachés sur petits écrans) */}
+          {/* Badges Flottants Autour de l'Illustration */}
           {floatingModules.map((mod, i) => {
             const IconComp = mod.icon;
             return (
@@ -246,7 +256,7 @@ export const LoginView: React.FC = () => {
                   color: designTokens.colors.brandGold,
                   display: 'flex',
                   alignItems: 'center',
-                  justify: 'center',
+                  justifyContent: 'center',
                 }}>
                   <IconComp size={12} />
                 </div>
@@ -278,7 +288,7 @@ export const LoginView: React.FC = () => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justify: 'center',
+        justifyContent: 'center',
         padding: '40px 24px',
         position: 'relative',
       }}>
@@ -356,13 +366,16 @@ export const LoginView: React.FC = () => {
           {!challengeId ? (
             <PasswordStep 
               onSuccess={handlePasswordSuccess} 
-              onRequireEnrollment={handleRequireEnrollment} 
+              onRequireEnrollment={handleRequireEnrollment}
+              onDirectLogin={handleDirectLoginSuccess}
+              role={role}
+              setRole={setRole}
             />
           ) : (
             <OtpStep 
               challengeId={challengeId} 
               userEmail={userEmail} 
-              onSuccess={handleOtpVerifySuccess} 
+              onVerifySuccess={handleOtpVerifySuccess} 
               onCancel={handleResetToPasswordStep} 
             />
           )}
