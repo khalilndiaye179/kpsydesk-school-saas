@@ -88,8 +88,12 @@ export const FleetView: React.FC = () => {
     setIsLoading(true);
     setApiError('');
     try {
-      const res = await api.get('/platform/tenants', { headers: authHeaders });
-      setTenants(res.data);
+      const res = await api.get('/platform/tenants');
+      if (Array.isArray(res.data)) {
+        setTenants(res.data);
+      } else {
+        setTenants([]);
+      }
       localStorage.removeItem('kpsydesk_new_signup_created');
       setNewSignupAlert(false);
     } catch (err: any) {

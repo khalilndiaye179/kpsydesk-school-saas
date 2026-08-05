@@ -23,6 +23,7 @@ export class PlatformTenantsService {
     return tenants.map((t) => ({
       id: t.id,
       name: t.name,
+      code: t.code,
       subdomain: t.subdomain,
       plan: t.plan,
       status: t.status,
