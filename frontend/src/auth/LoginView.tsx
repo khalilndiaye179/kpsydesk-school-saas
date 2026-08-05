@@ -152,36 +152,36 @@ export const LoginView: React.FC = () => {
                 right: m.right,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '8px 14px',
+                gap: '10px',
+                padding: '10px 18px',
                 borderRadius: designTokens.borderRadius.pill,
-                backgroundColor: 'rgba(5, 28, 20, 0.85)',
-                border: '1px solid rgba(212, 168, 83, 0.25)',
-                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.4)',
+                backgroundColor: 'rgba(5, 28, 20, 0.9)',
+                border: '1px solid rgba(212, 168, 83, 0.4)',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.5)',
                 backdropFilter: 'blur(8px)',
                 color: '#FFFFFF',
-                fontSize: '0.78rem',
-                fontWeight: 600,
+                fontSize: '0.88rem',
+                fontWeight: 700,
                 pointerEvents: 'none',
               }}
             >
-              <m.icon size={14} color={designTokens.colors.brandGold} />
+              <m.icon size={20} color={designTokens.colors.brandGold} />
               <span>{m.label}</span>
             </div>
           ))}
         </div>
 
-        {/* FOOTER PANNEAU BRANDING */}
-        <div style={{ zIndex: 2 }}>
+        {/* ENCART POINTS FORTS PRODUIT - POLICES ET ICÔNES AGRANDIES */}
+        <div style={{ zIndex: 2, marginTop: '20px' }}>
           <div style={{
-            display: 'flex', flexDirection: 'column', gap: '8px',
-            backgroundColor: 'rgba(5, 28, 20, 0.6)', padding: '16px 20px', borderRadius: '16px',
-            border: '1px solid rgba(212, 168, 83, 0.15)',
+            display: 'flex', flexDirection: 'column', gap: '14px',
+            backgroundColor: 'rgba(5, 28, 20, 0.85)', padding: '24px 28px', borderRadius: '20px',
+            border: '1.5px solid rgba(212, 168, 83, 0.35)', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
           }}>
             {featurePoints.map((pt, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#E2E8F0', fontSize: '0.82rem' }}>
-                <CheckCircle2 size={15} color={designTokens.colors.brandGold} />
-                <span>{pt}</span>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', color: '#F8FAFC', fontSize: '0.98rem', fontWeight: 600 }}>
+                <CheckCircle2 size={22} color={designTokens.colors.brandGold} style={{ flexShrink: 0 }} />
+                <span style={{ lineHeight: '1.4' }}>{pt}</span>
               </div>
             ))}
           </div>
@@ -203,10 +203,11 @@ export const LoginView: React.FC = () => {
           {/* Titre & Message de Bienvenue */}
           <div style={{ textAlign: 'center', marginBottom: '28px' }}>
             <div style={{
-              display: 'inline-flex', padding: '10px', borderRadius: '12px',
-              backgroundColor: 'rgba(212, 168, 83, 0.1)', color: designTokens.colors.brandGold, marginBottom: '12px',
+              display: 'inline-flex', padding: '14px', borderRadius: '16px',
+              backgroundColor: 'rgba(212, 168, 83, 0.15)', color: designTokens.colors.brandGold, marginBottom: '14px',
+              border: '1px solid rgba(212, 168, 83, 0.3)',
             }}>
-              <Lock size={22} />
+              <Lock size={28} />
             </div>
             <h2 style={{
               margin: '0 0 6px 0', fontSize: '1.5rem', fontWeight: 700,
