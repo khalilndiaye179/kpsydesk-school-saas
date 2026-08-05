@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&family=Space+Grotesk:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono&family=Space+Grotesk:wght@700&display=swap');
 
 :root {
   /* Palette Dark Mode (Moderne Futuriste - Par défaut) */
@@ -19,18 +19,19 @@
   --border: #1F2937;
 
   /* Design Tokens Charte Graphique KPSySchool Refonte */
-  --kpsy-green-forest: #1B3B2F;
+  --kpsy-green-forest: #051C14;
   --kpsy-gold-amber: #D4A853;
-  --kpsy-bordeaux: #8B2635;
-  --kpsy-cream-bg: #F5F1E8;
+  --kpsy-red-cta: #DC2626;
 
-  /* Couleurs Drapeau Sénégal / Panafricaines */
-  --sn-green: #00853F;
-  --sn-yellow: #FDEF42;
-  --sn-red: #E31B23;
+  /* Couleurs Thème Pays Dynamiques (Default Sénégal) */
+  --tenant-primary-color: #00853F;
+  --tenant-secondary-color: #FDEF42;
+  --tenant-accent-color: #E31B23;
+  --tenant-brand-color: #D4A853;
+  --tenant-currency-symbol: FCFA;
 
   /* Font stacks */
-  --font-title: 'Space Grotesk', sans-serif;
+  --font-title: 'Plus Jakarta Sans', 'Space Grotesk', sans-serif;
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }

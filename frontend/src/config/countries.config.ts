@@ -3,7 +3,13 @@ export interface CountryConfig {
   name: string;                  // Ex: "Côte d'Ivoire"
   flag: string;                  // Ex: "🇨🇮"
   callingCode: string;           // Ex: "+225"
-  isActive: boolean;             // Phase 3: true pour SN, CI, ML | false pour TG, BJ, BF, NE, GW
+  isActive: boolean;             // true pour SN, CI, ML | false pour TG, BJ, BF, NE, GW
+  theme: {
+    primaryColor: string;        // Couleur primaire dérivée du drapeau (ex: vert Sénégal #00853F, orange CI #F77F00)
+    secondaryColor: string;      // Couleur secondaire du drapeau (ex: jaune #FDEF42, blanc #FFFFFF)
+    accentColor: string;         // Couleur tertiaire ou accent (ex: rouge #E31B23, vert CI #009E60)
+    brandColor: string;          // Constante KPSyDesk #D4A853 (Doré / Amber)
+  };
   currency: {
     code: string;                // 'XOF'
     symbol: string;              // 'FCFA'
@@ -38,6 +44,12 @@ export const COUNTRY_REGISTRY: Record<string, CountryConfig> = {
     flag: '🇸🇳',
     callingCode: '+221',
     isActive: true,
+    theme: {
+      primaryColor: '#00853F',
+      secondaryColor: '#FDEF42',
+      accentColor: '#E31B23',
+      brandColor: '#D4A853',
+    },
     currency: { code: 'XOF', symbol: 'FCFA', position: 'AFTER' },
     phone: { placeholder: '77 123 45 67', example: '+221 77 123 45 67' },
     tax: { authorityName: 'DGI (Direction Générale des Impôts)', taxIdLabel: 'NINEA' },
@@ -54,6 +66,12 @@ export const COUNTRY_REGISTRY: Record<string, CountryConfig> = {
     flag: '🇨🇮',
     callingCode: '+225',
     isActive: true,
+    theme: {
+      primaryColor: '#F77F00',
+      secondaryColor: '#FFFFFF',
+      accentColor: '#009E60',
+      brandColor: '#D4A853',
+    },
     currency: { code: 'XOF', symbol: 'FCFA', position: 'AFTER' },
     phone: { placeholder: '07 12 34 56 78', example: '+225 07 12 34 56 78' },
     tax: { authorityName: 'DGI (Direction Générale des Impôts)', taxIdLabel: 'NCC (N° Compte Contribuable)' },
@@ -70,6 +88,12 @@ export const COUNTRY_REGISTRY: Record<string, CountryConfig> = {
     flag: '🇲🇱',
     callingCode: '+223',
     isActive: true,
+    theme: {
+      primaryColor: '#14B53A',
+      secondaryColor: '#FCD116',
+      accentColor: '#CE1126',
+      brandColor: '#D4A853',
+    },
     currency: { code: 'XOF', symbol: 'FCFA', position: 'AFTER' },
     phone: { placeholder: '66 12 34 56', example: '+223 66 12 34 56' },
     tax: { authorityName: 'DGI (Direction Générale des Impôts)', taxIdLabel: 'NIF' },
@@ -86,6 +110,12 @@ export const COUNTRY_REGISTRY: Record<string, CountryConfig> = {
     flag: '🇹🇬',
     callingCode: '+228',
     isActive: false,
+    theme: {
+      primaryColor: '#006A4E',
+      secondaryColor: '#FFCE00',
+      accentColor: '#D21034',
+      brandColor: '#D4A853',
+    },
     currency: { code: 'XOF', symbol: 'FCFA', position: 'AFTER' },
     phone: { placeholder: '90 12 34 56', example: '+228 90 12 34 56' },
     tax: { authorityName: 'OTR (Office Togolais des Recettes)', taxIdLabel: 'NIF' },
@@ -102,6 +132,12 @@ export const COUNTRY_REGISTRY: Record<string, CountryConfig> = {
     flag: '🇧🇯',
     callingCode: '+229',
     isActive: false,
+    theme: {
+      primaryColor: '#008751',
+      secondaryColor: '#FCD116',
+      accentColor: '#E8112D',
+      brandColor: '#D4A853',
+    },
     currency: { code: 'XOF', symbol: 'FCFA', position: 'AFTER' },
     phone: { placeholder: '97 12 34 56', example: '+229 97 12 34 56' },
     tax: { authorityName: 'DGI (Direction Générale des Impôts)', taxIdLabel: 'IFU' },
@@ -118,6 +154,12 @@ export const COUNTRY_REGISTRY: Record<string, CountryConfig> = {
     flag: '🇧🇫',
     callingCode: '+226',
     isActive: false,
+    theme: {
+      primaryColor: '#EF2B2D',
+      secondaryColor: '#009E49',
+      accentColor: '#FCD116',
+      brandColor: '#D4A853',
+    },
     currency: { code: 'XOF', symbol: 'FCFA', position: 'AFTER' },
     phone: { placeholder: '70 12 34 56', example: '+226 70 12 34 56' },
     tax: { authorityName: 'DGI (Direction Générale des Impôts)', taxIdLabel: 'IFU' },
@@ -134,6 +176,12 @@ export const COUNTRY_REGISTRY: Record<string, CountryConfig> = {
     flag: '🇳🇪',
     callingCode: '+227',
     isActive: false,
+    theme: {
+      primaryColor: '#E05206',
+      secondaryColor: '#FFFFFF',
+      accentColor: '#0DB02B',
+      brandColor: '#D4A853',
+    },
     currency: { code: 'XOF', symbol: 'FCFA', position: 'AFTER' },
     phone: { placeholder: '90 12 34 56', example: '+227 90 12 34 56' },
     tax: { authorityName: 'DGI (Direction Générale des Impôts)', taxIdLabel: 'NIF' },
@@ -150,6 +198,12 @@ export const COUNTRY_REGISTRY: Record<string, CountryConfig> = {
     flag: '🇬🇼',
     callingCode: '+245',
     isActive: false,
+    theme: {
+      primaryColor: '#CE1126',
+      secondaryColor: '#FCD116',
+      accentColor: '#007A3D',
+      brandColor: '#D4A853',
+    },
     currency: { code: 'XOF', symbol: 'FCFA', position: 'AFTER' },
     phone: { placeholder: '95 123 45 67', example: '+245 95 123 45 67' },
     tax: { authorityName: 'DGCI (Direcção-Geral das Contribuições e Impostos)', taxIdLabel: 'NIF' },
