@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Trash2, FileSpreadsheet, User, MapPin, Phone, Mail, Calendar as CalendarIcon, Printer, BadgeInfo, FileText } from 'lucide-react';
+import { UserPlus, Trash2, FileSpreadsheet, User, MapPin, Phone, Mail, Calendar as CalendarIcon, Printer, BadgeInfo, FileText, Upload, ShieldAlert, HeartPulse, GraduationCap, DollarSign, FileCheck } from 'lucide-react';
 import { api } from '../../lib/api';
 import { getCountryConfig } from '../../config/countries.config';
 
@@ -8,21 +8,57 @@ interface StudentData {
   matricule?: string;
   firstName: string;
   lastName: string;
+  gender: 'Masculin' | 'Féminin';
+  nationality?: string;
+  birthCertificateNo?: string;
+  photoUrl?: string;
+  registrationStatus: 'Nouvelle Inscription' | 'Réinscription' | 'Transfert';
+  
   classId: string;
   className: string;
   studentPhone?: string;
   studentEmail?: string;
+  
+  // Responsable Légal
   guardianName: string;
   guardianRelation: string;
   guardianPhone: string;
   guardianEmail: string;
+  guardianProfession?: string;
+  guardianIdCardNo?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  authorizedPersons?: string;
+  address: string;
+
+  // Naissance
   birthDate: string;
   birthPlace: string;
+
+  // Santé
+  bloodGroup?: string;
+  medicalNotes?: string;
+
+  // Scolarité
   previousSchool?: string;
-  address: string;
+  lastClass?: string;
+  transferReason?: string;
+
+  // Administratif & Financier
+  regime: 'Externe' | 'Demi-pensionnaire' | 'Interne';
+  paymentPlan: 'Mensuel' | 'Trimestriel' | 'Annuel';
+
+  // Suivi des Pièces Fournies
+  documents?: {
+    birthCertificateProvided?: boolean;
+    photoProvided?: boolean;
+    previousReportProvided?: boolean;
+    dischargeCertificateProvided?: boolean;
+    vaccinationRecordProvided?: boolean;
+  };
 }
 
-// Composant Helper pour les champs (déplacé en dehors pour éviter la perte de focus)
+// Composant Helper réutilisable pour les champs de saisie
 const InputField = ({ label, value, setter, type = 'text', required = false, placeholder = '' }: any) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 45%' }}>
     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -41,17 +77,49 @@ export const StudentView: React.FC = () => {
   // States du formulaire
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [gender, setGender] = useState<'Masculin' | 'Féminin'>('Masculin');
+  const [nationality, setNationality] = useState('Sénégalaise');
+  const [birthCertificateNo, setBirthCertificateNo] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [registrationStatus, setRegistrationStatus] = useState<'Nouvelle Inscription' | 'Réinscription' | 'Transfert'>('Nouvelle Inscription');
+
   const [classId, setClassId] = useState('');
   const [studentPhone, setStudentPhone] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [birthPlace, setBirthPlace] = useState('');
+  const [address, setAddress] = useState('');
+
+  // Tuteur & Urgence
   const [guardianName, setGuardianName] = useState('');
   const [guardianRelation, setGuardianRelation] = useState('Père');
   const [guardianPhone, setGuardianPhone] = useState('');
   const [guardianEmail, setGuardianEmail] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [birthPlace, setBirthPlace] = useState('');
+  const [guardianProfession, setGuardianProfession] = useState('');
+  const [guardianIdCardNo, setGuardianIdCardNo] = useState('');
+  const [emergencyContactName, setEmergencyContactName] = useState('');
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState('');
+  const [authorizedPersons, setAuthorizedPersons] = useState('');
+
+  // Santé
+  const [bloodGroup, setBloodGroup] = useState('O+');
+  const [medicalNotes, setMedicalNotes] = useState('');
+
+  // Scolarité
   const [previousSchool, setPreviousSchool] = useState('');
-  const [address, setAddress] = useState('');
+  const [lastClass, setLastClass] = useState('');
+  const [transferReason, setTransferReason] = useState('');
+
+  // Administratif & Financier
+  const [regime, setRegime] = useState<'Externe' | 'Demi-pensionnaire' | 'Interne'>('Externe');
+  const [paymentPlan, setPaymentPlan] = useState<'Mensuel' | 'Trimestriel' | 'Annuel'>('Mensuel');
+
+  // Documents
+  const [docBirthCert, setDocBirthCert] = useState(true);
+  const [docPhoto, setDocPhoto] = useState(true);
+  const [docPrevReport, setDocPrevReport] = useState(false);
+  const [docDischarge, setDocDischarge] = useState(false);
+  const [docVaccine, setDocVaccine] = useState(false);
 
   const [availableClasses, setAvailableClasses] = useState<{id: string, name: string}[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -98,113 +166,151 @@ export const StudentView: React.FC = () => {
   };
 
   const fetchStudents = async () => {
+    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
+    const STUDENTS_STORAGE_KEY = `kpsydesk_students_${activeTenantId}`;
+
     try {
       const response = await api.get('/tenant/students');
-      const apiStudents = response.data.map((s: any) => ({
-        id: s.id,
-        matricule: s.matricule,
-        firstName: s.firstName,
-        lastName: s.lastName,
-        classId: s.classId,
-        className: s.class?.name || 'Inconnue',
-        studentPhone: s.studentPhone || '',
-        studentEmail: s.studentEmail || '',
-        guardianName: s.guardianName || '',
-        guardianRelation: s.guardianRelation || 'Père',
-        guardianPhone: s.guardianPhone || '',
-        guardianEmail: s.guardianEmail || '',
-        birthDate: s.birthDate || '',
-        birthPlace: s.birthPlace || '',
-        previousSchool: s.previousSchool || '',
-        address: s.address || ''
-      }));
-      setStudents(apiStudents);
-      localStorage.setItem('kpsydesk_students', JSON.stringify(apiStudents));
+      setStudents(response.data);
+      localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(response.data));
     } catch (err) {
-      console.warn('Erreur API students:', err);
-      const savedStudents = localStorage.getItem('kpsydesk_students');
-      if (savedStudents) {
-        let parsed = JSON.parse(savedStudents);
-        let changed = false;
-        
-        // Attribuer un matricule aux étudiants existants s'ils n'en ont pas
-        parsed.forEach((s: any, index: number) => {
-          if (!s.matricule) {
-            const tempArray = parsed.slice(0, index); 
-            s.matricule = generateMatricule(tempArray.concat(parsed.slice(index + 1)));
-            changed = true;
-          }
-        });
-
-        if (changed) {
-          localStorage.setItem('kpsydesk_students', JSON.stringify(parsed));
-        }
-        setStudents(parsed);
+      const saved = localStorage.getItem(STUDENTS_STORAGE_KEY);
+      if (saved) {
+        setStudents(JSON.parse(saved));
+      } else {
+        setStudents([]);
+        localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify([]));
       }
     }
   };
 
   const resetForm = () => {
-    setEditingId(null);
     setFirstName('');
     setLastName('');
+    setGender('Masculin');
+    setNationality('Sénégalaise');
+    setBirthCertificateNo('');
+    setPhotoUrl('');
+    setRegistrationStatus('Nouvelle Inscription');
+
     setStudentPhone('');
     setStudentEmail('');
+    setBirthDate('');
+    setBirthPlace('');
+    setAddress('');
+
     setGuardianName('');
     setGuardianRelation('Père');
     setGuardianPhone('');
     setGuardianEmail('');
-    setBirthDate('');
-    setBirthPlace('');
+    setGuardianProfession('');
+    setGuardianIdCardNo('');
+    setEmergencyContactName('');
+    setEmergencyContactPhone('');
+    setAuthorizedPersons('');
+
+    setBloodGroup('O+');
+    setMedicalNotes('');
+
     setPreviousSchool('');
-    setAddress('');
+    setLastClass('');
+    setTransferReason('');
+
+    setRegime('Externe');
+    setPaymentPlan('Mensuel');
+
+    setDocBirthCert(true);
+    setDocPhoto(true);
+    setDocPrevReport(false);
+    setDocDischarge(false);
+    setDocVaccine(false);
+
+    setEditingId(null);
   };
 
   const handleAddOrUpdateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName || !lastName || !classId || !guardianName || !guardianPhone || !guardianEmail || !birthDate || !birthPlace || !address) {
-      alert('Veuillez remplir tous les champs obligatoires.');
-      return;
-    }
+    const targetClass = availableClasses.find(c => c.id === classId);
+    const className = targetClass ? targetClass.name : 'Non assignée';
+    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
+    const STUDENTS_STORAGE_KEY = `kpsydesk_students_${activeTenantId}`;
 
-    const studentPayload = {
-      firstName, lastName, classId,
-      studentPhone, studentEmail,
-      guardianName, guardianRelation,
-      guardianPhone, guardianEmail,
-      birthDate, birthPlace,
-      previousSchool, address
+    const studentPayload: Partial<StudentData> = {
+      firstName,
+      lastName,
+      gender,
+      nationality,
+      birthCertificateNo,
+      photoUrl,
+      registrationStatus,
+      classId,
+      className,
+      studentPhone,
+      studentEmail,
+      guardianName,
+      guardianRelation,
+      guardianPhone,
+      guardianEmail,
+      guardianProfession,
+      guardianIdCardNo,
+      emergencyContactName,
+      emergencyContactPhone,
+      authorizedPersons,
+      birthDate,
+      birthPlace,
+      address,
+      bloodGroup,
+      medicalNotes,
+      previousSchool,
+      lastClass,
+      transferReason,
+      regime,
+      paymentPlan,
+      documents: {
+        birthCertificateProvided: docBirthCert,
+        photoProvided: docPhoto,
+        previousReportProvided: docPrevReport,
+        dischargeCertificateProvided: docDischarge,
+        vaccinationRecordProvided: docVaccine,
+      }
     };
 
     if (editingId) {
+      // ------------------------------------
+      // MODE ÉDITION (PUT)
+      // ------------------------------------
       try {
         await api.put(`/tenant/students/${editingId}`, studentPayload);
-        fetchStudents();
       } catch (err) {
-        console.warn('Fallback: Update local');
-        const selectedClass = availableClasses.find(c => c.id === classId);
-        const updatedStudents = students.map(s => 
-          s.id === editingId ? { ...s, ...studentPayload, className: selectedClass?.name || 'Inconnue' } : s
-        );
-        setStudents(updatedStudents);
-        localStorage.setItem('kpsydesk_students', JSON.stringify(updatedStudents));
+        console.warn('Fallback mise à jour locale élève');
       }
+
+      const updated = students.map(s => s.id === editingId ? { ...s, ...studentPayload } as StudentData : s);
+      setStudents(updated);
+      localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(updated));
     } else {
+      // ------------------------------------
+      // MODE CRÉATION (POST)
+      // ------------------------------------
+      const matricule = generateMatricule(students);
+      const fullPayload = { ...studentPayload, matricule };
+
       try {
-        await api.post('/tenant/students', studentPayload);
-        fetchStudents();
+        const res = await api.post('/tenant/students', fullPayload);
+        const created = res.data;
+        const updated = [created, ...students];
+        setStudents(updated);
+        localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(updated));
       } catch (err) {
-        console.warn('Fallback: Inscription locale', err);
-        const selectedClass = availableClasses.find(c => c.id === classId);
+        console.warn('Fallback sauvegarde locale élève:', err);
         const newStudent: StudentData = {
-          id: `local-std-${Date.now()}`,
-          matricule: generateMatricule(students),
-          ...studentPayload,
-          className: selectedClass ? selectedClass.name : 'Inconnue'
+          id: `std-${Date.now()}`,
+          matricule,
+          ...(fullPayload as StudentData)
         };
-        const updatedStudents = [newStudent, ...students];
-        setStudents(updatedStudents);
-        localStorage.setItem('kpsydesk_students', JSON.stringify(updatedStudents));
+        const updated = [newStudent, ...students];
+        setStudents(updated);
+        localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(updated));
       }
     }
 
@@ -213,105 +319,126 @@ export const StudentView: React.FC = () => {
 
   const handleEditStudent = (std: StudentData) => {
     setEditingId(std.id);
-    setFirstName(std.firstName);
-    setLastName(std.lastName);
-    setClassId(std.classId);
+    setFirstName(std.firstName || '');
+    setLastName(std.lastName || '');
+    setGender(std.gender || 'Masculin');
+    setNationality(std.nationality || 'Sénégalaise');
+    setBirthCertificateNo(std.birthCertificateNo || '');
+    setPhotoUrl(std.photoUrl || '');
+    setRegistrationStatus(std.registrationStatus || 'Nouvelle Inscription');
+
+    setClassId(std.classId || (availableClasses[0]?.id || ''));
     setStudentPhone(std.studentPhone || '');
     setStudentEmail(std.studentEmail || '');
-    setGuardianName(std.guardianName);
-    setGuardianRelation(std.guardianRelation);
-    setGuardianPhone(std.guardianPhone);
-    setGuardianEmail(std.guardianEmail);
-    setBirthDate(std.birthDate);
-    setBirthPlace(std.birthPlace);
+    setBirthDate(std.birthDate || '');
+    setBirthPlace(std.birthPlace || '');
+    setAddress(std.address || '');
+
+    setGuardianName(std.guardianName || '');
+    setGuardianRelation(std.guardianRelation || 'Père');
+    setGuardianPhone(std.guardianPhone || '');
+    setGuardianEmail(std.guardianEmail || '');
+    setGuardianProfession(std.guardianProfession || '');
+    setGuardianIdCardNo(std.guardianIdCardNo || '');
+    setEmergencyContactName(std.emergencyContactName || '');
+    setEmergencyContactPhone(std.emergencyContactPhone || '');
+    setAuthorizedPersons(std.authorizedPersons || '');
+
+    setBloodGroup(std.bloodGroup || 'O+');
+    setMedicalNotes(std.medicalNotes || '');
+
     setPreviousSchool(std.previousSchool || '');
-    setAddress(std.address);
+    setLastClass(std.lastClass || '');
+    setTransferReason(std.transferReason || '');
+
+    setRegime(std.regime || 'Externe');
+    setPaymentPlan(std.paymentPlan || 'Mensuel');
+
+    setDocBirthCert(std.documents?.birthCertificateProvided ?? true);
+    setDocPhoto(std.documents?.photoProvided ?? true);
+    setDocPrevReport(std.documents?.previousReportProvided ?? false);
+    setDocDischarge(std.documents?.dischargeCertificateProvided ?? false);
+    setDocVaccine(std.documents?.vaccinationRecordProvided ?? false);
   };
 
   const handleDeleteStudent = async (id: string) => {
-    if (window.confirm('Voulez-vous vraiment supprimer cet élève ?')) {
-      try {
-        await api.delete(`/tenant/students/${id}`);
-        fetchStudents();
-      } catch (err) {
-        console.warn('Fallback: Suppression locale');
-        const updatedStudents = students.filter(s => s.id !== id);
-        setStudents(updatedStudents);
-        localStorage.setItem('kpsydesk_students', JSON.stringify(updatedStudents));
-      }
-    }
-  };
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet élève ?")) return;
 
-  const getSchoolSettings = async () => {
     try {
-      const res = await api.get('/tenant/settings');
-      if (res.data) {
-        localStorage.setItem('kpsydesk_school_settings', JSON.stringify(res.data));
-        return res.data;
-      }
-    } catch (e) {}
-    const saved = localStorage.getItem('kpsydesk_school_settings');
-    if (saved) return JSON.parse(saved);
-    return {
-      schoolName: 'Établissement (Non configuré)',
-      address: '',
-      phone: '',
-      motto: ''
-    };
+      await api.delete(`/tenant/students/${id}`);
+    } catch (err) {
+      console.warn('Suppression API échouée, fallback local');
+    }
+
+    const updated = students.filter(s => s.id !== id);
+    setStudents(updated);
+    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
+    localStorage.setItem(`kpsydesk_students_${activeTenantId}`, JSON.stringify(updated));
   };
 
   const generateDocument = async (std: StudentData, type: 'IDCARD' | 'CERTIFICATE') => {
-    const settings = await getSchoolSettings();
-    const countryConfig = getCountryConfig(settings.country);
-    const qrData = encodeURIComponent(`Authentification KPSyDesk | Matricule: ${std.matricule} | Nom: ${std.firstName} ${std.lastName} | Classe: ${std.className}`);
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
 
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    if (!printWindow) {
-      alert("Le navigateur a bloqué l'ouverture de la fenêtre. Veuillez autoriser les pop-ups.");
-      return;
+    let settings = {
+      schoolName: 'ÉTABLISSEMENT EXCELLENCE KPSY',
+      address: 'Dakar, Sénégal',
+      phone: '+221 33 800 00 00',
+      logo: '',
+      motto: 'Excellence & Discipline'
+    };
+
+    try {
+      const res = await api.get('/tenant/settings');
+      if (res.data) {
+        settings = { ...settings, ...res.data };
+      }
+    } catch (e) {
+      console.warn('Fallback settings document local');
     }
+
+    const countryCode = localStorage.getItem('kpsydesk_active_tenant_country') || 'SN';
+    const countryConfig = getCountryConfig(countryCode);
+
+    const qrData = `MATRICULE:${std.matricule}|NOM:${std.firstName}_${std.lastName}|CLASSE:${std.className}|VALIDE:2025-2026`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
 
     let content = '';
 
     if (type === 'IDCARD') {
       content = `
         <style>
-          body { font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f1f5f9; }
-          .card { width: 340px; height: 540px; background: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; position: relative; border: 2px solid #0f172a; }
-          .header { background: #0f172a; color: white; padding: 20px; text-align: center; }
-          .header h1 { margin: 0; font-size: 1.2rem; }
-          .header p { margin: 4px 0 0 0; font-size: 0.8rem; opacity: 0.8; }
-          .header img.logo { height: 40px; margin-bottom: 8px; border-radius: 4px; object-fit: contain; }
-          .photo-container { display: flex; justify-content: center; margin-top: -30px; }
-          .photo { width: 120px; height: 120px; border-radius: 60px; background: #e2e8f0; border: 4px solid white; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 40px; color: #94a3b8; }
-          .details { padding: 20px; text-align: center; }
-          .name { font-size: 1.4rem; font-weight: bold; margin: 0; color: #0f172a; }
-          .class { color: #38bdf8; font-weight: bold; font-size: 1.1rem; margin: 5px 0 15px 0; }
-          .info { font-size: 0.85rem; color: #475569; margin: 4px 0; display: flex; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; }
-          .footer { position: absolute; bottom: 0; width: 100%; background: #f8fafc; padding: 15px 0; text-align: center; border-top: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; }
-          .qr { width: 80px; height: 80px; margin-top: 10px; }
+          body { font-family: 'Inter', sans-serif; background: #f8fafc; padding: 20px; display: flex; justify-content: center; }
+          .card { width: 350px; height: 220px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; border-radius: 16px; padding: 16px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 12px; }
+          .school-name { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: #38bdf8; }
+          .photo-container { width: 65px; height: 65px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; border: 2px solid #38bdf8; float: left; margin-right: 12px; overflow: hidden; }
+          .details { overflow: hidden; }
+          .name { font-size: 0.95rem; font-weight: bold; margin: 0 0 2px 0; color: #fff; }
+          .class { font-size: 0.8rem; color: #38bdf8; font-weight: 600; margin-bottom: 6px; }
+          .info { font-size: 0.7rem; color: #94a3b8; margin-bottom: 2px; }
+          .info strong { color: #f8fafc; }
+          .footer { position: absolute; bottom: 12px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; }
+          .qr { width: 40px; height: 40px; border-radius: 4px; background: white; padding: 2px; }
         </style>
         <div class="card">
           <div class="header">
-            ${settings.logo ? `<img src="${settings.logo}" class="logo" alt="Logo"/>` : ''}
-            <h1>${settings.schoolName}</h1>
-            <p>CARTE D'IDENTITÉ SCOLAIRE</p>
+            <span class="school-name">${settings.schoolName}</span>
+            <span style="font-size:0.65rem; background:#38bdf8; color:#0f172a; padding:2px 6px; border-radius:4px; font-weight:bold;">ÉLÈVE</span>
           </div>
           <div class="photo-container">
-            <div class="photo">👤</div>
+            ${std.photoUrl ? `<img src="${std.photoUrl}" style="width:100%;height:100%;object-fit:cover;"/>` : `<div style="font-size: 24px;">👤</div>`}
           </div>
           <div class="details">
             <h2 class="name">${std.firstName} ${std.lastName}</h2>
             <div class="class">${std.className}</div>
             
             <div class="info"><span>Matricule:</span> <strong>${std.matricule || 'N/A'}</strong></div>
-            <div class="info"><span>Né(e) le:</span> <strong>${std.birthDate}</strong></div>
-            <div class="info"><span>Contact Urgence:</span> <strong>${std.guardianPhone}</strong></div>
-            
+            <div class="info"><span>Sexe:</span> <strong>${std.gender}</strong> · <span>Né(e) le:</span> <strong>${std.birthDate}</strong></div>
+            <div class="info"><span>Tuteur:</span> <strong>${std.guardianPhone}</strong></div>
           </div>
           <div class="footer">
-            <span style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Valide pour l'année scolaire en cours</span>
+            <span style="font-size: 0.65rem; color: #94a3b8; font-weight: bold;">CARTE SCOLAIRE 2025-2026</span>
             <img src="${qrUrl}" class="qr" alt="QR Code" />
           </div>
         </div>
@@ -349,9 +476,10 @@ export const StudentView: React.FC = () => {
           <div class="content">
             Je soussigné(e), Directeur(trice) de l'établissement <strong>${settings.schoolName}</strong>,<br/><br/>
             Certifie par la présente que l'élève :<br/><br/>
-            Nom et Prénom : <strong>${std.firstName} ${std.lastName}</strong><br/>
+            Nom et Prénom : <strong>${std.firstName} ${std.lastName}</strong> (${std.gender})<br/>
             Matricule : <strong>${std.matricule || 'N/A'}</strong><br/>
-            Né(e) le : <strong>${std.birthDate}</strong> à <strong>${std.birthPlace}</strong><br/><br/>
+            Né(e) le : <strong>${std.birthDate}</strong> à <strong>${std.birthPlace}</strong><br/>
+            Régime : <strong>${std.regime || 'Externe'}</strong><br/><br/>
             Est régulièrement inscrit(e) dans notre établissement pour l'année scolaire en cours, dans la classe de <strong>${std.className}</strong>.<br/><br/>
             En foi de quoi, ce certificat lui est délivré pour servir et valoir ce que de droit.
           </div>
@@ -384,23 +512,22 @@ export const StudentView: React.FC = () => {
     printWindow.document.close();
   };
 
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
       <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
         
-        {/* Formulaire (plus grand) */}
+        {/* Formulaire Enrichi (Dossier d'inscription complet) */}
         <div style={{
           backgroundColor: 'var(--bg-card)',
           borderRadius: '16px',
           padding: '24px',
           border: '1px solid var(--border)',
-          flex: 1.5, // Plus de place pour le formulaire
-          minWidth: '450px'
+          flex: 1.6,
+          minWidth: '480px'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h3 style={{ fontSize: '1.2rem', margin: 0, fontFamily: 'var(--font-title)' }}>
-              {editingId ? 'Modifier les informations' : 'Dossier d\'inscription complet'}
+              {editingId ? 'Modifier les informations de l\'élève' : 'Dossier d\'inscription complet'}
             </h3>
             {editingId && (
               <button 
@@ -414,38 +541,75 @@ export const StudentView: React.FC = () => {
 
           <form onSubmit={handleAddOrUpdateStudent} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
-            {/* Section Identité */}
+            {/* 1. IDENTITÉ DE L'ÉLÈVE */}
             <div>
-              <h4 style={{ fontSize: '0.95rem', color: 'var(--accent)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>Identité & Classe</h4>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--accent)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <User size={16} /> 1. Identité & Informations de l'Élève
+              </h4>
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                 <InputField label="Prénom" value={firstName} setter={setFirstName} required />
                 <InputField label="Nom" value={lastName} setter={setLastName} required />
+                
+                {/* Sexe (Masculin / Féminin) * */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 45%' }}>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Sexe <span style={{ color: 'var(--status-negative)' }}>*</span></label>
+                  <select 
+                    value={gender} onChange={e => setGender(e.target.value as any)} required
+                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none', backgroundColor: 'var(--bg-page)', color: 'var(--text-primary)' }}
+                  >
+                    <option value="Masculin">Masculin</option>
+                    <option value="Féminin">Féminin</option>
+                  </select>
+                </div>
+
+                {/* Statut Inscription * */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 45%' }}>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Statut Inscription <span style={{ color: 'var(--status-negative)' }}>*</span></label>
+                  <select 
+                    value={registrationStatus} onChange={e => setRegistrationStatus(e.target.value as any)} required
+                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none', backgroundColor: 'var(--bg-page)', color: 'var(--text-primary)' }}
+                  >
+                    <option value="Nouvelle Inscription">Nouvelle Inscription</option>
+                    <option value="Réinscription">Réinscription</option>
+                    <option value="Transfert">Transfert</option>
+                  </select>
+                </div>
+
+                {/* Classe * */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 100%' }}>
-                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Classe <span style={{ color: 'var(--status-negative)' }}>*</span></label>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Classe d'affectation <span style={{ color: 'var(--status-negative)' }}>*</span></label>
                   <select 
                     value={classId} onChange={e => setClassId(e.target.value)} required
-                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none' }}
+                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none', backgroundColor: 'var(--bg-page)', color: 'var(--text-primary)' }}
                   >
                     {availableClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
+
                 <InputField label="Date de naissance" value={birthDate} setter={setBirthDate} type="date" required />
                 <InputField label="Lieu de naissance" value={birthPlace} setter={setBirthPlace} required />
+                <InputField label="Nationalité (Optionnel)" value={nationality} setter={setNationality} placeholder="Ex: Sénégalaise" />
+                <InputField label="N° Extrait d'acte de naissance (Optionnel)" value={birthCertificateNo} setter={setBirthCertificateNo} placeholder="Ex: 2012/0458/DK" />
+                <InputField label="Lien photo d'identité (URL Optionnelle)" value={photoUrl} setter={setPhotoUrl} placeholder="https://..." />
               </div>
             </div>
 
-            {/* Section Contacts Élève */}
+            {/* 2. COORDONNÉES DE L'ÉLÈVE */}
             <div>
-              <h4 style={{ fontSize: '0.95rem', color: 'var(--accent)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>Coordonnées de l'élève (Optionnel)</h4>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--accent)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Phone size={16} /> 2. Coordonnées Directes de l'Élève (Optionnel)
+              </h4>
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                <InputField label="Téléphone (Élève)" value={studentPhone} setter={setStudentPhone} type="tel" />
-                <InputField label="Email (Élève)" value={studentEmail} setter={setStudentEmail} type="email" />
+                <InputField label="Téléphone (Élève)" value={studentPhone} setter={setStudentPhone} type="tel" placeholder="77 000 00 00" />
+                <InputField label="Email (Élève)" value={studentEmail} setter={setStudentEmail} type="email" placeholder="eleve@ecole.com" />
               </div>
             </div>
 
-            {/* Section Contacts Tuteur */}
+            {/* 3. RESPONSABLE LÉGAL & CONTACTS D'URGENCE */}
             <div>
-              <h4 style={{ fontSize: '0.95rem', color: 'var(--accent)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>Responsable Légal</h4>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--accent)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShieldAlert size={16} /> 3. Responsable Légal & Contacts d'Urgence
+              </h4>
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                 <InputField label="Nom du Responsable" value={guardianName} setter={setGuardianName} required />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 45%' }}>
@@ -462,21 +626,134 @@ export const StudentView: React.FC = () => {
                 </div>
                 <InputField label="Téléphone (Tuteur)" value={guardianPhone} setter={setGuardianPhone} type="tel" required />
                 <InputField label="Email (Tuteur)" value={guardianEmail} setter={setGuardianEmail} type="email" required />
+                
+                <InputField label="Profession du Responsable (Optionnel)" value={guardianProfession} setter={setGuardianProfession} placeholder="Ex: Ingénieur, Commerçant" />
+                <InputField label="N° CNI / Passeport du Responsable (Optionnel)" value={guardianIdCardNo} setter={setGuardianIdCardNo} placeholder="Ex: 1 759 1990 01234" />
+                
+                <InputField label="Second Contact / Urgence - Nom (Optionnel)" value={emergencyContactName} setter={setEmergencyContactName} placeholder="Ex: Oncle Mamadou" />
+                <InputField label="Second Contact / Urgence - Tél (Optionnel)" value={emergencyContactPhone} setter={setEmergencyContactPhone} type="tel" placeholder="78 000 00 00" />
+                
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 100%' }}>
-                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Adresse complète <span style={{ color: 'var(--status-negative)' }}>*</span></label>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Personnes autorisées à récupérer l'enfant (Optionnel)</label>
+                  <input 
+                    type="text" value={authorizedPersons} onChange={e => setAuthorizedPersons(e.target.value)} placeholder="Ex: Grand-mère Aminata, Chauffeur Ousmane (77 111 22 33)"
+                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 100%' }}>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Adresse Domicile Complète <span style={{ color: 'var(--status-negative)' }}>*</span></label>
                   <textarea 
-                    value={address} onChange={e => setAddress(e.target.value)} required rows={2}
+                    value={address} onChange={e => setAddress(e.target.value)} required rows={2} placeholder="Ville, Quartier, Rue, N° villa..."
                     style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none', resize: 'vertical' }}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Section Divers */}
+            {/* 4. SANTÉ ET SITUATION PARTICULIÈRE */}
             <div>
-              <h4 style={{ fontSize: '0.95rem', color: 'var(--accent)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>Scolarité précédente</h4>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--accent)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <HeartPulse size={16} /> 4. Santé & Informations Médicales (Optionnel)
+              </h4>
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                <InputField label="Structure d'origine (Optionnel)" value={previousSchool} setter={setPreviousSchool} placeholder="Ex: Collège Mermoz" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 45%' }}>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Groupe Sanguin</label>
+                  <select 
+                    value={bloodGroup} onChange={e => setBloodGroup(e.target.value)}
+                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none', backgroundColor: 'var(--bg-page)', color: 'var(--text-primary)' }}
+                  >
+                    <option value="O+">O+</option>
+                    <option value="A+">A+</option>
+                    <option value="B+">B+</option>
+                    <option value="AB+">AB+</option>
+                    <option value="O-">O-</option>
+                    <option value="A-">A-</option>
+                    <option value="B-">B-</option>
+                    <option value="AB-">AB-</option>
+                    <option value="Inconnu">Inconnu / Non renseigné</option>
+                  </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 100%' }}>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Allergies, Traitements urgents ou Besoins spécifiques (PAI)</label>
+                  <input 
+                    type="text" value={medicalNotes} onChange={e => setMedicalNotes(e.target.value)} placeholder="Ex: Asthmatique (Ventoline), Allergie arachides"
+                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 5. SCOLARITÉ PRÉCÉDENTE */}
+            <div>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--accent)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <GraduationCap size={16} /> 5. Scolarité Précédente (Optionnel)
+              </h4>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                <InputField label="Dernier Établissement Fréquenté" value={previousSchool} setter={setPreviousSchool} placeholder="Ex: Collège Mermoz" />
+                <InputField label="Dernière Classe Fréquentée" value={lastClass} setter={setLastClass} placeholder="Ex: CM2, 6ème" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 100%' }}>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Motif de changement d'établissement</label>
+                  <input 
+                    type="text" value={transferReason} onChange={e => setTransferReason(e.target.value)} placeholder="Ex: Déménagement familial, Recherche d'excellence"
+                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 6. ADMINISTRATIF ET RÉGIME FINANCIER */}
+            <div>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--accent)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <DollarSign size={16} /> 6. Régime Scolaire & Modalité de Paiement
+              </h4>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 45%' }}>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Régime de l'élève <span style={{ color: 'var(--status-negative)' }}>*</span></label>
+                  <select 
+                    value={regime} onChange={e => setRegime(e.target.value as any)} required
+                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none', backgroundColor: 'var(--bg-page)', color: 'var(--text-primary)' }}
+                  >
+                    <option value="Externe">Externe</option>
+                    <option value="Demi-pensionnaire">Demi-pensionnaire</option>
+                    <option value="Interne">Interne</option>
+                  </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '1 1 45%' }}>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Échéancier de Paiement <span style={{ color: 'var(--status-negative)' }}>*</span></label>
+                  <select 
+                    value={paymentPlan} onChange={e => setPaymentPlan(e.target.value as any)} required
+                    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none', backgroundColor: 'var(--bg-page)', color: 'var(--text-primary)' }}
+                  >
+                    <option value="Mensuel">Mensuel (10 tranches)</option>
+                    <option value="Trimestriel">Trimestriel (3 tranches)</option>
+                    <option value="Annuel">Annuel (Paiement intégral)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* 7. CHECKLIST PIÈCES DU DOSSIER */}
+            <div>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--accent)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileCheck size={16} /> 7. Pièces administratives fournies (Checklist)
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.85rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={docBirthCert} onChange={e => setDocBirthCert(e.target.checked)} /> Extrait d'acte de naissance
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={docPhoto} onChange={e => setDocPhoto(e.target.checked)} /> Photo d'identité (2 exemplaires)
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={docPrevReport} onChange={e => setDocPrevReport(e.target.checked)} /> Bulletins de l'année précédente
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={docDischarge} onChange={e => setDocDischarge(e.target.checked)} /> Certificat de radiation (Ex-Certificat de sortie)
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={docVaccine} onChange={e => setDocVaccine(e.target.checked)} /> Carnet de vaccination / Certificat médical
+                </label>
               </div>
             </div>
 
@@ -484,12 +761,12 @@ export const StudentView: React.FC = () => {
               backgroundColor: editingId ? '#10b981' : 'var(--accent)', color: '#FFFFFF', border: 'none', padding: '14px',
               borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.2s', marginTop: '10px'
             }}>
-              <UserPlus size={18} /> {editingId ? 'Sauvegarder les modifications' : 'Valider l\'inscription'}
+              <UserPlus size={18} /> {editingId ? 'Sauvegarder les modifications' : 'Valider le dossier d\'inscription'}
             </button>
           </form>
         </div>
 
-        {/* Liste */}
+        {/* Liste des Dossiers */}
         <div style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
@@ -518,10 +795,21 @@ export const StudentView: React.FC = () => {
                       <User size={20} />
                     </div>
                     <div>
-                      <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{std.firstName} {std.lastName}</h4>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--accent)', fontWeight: 500 }}>{std.className}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{std.firstName} {std.lastName}</h4>
+                        <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: std.gender === 'Féminin' ? '#f472b6' : '#38bdf8', color: 'white', fontWeight: 700 }}>
+                          {std.gender === 'Féminin' ? 'F' : 'M'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--accent)', fontWeight: 600 }}>{std.className}</span>
+                        <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(212, 168, 83, 0.15)', color: '#D4A853', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                          {std.regime || 'Externe'}
+                        </span>
+                      </div>
                     </div>
                   </div>
+
                   <div style={{ display: 'flex', gap: '4px' }}>
                     <button type="button" onClick={() => generateDocument(std, 'IDCARD')} style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', padding: '6px', borderRadius: '6px' }} title="Générer Carte d'identité">
                       <BadgeInfo size={18} />
@@ -543,17 +831,17 @@ export const StudentView: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px', paddingTop: '12px', borderTop: '1px dashed var(--border)' }}>
                   {std.guardianName && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      <User size={14} /> Tuteur: {std.guardianName} ({std.guardianRelation})
+                      <User size={14} /> Responsable: {std.guardianName} ({std.guardianRelation}) {std.guardianProfession ? `- ${std.guardianProfession}` : ''}
                     </div>
                   )}
                   {std.guardianPhone && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      <Phone size={14} /> Tél: {std.guardianPhone}
+                      <Phone size={14} /> Tél Tuteur: {std.guardianPhone}
                     </div>
                   )}
-                  {std.guardianEmail && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      <Mail size={14} /> {std.guardianEmail}
+                  {std.emergencyContactPhone && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#ef4444', fontWeight: 600 }}>
+                      <ShieldAlert size={14} /> Urgence: {std.emergencyContactName} ({std.emergencyContactPhone})
                     </div>
                   )}
                   {std.address && (
