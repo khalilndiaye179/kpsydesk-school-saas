@@ -368,12 +368,13 @@ export const FleetView: React.FC = () => {
                   🔑 IDENTIFIANT DE CONNEXION INITIAL (SUPERADMIN / DIRECTEUR)
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '1.2rem', fontFamily: 'monospace', fontWeight: 800, color: '#0284c7', letterSpacing: '1px' }}>
-                    {selectedTenant.code ? `${selectedTenant.code}-0001` : `${selectedTenant.subdomain.toUpperCase()}-0001`}
+                  <span style={{ fontSize: '1.25rem', fontFamily: 'monospace', fontWeight: 800, color: '#0284c7', letterSpacing: '1px' }}>
+                    {(selectedTenant.code || selectedTenant.subdomain.toUpperCase().replace(/-/g, '').slice(0, 7))}-0001
                   </span>
                   <button
                     onClick={() => {
-                      const loginId = selectedTenant.code ? `${selectedTenant.code}-0001` : `${selectedTenant.subdomain.toUpperCase()}-0001`;
+                      const computedCode = selectedTenant.code || selectedTenant.subdomain.toUpperCase().replace(/-/g, '').slice(0, 7);
+                      const loginId = `${computedCode}-0001`;
                       navigator.clipboard.writeText(loginId);
                       alert(`Identifiant ${loginId} copié dans le presse-papier !`);
                     }}
@@ -383,7 +384,7 @@ export const FleetView: React.FC = () => {
                   </button>
                 </div>
                 <span style={{ fontSize: '0.75rem', color: '#0369a1' }}>
-                  Code Établissement : <strong>{selectedTenant.code || selectedTenant.subdomain.toUpperCase()}</strong>
+                  Code Établissement : <strong>{selectedTenant.code || selectedTenant.subdomain.toUpperCase().replace(/-/g, '').slice(0, 7)}</strong>
                 </span>
               </div>
 
