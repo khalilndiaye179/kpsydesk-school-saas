@@ -108,7 +108,7 @@ services:
     volumes:
       - kpsyschool_backups:/backups
       - ./deploy/scripts/backup-kpsyschool-postgres.sh:/backup.sh:ro
-    entrypoint: ["/bin/sh", "-c", "echo '0 2 * * * /backup.sh' | crond -f"]
+    entrypoint: ["/bin/sh", "-c", "echo '0 2 * * * /bin/sh /backup.sh' | crond -f -l 8"]
     depends_on:
       - kpsyschool_postgres
     networks:
