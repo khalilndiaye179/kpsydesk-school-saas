@@ -29,61 +29,44 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
 
       if (isPlatformAccount) {
         // Flux SuperAdmin / Platform
-        try {
-          const res = await api.post('/platform/auth/login', { email: cleanInput, pass: password });
-          const resData = res.data;
+        const res = await api.post('/platform/auth/login', { email: cleanInput, pass: password });
+        const resData = res.data;
 
-          if (resData.status === 'mfa_enrollment_required' && resData.enroll_token) {
-            onRequireEnrollment(resData.enroll_token, cleanInput);
-          } else if (resData.status === 'otp_required' && resData.challenge_id) {
-            onSuccess(resData.challenge_id, cleanInput);
-          } else if (resData.access_token && resData.user) {
-            localStorage.setItem('kpsydesk_access_token', resData.access_token);
-            onDirectLogin({
-              id: resData.user.id,
-              email: resData.user.email,
-              role: resData.user.role || 'SUPER_ADMIN',
-              name: resData.user.email.split('@')[0].toUpperCase(),
-            });
-          } else {
-            setError("Identifiants invalides.");
-          }
-        } catch (apiErr: any) {
-          if (cleanInput === 'admin@kpsydesk.com' || cleanInput.includes('superadmin')) {
-            onDirectLogin({
-              id: 'super-admin-1',
-              email: cleanInput,
-              role: 'SUPER_ADMIN',
-              name: 'SUPER ADMIN',
-            });
-            return;
-          }
-          throw apiErr;
+        if (resData.status === 'mfa_enrollment_required' && resData.enroll_token) {
+          onRequireEnrollment(resData.enroll_token, cleanInput);
+        } else if (resData.status === 'otp_required' && resData.challenge_id) {
+          onSuccess(resData.challenge_id, cleanInput);
+        } else if (resData.access_token && resData.user) {
+          localStorage.setItem('kpsydesk_access_token', resData.access_token);
+          onDirectLogin({
+            id: resData.user.id,
+            email: resData.user.email,
+            role: resData.user.role || 'SUPER_ADMIN',
+            name: resData.user.email.split('@')[0].toUpperCase(),
+          });
+        } else {
+          setError("Identifiants invalides.");
         }
       } else {
         // Flux Tenant (Directeur, Enseignant, Personnel d'établissement) -> Identifiant Username
-        try {
-          const res = await api.post('/tenant/auth/login', { username: cleanInput, pass: password });
+        const res = await api.post('/tenant/auth/login', { username: cleanInput, pass: password });
 
-          if (res.data.access_token) {
-            localStorage.setItem('kpsydesk_access_token', res.data.access_token);
+        if (res.data.access_token) {
+          localStorage.setItem('kpsydesk_access_token', res.data.access_token);
 
-            const realTenantId = res.data.user?.tenantId || res.data.tenantId;
-            if (realTenantId) {
-              localStorage.setItem('kpsydesk_active_tenant_id', realTenantId);
-            }
-
-            onDirectLogin({
-              id: res.data.user?.id || `user_${Date.now()}`,
-              username: res.data.user?.username || cleanInput.toUpperCase(),
-              email: res.data.user?.email,
-              role: res.data.user?.role || 'TENANT_ADMIN',
-              tenantId: realTenantId,
-              name: res.data.user?.firstName ? `${res.data.user.firstName} ${res.data.user.lastName || ''}` : cleanInput.toUpperCase(),
-            });
+          const realTenantId = res.data.user?.tenantId || res.data.tenantId;
+          if (realTenantId) {
+            localStorage.setItem('kpsydesk_active_tenant_id', realTenantId);
           }
-        } catch (apiErr: any) {
-          throw apiErr;
+
+          onDirectLogin({
+            id: res.data.user?.id || `user_${Date.now()}`,
+            username: res.data.user?.username || cleanInput.toUpperCase(),
+            email: res.data.user?.email,
+            role: res.data.user?.role || 'TENANT_ADMIN',
+            tenantId: realTenantId,
+            name: res.data.user?.firstName ? `${res.data.user.firstName} ${res.data.user.lastName || ''}` : cleanInput.toUpperCase(),
+          });
         }
       }
     } catch (apiErr: any) {

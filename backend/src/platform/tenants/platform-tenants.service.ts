@@ -11,7 +11,7 @@ export class PlatformTenantsService {
       include: {
         users: {
           where: { role: 'DIRECTOR' },
-          select: { email: true, firstName: true, lastName: true, phone: true },
+          select: { username: true, email: true, firstName: true, lastName: true, phone: true },
           take: 1,
         },
         _count: {
@@ -31,6 +31,7 @@ export class PlatformTenantsService {
       studentsCount: t._count.students,
       usersCount: t._count.users,
       contactEmail: t.users[0]?.email ?? null,
+      contactUsername: t.users[0]?.username ?? null,
       contactName: t.users[0]
         ? `${t.users[0].firstName ?? ''} ${t.users[0].lastName ?? ''}`.trim()
         : null,

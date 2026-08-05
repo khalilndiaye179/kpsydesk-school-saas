@@ -10,6 +10,8 @@ interface TenantData {
   status: 'ACTIVE' | 'SUSPENDED';
   createdAt: string;
   studentsCount: number;
+  contactEmail?: string | null;
+  contactUsername?: string | null;
 }
 
 export const TenantsManager: React.FC = () => {
@@ -32,7 +34,7 @@ export const TenantsManager: React.FC = () => {
     // Simulons la récupération des tenants (car on n'a pas encore la route admin/tenants dans le backend)
     // Mais on prévoit l'hybride pour respecter la règle.
     try {
-      const response = await api.get('/admin/tenants');
+      const response = await api.get('/platform/tenants');
       setTenants(response.data);
     } catch (err) {
       console.warn('Erreur API /admin/tenants (Attendue en Phase 5), fallback local');
@@ -300,8 +302,8 @@ export const TenantsManager: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', color: '#cbd5e1' }}>
               <p><strong>Nom :</strong> {actionModal.tenant.name}</p>
               <p><strong>Domaine :</strong> {actionModal.tenant.domain}</p>
-              <p><strong>Email Admin :</strong> admin@{actionModal.tenant.domain}</p>
-              <p><strong>Téléphone (OTP) :</strong> +221 7X XXX XX XX</p>
+              <p><strong>Identifiant de connexion :</strong> {actionModal.tenant.contactUsername || 'Non disponible'}</p>
+              <p><strong>Email Admin :</strong> {actionModal.tenant.contactEmail || 'Non renseigné'}</p>
               <p><strong>Date d'inscription :</strong> {actionModal.tenant.createdAt}</p>
             </div>
             <button onClick={() => setActionModal({ type: '', tenant: null })} style={{ width: '100%', marginTop: '24px', padding: '12px', backgroundColor: '#334155', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Fermer</button>
