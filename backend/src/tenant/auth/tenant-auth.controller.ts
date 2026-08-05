@@ -8,13 +8,9 @@ export class TenantAuthController {
 
   @Post('login')
   async login(
-    @Body() loginDto: { email: string; pass: string; tenantId?: string },
-    @Headers('x-tenant-id') headerTenantId: string,
-    @Req() req: Request,
+    @Body() loginDto: { username: string; pass: string },
   ) {
-    const tenantId = headerTenantId || loginDto.tenantId;
-    const host = req.headers.host || '';
-    return this.authService.login(loginDto.email, loginDto.pass, tenantId, host);
+    return this.authService.login(loginDto.username, loginDto.pass);
   }
 }
 

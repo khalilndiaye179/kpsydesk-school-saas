@@ -11,7 +11,7 @@ interface PasswordStepProps {
 }
 
 export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequireEnrollment, onDirectLogin, role, setRole }) => {
-  const [email, setEmail] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,20 +21,22 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
     setIsLoading(true);
     setError('');
 
+    const cleanInput = usernameInput.trim();
+
     try {
       // Déterminer si l'authentification cible la plateforme globale (SuperAdmin) ou un tenant
-      const isPlatformAccount = email.toLowerCase() === 'admin@kpsydesk.com' || email.toLowerCase().endsWith('@kpsydesk.com') || email.toLowerCase().includes('superadmin@');
+      const isPlatformAccount = cleanInput.toLowerCase() === 'admin@kpsydesk.com' || cleanInput.toLowerCase().endsWith('@kpsydesk.com') || cleanInput.toLowerCase().includes('superadmin@');
 
       if (isPlatformAccount) {
         // Flux SuperAdmin / Platform
         try {
-          const res = await api.post('/platform/auth/login', { email, pass: password });
+          const res = await api.post('/platform/auth/login', { email: cleanInput, pass: password });
           const resData = res.data;
 
           if (resData.status === 'mfa_enrollment_required' && resData.enroll_token) {
-            onRequireEnrollment(resData.enroll_token, email);
+            onRequireEnrollment(resData.enroll_token, cleanInput);
           } else if (resData.status === 'otp_required' && resData.challenge_id) {
-            onSuccess(resData.challenge_id, email);
+            onSuccess(resData.challenge_id, cleanInput);
           } else if (resData.access_token && resData.user) {
             localStorage.setItem('kpsydesk_access_token', resData.access_token);
             onDirectLogin({
@@ -47,10 +49,10 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
             setError("Identifiants invalides.");
           }
         } catch (apiErr: any) {
-          if (email === 'admin@kpsydesk.com' || email.includes('superadmin')) {
+          if (cleanInput === 'admin@kpsydesk.com' || cleanInput.includes('superadmin')) {
             onDirectLogin({
               id: 'super-admin-1',
-              email: email,
+              email: cleanInput,
               role: 'SUPER_ADMIN',
               name: 'SUPER ADMIN',
             });
@@ -59,12 +61,9 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
           throw apiErr;
         }
       } else {
-        // Flux Tenant (Directeur, Enseignant, Personnel d'établissement)
-        const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
+        // Flux Tenant (Directeur, Enseignant, Personnel d'établissement) -> Identifiant Username
         try {
-          const res = await api.post('/tenant/auth/login', { email, pass: password }, {
-            headers: activeTenantId ? { 'x-tenant-id': activeTenantId } : {}
-          });
+          const res = await api.post('/tenant/auth/login', { username: cleanInput, pass: password });
 
           if (res.data.access_token) {
             localStorage.setItem('kpsydesk_access_token', res.data.access_token);
@@ -76,10 +75,11 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
 
             onDirectLogin({
               id: res.data.user?.id || `user_${Date.now()}`,
-              email: email,
+              username: res.data.user?.username || cleanInput.toUpperCase(),
+              email: res.data.user?.email,
               role: res.data.user?.role || 'TENANT_ADMIN',
               tenantId: realTenantId,
-              name: res.data.user?.firstName ? `${res.data.user.firstName} ${res.data.user.lastName || ''}` : email.split('@')[0].toUpperCase(),
+              name: res.data.user?.firstName ? `${res.data.user.firstName} ${res.data.user.lastName || ''}` : cleanInput.toUpperCase(),
             });
           }
         } catch (apiErr: any) {
@@ -87,7 +87,7 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
         }
       }
     } catch (apiErr: any) {
-      const msg = apiErr?.response?.data?.message || 'Identifiants invalides.';
+      const msg = apiErr?.response?.data?.message || 'Identifiant ou mot de passe incorrect.';
       setError(Array.isArray(msg) ? msg.join(' | ') : msg);
     } finally {
       setIsLoading(false);
@@ -98,19 +98,20 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
         <h2 style={{ margin: '0 0 4px 0', fontSize: '1.65rem', color: '#f8fafc', fontWeight: 700, fontFamily: 'var(--font-title)' }}>
-          Bienvenue <span style={{ color: '#9CA3AF', fontWeight: 400, fontSize: '1.25rem' }}>/ Welcome</span>
+          Connexion Établissement
         </h2>
-        <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.85rem' }}>Connexion sécurisée — Étape 1/2</p>
+        <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>
+          Saisissez votre identifiant unique (ex: <strong>LYC-EDA-0001</strong>) et votre mot de passe.
+        </p>
       </div>
 
       {error && (
-        <div style={{ backgroundColor: 'rgba(220, 38, 38, 0.15)', color: '#fca5a5', padding: '12px 16px', borderRadius: '12px', fontSize: '0.85rem', border: '1px solid rgba(220, 38, 38, 0.4)', backdropFilter: 'blur(8px)' }}>
+        <div style={{ padding: '12px 16px', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '10px', color: '#fca5a5', fontSize: '0.88rem' }}>
           {error}
         </div>
       )}
 
       {/* Identifiant */}
-      <div>
         <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.85rem', marginBottom: '8px', fontWeight: 500 }}>Adresse Email</label>
         <input 
           type="email" 

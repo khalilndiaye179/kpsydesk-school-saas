@@ -46,22 +46,36 @@ export class PlatformTenantsService {
 
   async create(data: { name: string; email: string; plan?: any }) {
     const subdomain = data.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+    const { generateTenantCodeSlug } = require('../../common/utils/tenant-code.util');
+    let baseCode = generateTenantCodeSlug(data.name);
+    let code = baseCode;
+    let codeIndex = 1;
+
+    // Détection des collisions de code tenant
+    while (await this.prisma.tenant.findUnique({ where: { code } })) {
+      code = `${baseCode}${codeIndex}`;
+      codeIndex++;
+    }
+
     const bcrypt = require('bcryptjs');
     const defaultPassHash = await bcrypt.hash('KPsySchool2026!', 12);
+    const initialUsername = `${code}-0001`;
 
     return this.prisma.tenant.create({
       data: {
         name: data.name,
+        code,
         subdomain,
         plan: data.plan || 'PRO',
         status: 'ACTIVE',
         users: {
           create: {
-            email: data.email,
+            username: initialUsername,
+            email: data.email.trim().toLowerCase(),
             passwordHash: defaultPassHash,
-            firstName: 'Directeur',
-            lastName: data.name,
             role: 'DIRECTOR',
+            firstName: 'Directeur',
+            lastName: 'Principal',
           },
         },
       },
