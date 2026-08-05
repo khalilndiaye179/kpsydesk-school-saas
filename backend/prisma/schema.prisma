@@ -36,6 +36,11 @@ model Tenant {
   rooms                   Room[]
   settings                TenantSettings?
   clockEvents             StaffClockEvent[]
+  evaluations             Evaluation[]
+  grades                  Grade[]
+  schoolFees              SchoolFee[]
+  payments                Payment[]
+  notifications           Notification[]
 }
 
 enum TenantStatus {
@@ -163,6 +168,7 @@ model Class {
   timetables      Timetable[]
   courseRequirements ClassCourseRequirement[]
   attendances     Attendance[]
+  evaluations     Evaluation[]
 
   @@unique([tenantId, code])
 }
@@ -191,6 +197,8 @@ model Student {
   tenant           Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   class            Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
   attendances      Attendance[]
+  grades           Grade[]
+  schoolFees       SchoolFee[]
 
   @@unique([tenantId, email])
   @@unique([tenantId, matricule])
@@ -227,6 +235,7 @@ model Course {
   tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   timetables      Timetable[]
   requirements    ClassCourseRequirement[]
+  evaluations     Evaluation[]
 
   @@unique([tenantId, code])
 }
@@ -451,4 +460,99 @@ model PendingSignup {
   
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+}
+
+// ============================================================
+// NOUVEAUX MODÈLES — Sprint 1 (KPSyDesk School v2.0)
+// ============================================================
+
+// --- Évaluations & Notes ---
+
+model Evaluation {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  classId     String   @db.Uuid
+  courseId    String   @db.Uuid
+  title       String
+  type        String   // DEVOIR, COMPOSITION, EXAMEN_BLANC, EXAMEN
+  date        DateTime @db.Date
+  coefficient Float    @default(1)
+  maxScore    Float    @default(20)
+  semester    Int      @default(1) // 1 ou 2
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  class   Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  grades  Grade[]
+
+  @@unique([tenantId, classId, courseId, title, semester])
+}
+
+model Grade {
+  id           String     @id @default(uuid()) @db.Uuid
+  tenantId     String     @db.Uuid
+  evaluationId String     @db.Uuid
+  studentId    String     @db.Uuid
+  score        Float?     // null = absent
+  comment      String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([evaluationId, studentId])
+}
+
+// --- Finance Scolaire ---
+
+model SchoolFee {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @db.Uuid
+  studentId   String    @db.Uuid
+  label       String    // INSCRIPTION, SCOLARITE_S1, SCOLARITE_S2, CANTINE, TRANSPORT, AUTRE
+  amount      Float
+  dueDate     DateTime?
+  schoolYear  String    @default("2025-2026")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student  Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  payments Payment[]
+}
+
+model Payment {
+  id         String    @id @default(uuid()) @db.Uuid
+  tenantId   String    @db.Uuid
+  feeId      String    @db.Uuid
+  amount     Float
+  method     String    // CASH, MOBILE_MONEY, VIREMENT, CHEQUE, WAVE, ORANGE_MONEY
+  reference  String?
+  notes      String?
+  paidAt     DateTime  @default(now())
+  recordedBy String?   @db.Uuid
+  createdAt  DateTime  @default(now())
+
+  tenant Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  fee    SchoolFee @relation(fields: [feeId], references: [id], onDelete: Cascade)
+}
+
+// --- Notifications ---
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  type      String   // ANNOUNCEMENT, PAYMENT_REMINDER, ABSENCE_ALERT, SYSTEM
+  title     String
+  body      String
+  targetRole String? // null = tous, ou TEACHER, PARENT, STUDENT
+  isRead    Boolean  @default(false)
+  createdBy String?  @db.Uuid
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }

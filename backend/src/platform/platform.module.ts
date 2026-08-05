@@ -7,6 +7,8 @@ import { PlatformAuthService } from './auth/platform-auth.service';
 import { PlatformJwtGuard } from '../common/guards/platform-jwt.guard';
 import { PrismaService } from '../prisma.service';
 import { MfaModule } from './mfa/mfa.module';
+import { PlatformStatsController } from './stats/platform-stats.controller';
+import { PlatformStatsService } from './stats/platform-stats.service';
 
 @Module({
   imports: [
@@ -16,8 +18,8 @@ import { MfaModule } from './mfa/mfa.module';
       signOptions: { expiresIn: '8h' },
     }),
   ],
-  controllers: [PlatformTenantsController, PlatformAuthController],
-  providers: [PlatformTenantsService, PlatformAuthService, PlatformJwtGuard, PrismaService],
+  controllers: [PlatformTenantsController, PlatformAuthController, PlatformStatsController],
+  providers: [PlatformTenantsService, PlatformAuthService, PlatformJwtGuard, PrismaService, PlatformStatsService],
   exports: [PlatformJwtGuard, JwtModule],
 })
 export class PlatformModule {}
