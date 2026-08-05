@@ -134,7 +134,7 @@ export const LoginView: React.FC = () => {
         {/* CONTENU CENTRAL : ILLUSTRATION VECTORIELLE INTERACTIVE */}
         <div style={{
           zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          my: 'auto', position: 'relative', height: '360px',
+          margin: 'auto 0', position: 'relative', height: '360px',
         }}>
           {/* Illustration de remise de diplômes / éducation */}
           <div style={{ width: '280px', height: '280px', opacity: 0.9 }}>
