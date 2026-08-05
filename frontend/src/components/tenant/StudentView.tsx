@@ -304,9 +304,9 @@ export const StudentView: React.FC = () => {
       } catch (err) {
         console.warn('Fallback sauvegarde locale élève:', err);
         const newStudent: StudentData = {
+          ...(fullPayload as StudentData),
           id: `std-${Date.now()}`,
           matricule,
-          ...(fullPayload as StudentData)
         };
         const updated = [newStudent, ...students];
         setStudents(updated);
