@@ -203,12 +203,49 @@ export const FleetView: React.FC = () => {
         </div>
       )}
 
-      {/* KPI */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
-        <CardKPI label="Total Établissements" value={tenants.length.toString()} icon={<Building2 size={24} />} trend="Source : BDD" isPositive={true} />
-        <CardKPI label="Élèves gérés" value={tenants.reduce((acc, curr) => acc + curr.studentsCount, 0).toLocaleString('fr-FR')} icon={<Activity size={24} />} trend="Données réelles" isPositive={true} />
-        <CardKPI label="Tenants Suspendus" value={tenants.filter(t => t.status === 'SUSPENDED').length.toString()} icon={<ShieldAlert size={24} />} trend="Live" isPositive={true} />
-        <CardKPI label="Santé Serveur" value="99.9%" icon={<Server size={24} />} trend="Optimal" isPositive={true} />
+      {/* CARTE KPI MACRO-ÉCONOMIQUES SAAS */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+        <CardKPI label="MRR (Revenu Mensuel Récurrent)" value={formatCurrency(estimatedMrr)} icon={<Activity size={24} />} trend="Revenu SaaS" isPositive={true} />
+        <CardKPI label="ARR Estime (Annuel)" value={formatCurrency(estimatedArr)} icon={<Activity size={24} />} trend="Projeté 12M" isPositive={true} />
+        <CardKPI label="Total Établissements Actifs" value={`${activeTenantsCount} / ${totalTenantsCount}`} icon={<Building2 size={24} />} trend={`${trialTenantsCount} en Essai`} isPositive={true} />
+        <CardKPI label="Élèves Gérés sur la Plateforme" value={totalGlobalStudents.toLocaleString('fr-FR')} icon={<Activity size={24} />} trend="Volume global" isPositive={true} />
+      </div>
+
+      {/* REPARTITION GÉOGRAPHIQUE PAR PAYS & CONFORMITÉ PROTECTION DES DONNÉES */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+        
+        {/* Répartition par Pays */}
+        <div style={{ backgroundColor: '#FFFFFF', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+          <h4 style={{ margin: '0 0 14px 0', fontSize: '1rem', fontFamily: 'var(--font-title)', color: 'var(--text-primary)' }}>
+            Répartition Régionale du Parc (Afrique de l'Ouest)
+          </h4>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+            <div style={{ padding: '12px 16px', borderRadius: '12px', backgroundColor: '#f0fdf4', border: '1px solid #86efac' }}>
+              <div style={{ fontSize: '0.8rem', color: '#166534', fontWeight: 700 }}>🇸🇳 Sénégal</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#14532d', marginTop: '4px' }}>{senegalCount} Écoles</div>
+            </div>
+            <div style={{ padding: '12px 16px', borderRadius: '12px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}>
+              <div style={{ fontSize: '0.8rem', color: '#9a3412', fontWeight: 700 }}>🇨🇮 Côte d'Ivoire</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#7c2d12', marginTop: '4px' }}>{ciCount} Écoles</div>
+            </div>
+            <div style={{ padding: '12px 16px', borderRadius: '12px', backgroundColor: '#f0f9ff', border: '1px solid #bae6fd' }}>
+              <div style={{ fontSize: '0.8rem', color: '#0369a1', fontWeight: 700 }}>🇲🇱 Mali</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#075985', marginTop: '4px' }}>{maliCount} Écoles</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Note de Conformité Protection des Données */}
+        <div style={{ backgroundColor: '#0f172a', color: 'white', padding: '20px', borderRadius: '16px', border: '1px solid #334155' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#D4A853', fontWeight: 700, fontSize: '0.9rem', marginBottom: '8px' }}>
+            <Shield size={18} /> Confidentialité & Protection
+          </div>
+          <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8', lineHeight: '1.5' }}>
+            Les métriques affichées sont 100% agrégées et anonymisées conformément à la législation CDP/RGPD. Aucune donnée nominative élève ou enseignant n'est accessible au niveau SuperAdmin.
+          </p>
+        </div>
+
       </div>
 
       {/* Main List */}
