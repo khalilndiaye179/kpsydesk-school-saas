@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Loader2, Shield } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { api } from '../lib/api';
 
 interface PasswordStepProps {
@@ -111,13 +111,16 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
         </div>
       )}
 
-      {/* Identifiant */}
-        <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.85rem', marginBottom: '8px', fontWeight: 500 }}>Adresse Email</label>
+      {/* Identifiant Unique */}
+      <div>
+        <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.85rem', marginBottom: '8px', fontWeight: 500 }}>
+          Identifiant Utilisateur (Username)
+        </label>
         <input 
-          type="email" 
-          placeholder="votre.email@kpsyschool.com"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
+          type="text" 
+          placeholder="ex: LYC-EDA-0001"
+          value={usernameInput}
+          onChange={e => setUsernameInput(e.target.value)}
           required
           style={{
             width: '100%', padding: '13px 16px', backgroundColor: 'rgba(5, 25, 18, 0.75)',
@@ -167,7 +170,7 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
         ))}
       </div>
 
-      {/* Bouton Principal Se Connecter (Bordeaux/Maroon #8B2635) */}
+      {/* Bouton Principal Se Connecter */}
       <button 
         type="submit" 
         disabled={isLoading}
