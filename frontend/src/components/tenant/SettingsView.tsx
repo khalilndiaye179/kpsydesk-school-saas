@@ -584,9 +584,50 @@ export const SettingsView: React.FC = () => {
         {/* ----------------------------------------------------------------- */}
         {activeTab === 'KIOSK' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'var(--font-title)', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
-              Géofencing GPS & Paramètres Kiosque de Pointage
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'var(--font-title)' }}>
+                Géofencing GPS & Paramètres Kiosque de Pointage
+              </h3>
+              
+              {/* BOUTON VERT : DÉTECTION GPS AUTOMATIQUE */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        const lat = pos.coords.latitude.toFixed(6);
+                        const lng = pos.coords.longitude.toFixed(6);
+                        setSettings(prev => ({ ...prev, kioskLatitude: lat, kioskLongitude: lng }));
+                        
+                        if (leafletMap.current) {
+                          leafletMap.current.setView([parseFloat(lat), parseFloat(lng)], 16);
+                          if (marker.current) {
+                            marker.current.setLatLng([parseFloat(lat), parseFloat(lng)]);
+                          } else if (window.L) {
+                            marker.current = window.L.marker([parseFloat(lat), parseFloat(lng)]).addTo(leafletMap.current);
+                          }
+                        }
+                        alert(`Position GPS de l'établissement détectée avec succès !\nLatitude: ${lat}\nLongitude: ${lng}`);
+                      },
+                      (err) => {
+                        alert(`Impossible de récupérer la géolocalisation : ${err.message}. Veuillez autoriser l'accès à la localisation dans votre navigateur.`);
+                      },
+                      { enableHighAccuracy: true }
+                    );
+                  } else {
+                    alert("La géolocalisation n'est pas supportée par votre navigateur.");
+                  }
+                }}
+                style={{ 
+                  display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', 
+                  backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '10px', 
+                  cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', boxShadow: '0 2px 8px rgba(16,185,129,0.3)' 
+                }}
+              >
+                <Navigation size={16} /> 📍 Détecter Ma Position GPS Actuelle
+              </button>
+            </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -606,7 +647,7 @@ export const SettingsView: React.FC = () => {
 
               {/* Carte Leaflet */}
               <div>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px', display: 'block' }}>Cliquez sur la carte pour définir la position GPS de l'école</label>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px', display: 'block' }}>Cliquez sur la carte pour affiner la position GPS de l'école</label>
                 <div ref={mapRef} style={{ width: '100%', height: '220px', borderRadius: '12px', border: '1px solid #cbd5e1' }} />
               </div>
             </div>
