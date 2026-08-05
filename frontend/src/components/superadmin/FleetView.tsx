@@ -10,6 +10,7 @@ import { formatCurrency } from '../../config/countries.config';
 interface TenantData {
   id: string;
   name: string;
+  code?: string;
   subdomain: string;
   plan: string;
   status: 'ACTIVE' | 'TRIAL' | 'SUSPENDED';
@@ -258,28 +259,29 @@ export const FleetView: React.FC = () => {
                 <th style={{ padding: '12px', textAlign: 'right' }}>Actions d'Administration</th>
               </tr>
             </thead>
-            <tbody>
-              {tenants.length === 0 && (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
-                    Aucun établissement enregistré.
-                  </td>
-                </tr>
-              )}
-              {tenants.map(t => (
-                <tr key={t.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td style={{ padding: '16px 12px', fontWeight: 600 }}>
-                    {t.name}<br />
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>
-                      {t.subdomain}.kpsyschool.com &bull; {t.studentsCount} élèves
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px 12px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                    <span style={{ fontWeight: 500, color: 'var(--text)' }}>{t.contactName ?? 'Non spécifié'}</span><br />
-                    {t.contactEmail ?? '—'}
-                  </td>
-                  <td style={{ padding: '16px 12px', fontFamily: 'var(--font-data)', fontWeight: 600 }}>{t.plan}</td>
-                  <td style={{ padding: '16px 12px' }}>{getStatusBadge(t.status)}</td>
+              {tenants.map(t => {
+                const tenantCode = t.code || t.subdomain.toUpperCase();
+                return (
+                  <tr key={t.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '16px 12px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{t.name}</strong>
+                          <span style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 800, fontFamily: 'monospace' }}>
+                            {tenantCode}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{t.subdomain}.kpsyschool.com &bull; {t.studentsCount} élèves</span>
+                        <span style={{ fontSize: '0.75rem', color: '#0284c7', fontFamily: 'monospace', fontWeight: 700, marginTop: '3px' }}>
+                          🔑 Identifiant : {tenantCode}-0001
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px 12px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                      <span style={{ fontWeight: 500, color: 'var(--text)' }}>{t.contactName ?? 'Non spécifié'}</span><br />
+                      {t.contactEmail ?? '—'}
+                    </td>
+                    <td style={{ padding: '16px 12px', fontFamily: 'var(--font-data)', fontWeight: 600 }}>{t.plan}</td>
                   <td style={{ padding: '16px 12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                     {new Date(t.createdAt).toLocaleDateString('fr-FR')}
                   </td>
@@ -358,6 +360,32 @@ export const FleetView: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              
+              {/* ENCADRÉ IDENTIFIANT DE CONNEXION */}
+              <div style={{ backgroundColor: '#f0f9ff', padding: '16px', borderRadius: '12px', border: '1px solid #bae6fd', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ fontSize: '0.75rem', color: '#0369a1', fontWeight: 700, letterSpacing: '0.5px' }}>
+                  🔑 IDENTIFIANT DE CONNEXION INITIAL (SUPERADMIN / DIRECTEUR)
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '1.2rem', fontFamily: 'monospace', fontWeight: 800, color: '#0284c7', letterSpacing: '1px' }}>
+                    {selectedTenant.code ? `${selectedTenant.code}-0001` : `${selectedTenant.subdomain.toUpperCase()}-0001`}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const loginId = selectedTenant.code ? `${selectedTenant.code}-0001` : `${selectedTenant.subdomain.toUpperCase()}-0001`;
+                      navigator.clipboard.writeText(loginId);
+                      alert(`Identifiant ${loginId} copié dans le presse-papier !`);
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: '#0284c7', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    <Copy size={14} /> Copier l'identifiant
+                  </button>
+                </div>
+                <span style={{ fontSize: '0.75rem', color: '#0369a1' }}>
+                  Code Établissement : <strong>{selectedTenant.code || selectedTenant.subdomain.toUpperCase()}</strong>
+                </span>
+              </div>
+
               <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <User size={18} color="#0284c7" />
