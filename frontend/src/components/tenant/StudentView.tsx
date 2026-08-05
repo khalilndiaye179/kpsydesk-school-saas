@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Trash2, FileSpreadsheet, User, MapPin, Phone, Mail, Calendar as CalendarIcon, Printer, BadgeInfo, FileText, Upload, ShieldAlert, HeartPulse, GraduationCap, DollarSign, FileCheck } from 'lucide-react';
+import { UserPlus, Trash2, FileSpreadsheet, User, MapPin, Phone, Mail, Calendar as CalendarIcon, Printer, BadgeInfo, FileText, Upload, ShieldAlert, HeartPulse, GraduationCap, DollarSign, FileCheck, Eye, X, Download } from 'lucide-react';
 import { api } from '../../lib/api';
 import { getCountryConfig } from '../../config/countries.config';
+
+interface AttachedDoc {
+  name: string;
+  dataUrl: string; // Base64 / PDF / Image
+  uploadedAt: string;
+  fileType: 'pdf' | 'image';
+}
 
 interface StudentData {
   id: string;
@@ -48,13 +55,13 @@ interface StudentData {
   regime: 'Externe' | 'Demi-pensionnaire' | 'Interne';
   paymentPlan: 'Mensuel' | 'Trimestriel' | 'Annuel';
 
-  // Suivi des Pièces Fournies
-  documents?: {
-    birthCertificateProvided?: boolean;
-    photoProvided?: boolean;
-    previousReportProvided?: boolean;
-    dischargeCertificateProvided?: boolean;
-    vaccinationRecordProvided?: boolean;
+  // Documents Numérisés (PDF / Images)
+  scannedDocs?: {
+    birthCertificate?: AttachedDoc;
+    photo?: AttachedDoc;
+    previousReport?: AttachedDoc;
+    dischargeCertificate?: AttachedDoc;
+    vaccinationRecord?: AttachedDoc;
   };
 }
 
@@ -114,12 +121,16 @@ export const StudentView: React.FC = () => {
   const [regime, setRegime] = useState<'Externe' | 'Demi-pensionnaire' | 'Interne'>('Externe');
   const [paymentPlan, setPaymentPlan] = useState<'Mensuel' | 'Trimestriel' | 'Annuel'>('Mensuel');
 
-  // Documents
-  const [docBirthCert, setDocBirthCert] = useState(true);
-  const [docPhoto, setDocPhoto] = useState(true);
-  const [docPrevReport, setDocPrevReport] = useState(false);
-  const [docDischarge, setDocDischarge] = useState(false);
-  const [docVaccine, setDocVaccine] = useState(false);
+  // Documents Scannés
+  const [docBirthCert, setDocBirthCert] = useState<AttachedDoc | undefined>(undefined);
+  const [docPhoto, setDocPhoto] = useState<AttachedDoc | undefined>(undefined);
+  const [docPrevReport, setDocPrevReport] = useState<AttachedDoc | undefined>(undefined);
+  const [docDischarge, setDocDischarge] = useState<AttachedDoc | undefined>(undefined);
+  const [docVaccine, setDocVaccine] = useState<AttachedDoc | undefined>(undefined);
+
+  // État de la visionneuse de document PDF/Image
+  const [viewingDoc, setViewingDoc] = useState<{ title: string; doc: AttachedDoc } | null>(null);
+  const [viewingStudentDocsModal, setViewingStudentDocsModal] = useState<StudentData | null>(null);
 
   const [availableClasses, setAvailableClasses] = useState<{id: string, name: string}[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -219,13 +230,32 @@ export const StudentView: React.FC = () => {
     setRegime('Externe');
     setPaymentPlan('Mensuel');
 
-    setDocBirthCert(true);
-    setDocPhoto(true);
-    setDocPrevReport(false);
-    setDocDischarge(false);
-    setDocVaccine(false);
+    setDocBirthCert(undefined);
+    setDocPhoto(undefined);
+    setDocPrevReport(undefined);
+    setDocDischarge(undefined);
+    setDocVaccine(undefined);
 
     setEditingId(null);
+  };
+
+  // Convertisseur de fichier scanné (PDF/Image) en DataURL
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (doc: AttachedDoc) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      const fileType = file.type.includes('pdf') ? 'pdf' : 'image';
+      setter({
+        name: file.name,
+        dataUrl,
+        uploadedAt: new Date().toLocaleDateString('fr-FR'),
+        fileType,
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleAddOrUpdateStudent = async (e: React.FormEvent) => {
@@ -241,7 +271,7 @@ export const StudentView: React.FC = () => {
       gender,
       nationality,
       birthCertificateNo,
-      photoUrl,
+      photoUrl: docPhoto ? docPhoto.dataUrl : photoUrl,
       registrationStatus,
       classId,
       className,
@@ -266,19 +296,16 @@ export const StudentView: React.FC = () => {
       transferReason,
       regime,
       paymentPlan,
-      documents: {
-        birthCertificateProvided: docBirthCert,
-        photoProvided: docPhoto,
-        previousReportProvided: docPrevReport,
-        dischargeCertificateProvided: docDischarge,
-        vaccinationRecordProvided: docVaccine,
+      scannedDocs: {
+        birthCertificate: docBirthCert,
+        photo: docPhoto,
+        previousReport: docPrevReport,
+        dischargeCertificate: docDischarge,
+        vaccinationRecord: docVaccine,
       }
     };
 
     if (editingId) {
-      // ------------------------------------
-      // MODE ÉDITION (PUT)
-      // ------------------------------------
       try {
         await api.put(`/tenant/students/${editingId}`, studentPayload);
       } catch (err) {
@@ -289,9 +316,6 @@ export const StudentView: React.FC = () => {
       setStudents(updated);
       localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(updated));
     } else {
-      // ------------------------------------
-      // MODE CRÉATION (POST)
-      // ------------------------------------
       const matricule = generateMatricule(students);
       const fullPayload = { ...studentPayload, matricule };
 
@@ -354,11 +378,11 @@ export const StudentView: React.FC = () => {
     setRegime(std.regime || 'Externe');
     setPaymentPlan(std.paymentPlan || 'Mensuel');
 
-    setDocBirthCert(std.documents?.birthCertificateProvided ?? true);
-    setDocPhoto(std.documents?.photoProvided ?? true);
-    setDocPrevReport(std.documents?.previousReportProvided ?? false);
-    setDocDischarge(std.documents?.dischargeCertificateProvided ?? false);
-    setDocVaccine(std.documents?.vaccinationRecordProvided ?? false);
+    setDocBirthCert(std.scannedDocs?.birthCertificate);
+    setDocPhoto(std.scannedDocs?.photo);
+    setDocPrevReport(std.scannedDocs?.previousReport);
+    setDocDischarge(std.scannedDocs?.dischargeCertificate);
+    setDocVaccine(std.scannedDocs?.vaccinationRecord);
   };
 
   const handleDeleteStudent = async (id: string) => {
@@ -512,6 +536,42 @@ export const StudentView: React.FC = () => {
     printWindow.document.close();
   };
 
+  // Composant d'upload de document individuel
+  const DocumentUploaderItem = ({ title, doc, setter }: { title: string; doc?: AttachedDoc; setter: (d: AttachedDoc) => void }) => (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: '10px', backgroundColor: doc ? '#f0fdf4' : 'var(--bg-page)', border: doc ? '1px solid #86efac' : '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <FileCheck size={18} color={doc ? '#166534' : '#64748b'} />
+        <div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: doc ? '#14532d' : 'var(--text-primary)' }}>{title}</div>
+          {doc && <div style={{ fontSize: '0.75rem', color: '#15803d' }}>📄 {doc.name} ({doc.uploadedAt})</div>}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {doc ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setViewingDoc({ title, doc })}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 10px', borderRadius: '6px', backgroundColor: '#dcfce7', border: '1px solid #86efac', color: '#166534', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700 }}
+            >
+              <Eye size={14} /> Voir
+            </button>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 10px', borderRadius: '6px', backgroundColor: '#white', border: '1px solid #cbd5e1', color: '#475569', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>
+              <Upload size={13} /> Remplacer
+              <input type="file" accept="application/pdf,image/*" onChange={(e) => handleFileUpload(e, setter)} style={{ display: 'none' }} />
+            </label>
+          </>
+        ) : (
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px', backgroundColor: '#0f172a', color: 'white', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>
+            <Upload size={14} /> Joindre / Scanner (PDF)
+            <input type="file" accept="application/pdf,image/*" onChange={(e) => handleFileUpload(e, setter)} style={{ display: 'none' }} />
+          </label>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
       <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
@@ -590,7 +650,6 @@ export const StudentView: React.FC = () => {
                 <InputField label="Lieu de naissance" value={birthPlace} setter={setBirthPlace} required />
                 <InputField label="Nationalité (Optionnel)" value={nationality} setter={setNationality} placeholder="Ex: Sénégalaise" />
                 <InputField label="N° Extrait d'acte de naissance (Optionnel)" value={birthCertificateNo} setter={setBirthCertificateNo} placeholder="Ex: 2012/0458/DK" />
-                <InputField label="Lien photo d'identité (URL Optionnelle)" value={photoUrl} setter={setPhotoUrl} placeholder="https://..." />
               </div>
             </div>
 
@@ -733,27 +792,17 @@ export const StudentView: React.FC = () => {
               </div>
             </div>
 
-            {/* 7. CHECKLIST PIÈCES DU DOSSIER */}
+            {/* 7. NUMÉRISATION & PIÈCES JOINTE EN FORMAT PDF/IMAGE */}
             <div>
               <h4 style={{ fontSize: '0.95rem', color: 'var(--accent)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileCheck size={16} /> 7. Pièces administratives fournies (Checklist)
+                <FileCheck size={16} /> 7. Numérisation des Pièces Jointes (GED / PDF)
               </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.85rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={docBirthCert} onChange={e => setDocBirthCert(e.target.checked)} /> Extrait d'acte de naissance
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={docPhoto} onChange={e => setDocPhoto(e.target.checked)} /> Photo d'identité (2 exemplaires)
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={docPrevReport} onChange={e => setDocPrevReport(e.target.checked)} /> Bulletins de l'année précédente
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={docDischarge} onChange={e => setDocDischarge(e.target.checked)} /> Certificat de radiation (Ex-Certificat de sortie)
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={docVaccine} onChange={e => setDocVaccine(e.target.checked)} /> Carnet de vaccination / Certificat médical
-                </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <DocumentUploaderItem title="Extrait d'acte de naissance (PDF)" doc={docBirthCert} setter={setDocBirthCert} />
+                <DocumentUploaderItem title="Photo d'identité (Image / PDF)" doc={docPhoto} setter={setDocPhoto} />
+                <DocumentUploaderItem title="Bulletins de l'année précédente (PDF)" doc={docPrevReport} setter={setDocPrevReport} />
+                <DocumentUploaderItem title="Certificat de radiation (Ex-Sortie) (PDF)" doc={docDischarge} setter={setDocDischarge} />
+                <DocumentUploaderItem title="Carnet de vaccination / Certificat médical (PDF)" doc={docVaccine} setter={setDocVaccine} />
               </div>
             </div>
 
@@ -786,73 +835,89 @@ export const StudentView: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {students.map((std) => (
-              <div key={std.id} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '16px', borderRadius: '10px', border: '1px solid var(--border)', backgroundColor: editingId === std.id ? 'rgba(56, 189, 248, 0.05)' : 'var(--bg-page)', transition: 'background 0.2s' }}>
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ backgroundColor: 'var(--bg-card)', padding: '10px', borderRadius: '8px', color: 'var(--accent)', border: '1px solid var(--border)' }}>
-                      <User size={20} />
+            {students.map((std) => {
+              const docCount = Object.values(std.scannedDocs || {}).filter(Boolean).length;
+              return (
+                <div key={std.id} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '16px', borderRadius: '10px', border: '1px solid var(--border)', backgroundColor: editingId === std.id ? 'rgba(56, 189, 248, 0.05)' : 'var(--bg-page)', transition: 'background 0.2s' }}>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: 'var(--bg-card)', color: 'var(--accent)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        {std.photoUrl ? (
+                          <img src={std.photoUrl} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <User size={20} />
+                        )}
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{std.firstName} {std.lastName}</h4>
+                          <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: std.gender === 'Féminin' ? '#f472b6' : '#38bdf8', color: 'white', fontWeight: 700 }}>
+                            {std.gender === 'Féminin' ? 'F' : 'M'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--accent)', fontWeight: 600 }}>{std.className}</span>
+                          <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(212, 168, 83, 0.15)', color: '#D4A853', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                            {std.regime || 'Externe'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{std.firstName} {std.lastName}</h4>
-                        <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: std.gender === 'Féminin' ? '#f472b6' : '#38bdf8', color: 'white', fontWeight: 700 }}>
-                          {std.gender === 'Féminin' ? 'F' : 'M'}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--accent)', fontWeight: 600 }}>{std.className}</span>
-                        <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(212, 168, 83, 0.15)', color: '#D4A853', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                          {std.regime || 'Externe'}
-                        </span>
-                      </div>
+
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      {/* BOUTON DE VISIONNAGE DE TOUS LES DOCUMENTS SCANNÉS */}
+                      <button 
+                        type="button" 
+                        onClick={() => setViewingStudentDocsModal(std)} 
+                        style={{ background: docCount > 0 ? '#dcfce7' : 'none', border: docCount > 0 ? '1px solid #86efac' : 'none', color: docCount > 0 ? '#166534' : '#64748b', cursor: 'pointer', padding: '6px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 700 }} 
+                        title="Consulter les documents scannés du dossier"
+                      >
+                        <FileCheck size={16} /> GED ({docCount})
+                      </button>
+                      <button type="button" onClick={() => generateDocument(std, 'IDCARD')} style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', padding: '6px', borderRadius: '6px' }} title="Générer Carte d'identité">
+                        <BadgeInfo size={18} />
+                      </button>
+                      <button type="button" onClick={() => generateDocument(std, 'CERTIFICATE')} style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', padding: '6px', borderRadius: '6px' }} title="Générer Certificat de scolarité">
+                        <FileText size={18} />
+                      </button>
+                      <div style={{ width: '1px', backgroundColor: 'var(--border)', margin: '0 4px' }}></div>
+                      <button type="button" onClick={() => handleEditStudent(std)} style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer', padding: '6px', borderRadius: '6px' }} title="Modifier">
+                        <UserPlus size={18} />
+                      </button>
+                      <button type="button" onClick={() => handleDeleteStudent(std.id)} style={{ background: 'none', border: 'none', color: 'var(--status-negative)', cursor: 'pointer', padding: '6px', borderRadius: '6px' }} title="Supprimer">
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    <button type="button" onClick={() => generateDocument(std, 'IDCARD')} style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', padding: '6px', borderRadius: '6px' }} title="Générer Carte d'identité">
-                      <BadgeInfo size={18} />
-                    </button>
-                    <button type="button" onClick={() => generateDocument(std, 'CERTIFICATE')} style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', padding: '6px', borderRadius: '6px' }} title="Générer Certificat de scolarité">
-                      <FileText size={18} />
-                    </button>
-                    <div style={{ width: '1px', backgroundColor: 'var(--border)', margin: '0 4px' }}></div>
-                    <button type="button" onClick={() => handleEditStudent(std)} style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer', padding: '6px', borderRadius: '6px' }} title="Modifier">
-                      <UserPlus size={18} />
-                    </button>
-                    <button type="button" onClick={() => handleDeleteStudent(std.id)} style={{ background: 'none', border: 'none', color: 'var(--status-negative)', cursor: 'pointer', padding: '6px', borderRadius: '6px' }} title="Supprimer">
-                      <Trash2 size={18} />
-                    </button>
+                  {/* Détails supplémentaires dans la carte */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px', paddingTop: '12px', borderTop: '1px dashed var(--border)' }}>
+                    {std.guardianName && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        <User size={14} /> Responsable: {std.guardianName} ({std.guardianRelation}) {std.guardianProfession ? `- ${std.guardianProfession}` : ''}
+                      </div>
+                    )}
+                    {std.guardianPhone && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        <Phone size={14} /> Tél Tuteur: {std.guardianPhone}
+                      </div>
+                    )}
+                    {std.emergencyContactPhone && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#ef4444', fontWeight: 600 }}>
+                        <ShieldAlert size={14} /> Urgence: {std.emergencyContactName} ({std.emergencyContactPhone})
+                      </div>
+                    )}
+                    {std.address && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        <MapPin size={14} /> {std.address.substring(0, 30)}{std.address.length > 30 ? '...' : ''}
+                      </div>
+                    )}
                   </div>
-                </div>
 
-                {/* Détails supplémentaires dans la carte */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px', paddingTop: '12px', borderTop: '1px dashed var(--border)' }}>
-                  {std.guardianName && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      <User size={14} /> Responsable: {std.guardianName} ({std.guardianRelation}) {std.guardianProfession ? `- ${std.guardianProfession}` : ''}
-                    </div>
-                  )}
-                  {std.guardianPhone && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      <Phone size={14} /> Tél Tuteur: {std.guardianPhone}
-                    </div>
-                  )}
-                  {std.emergencyContactPhone && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#ef4444', fontWeight: 600 }}>
-                      <ShieldAlert size={14} /> Urgence: {std.emergencyContactName} ({std.emergencyContactPhone})
-                    </div>
-                  )}
-                  {std.address && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      <MapPin size={14} /> {std.address.substring(0, 30)}{std.address.length > 30 ? '...' : ''}
-                    </div>
-                  )}
                 </div>
-
-              </div>
-            ))}
+              );
+            })}
             
             {students.length === 0 && (
               <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
@@ -862,6 +927,116 @@ export const StudentView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* MODALE VISIONNEUSE INTELLIGENTE DE DOCUMENT INDIVIDUEL (PDF/IMG)*/}
+      {/* ------------------------------------------------------------- */}
+      {viewingDoc && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200, padding: '24px' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '20px', width: '900px', maxWidth: '95vw', height: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+            
+            {/* Header Modale */}
+            <div style={{ padding: '16px 24px', backgroundColor: '#0f172a', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'var(--font-title)' }}>📄 {viewingDoc.title}</h3>
+                <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Fichier : {viewingDoc.doc.name} · Numérisé le {viewingDoc.doc.uploadedAt}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <a
+                  href={viewingDoc.doc.dataUrl}
+                  download={viewingDoc.doc.name}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '8px', backgroundColor: '#38bdf8', color: '#0f172a', textDecoration: 'none', fontWeight: 700, fontSize: '0.82rem' }}
+                >
+                  <Download size={14} /> Télécharger
+                </a>
+                <button
+                  onClick={() => setViewingDoc(null)}
+                  style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+                >
+                  <X size={22} />
+                </button>
+              </div>
+            </div>
+
+            {/* Contenu Visionneuse */}
+            <div style={{ flex: 1, backgroundColor: '#f8fafc', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {viewingDoc.doc.fileType === 'pdf' ? (
+                <iframe
+                  src={viewingDoc.doc.dataUrl}
+                  title={viewingDoc.title}
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                />
+              ) : (
+                <img
+                  src={viewingDoc.doc.dataUrl}
+                  alt={viewingDoc.title}
+                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', padding: '16px' }}
+                />
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* MODALE LISTE DES DOCUMENTS DU DOSSIER D'UN ÉLÈVE             */}
+      {/* ------------------------------------------------------------- */}
+      {viewingStudentDocsModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '24px' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '20px', width: '600px', maxWidth: '90vw', padding: '28px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontFamily: 'var(--font-title)' }}>
+                  📁 Pièces Numérisées de {viewingStudentDocsModal.firstName} {viewingStudentDocsModal.lastName}
+                </h3>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Classe : {viewingStudentDocsModal.className} · Matricule : {viewingStudentDocsModal.matricule}</span>
+              </div>
+              <button onClick={() => setViewingStudentDocsModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}><X size={20} /></button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {[
+                { title: "Extrait d'acte de naissance", doc: viewingStudentDocsModal.scannedDocs?.birthCertificate },
+                { title: "Photo d'identité de l'élève", doc: viewingStudentDocsModal.scannedDocs?.photo },
+                { title: "Bulletins de l'année précédente", doc: viewingStudentDocsModal.scannedDocs?.previousReport },
+                { title: "Certificat de radiation (Ex-Certificat de sortie)", doc: viewingStudentDocsModal.scannedDocs?.dischargeCertificate },
+                { title: "Carnet de vaccination / Certificat médical", doc: viewingStudentDocsModal.scannedDocs?.vaccinationRecord },
+              ].map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: '10px', backgroundColor: item.doc ? '#f0fdf4' : '#f8fafc', border: item.doc ? '1px solid #86efac' : '1px solid #e2e8f0' }}>
+                  <div>
+                    <strong style={{ fontSize: '0.88rem', color: item.doc ? '#14532d' : '#64748b' }}>{item.title}</strong>
+                    {item.doc ? (
+                      <div style={{ fontSize: '0.75rem', color: '#166534', marginTop: '2px' }}>📄 {item.doc.name} ({item.doc.uploadedAt})</div>
+                    ) : (
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>Non fourni / Non scanné</div>
+                    )}
+                  </div>
+
+                  {item.doc ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setViewingDoc({ title: item.title, doc: item.doc! });
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '6px', backgroundColor: '#dcfce7', border: '1px solid #86efac', color: '#166534', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem' }}
+                    >
+                      <Eye size={14} /> Consulter le PDF
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>Absente</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: '24px', textAlign: 'right' }}>
+              <button onClick={() => setViewingStudentDocsModal(null)} style={{ padding: '10px 20px', borderRadius: '8px', backgroundColor: '#0f172a', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer' }}>Fermer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
