@@ -259,6 +259,7 @@ export const FleetView: React.FC = () => {
                 <th style={{ padding: '12px', textAlign: 'right' }}>Actions d'Administration</th>
               </tr>
             </thead>
+            <tbody>
               {tenants.map(t => {
                 const tenantCode = t.code || t.subdomain.toUpperCase();
                 return (
@@ -282,9 +283,18 @@ export const FleetView: React.FC = () => {
                       {t.contactEmail ?? '—'}
                     </td>
                     <td style={{ padding: '16px 12px', fontFamily: 'var(--font-data)', fontWeight: 600 }}>{t.plan}</td>
-                  <td style={{ padding: '16px 12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    {new Date(t.createdAt).toLocaleDateString('fr-FR')}
-                  </td>
+                    <td style={{ padding: '16px 12px' }}>
+                      <span style={{
+                        padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700,
+                        backgroundColor: t.status === 'ACTIVE' ? '#dcfce7' : t.status === 'TRIAL' ? '#fef3c7' : '#fee2e2',
+                        color: t.status === 'ACTIVE' ? '#166534' : t.status === 'TRIAL' ? '#92400e' : '#991b1b'
+                      }}>
+                        {t.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '16px 12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      {new Date(t.createdAt).toLocaleDateString('fr-FR')}
+                    </td>
                   <td style={{ padding: '16px 12px', textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
                       
