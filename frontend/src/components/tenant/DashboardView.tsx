@@ -5,6 +5,7 @@ import {
   UserX, CreditCard,
 } from 'lucide-react';
 import { useRealtime } from '../../hooks/useRealtime';
+import { useCountryTheme } from '../../theme/CountryThemeProvider';
 
 interface DashboardStats {
   totalStudents: number;
@@ -57,9 +58,10 @@ const KpiCard: React.FC<{
   </div>
 );
 
-const formatCfa = (n: number) => `${n.toLocaleString('fr-FR')} FCFA`;
+// formatCfa remplacé par formatCurrency dynamique du hook useCountryTheme
 
 export const DashboardView: React.FC = () => {
+  const { formatCurrency } = useCountryTheme();
   const { data: stats, loading, error, lastUpdated, refresh } = useRealtime<DashboardStats>(
     '/tenant/dashboard/stats',
     { interval: POLL_INTERVAL }
@@ -165,9 +167,9 @@ export const DashboardView: React.FC = () => {
               <div style={{ width: `${stats.collectionRate}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #34d399)', borderRadius: '5px', transition: 'width 1s ease' }} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-              <span>Collecté : <strong style={{ color: 'var(--text-primary)' }}>{formatCfa(stats.totalCollected)}</strong></span>
-              <span>Attendu : <strong style={{ color: 'var(--text-primary)' }}>{formatCfa(stats.totalExpected)}</strong></span>
-              <span>Reste : <strong style={{ color: '#ef4444' }}>{formatCfa(Math.max(0, stats.totalExpected - stats.totalCollected))}</strong></span>
+              <span>Collecté : <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(stats.totalCollected)}</strong></span>
+              <span>Attendu : <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(stats.totalExpected)}</strong></span>
+              <span>Reste : <strong style={{ color: '#ef4444' }}>{formatCurrency(Math.max(0, stats.totalExpected - stats.totalCollected))}</strong></span>
             </div>
           </div>
 

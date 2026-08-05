@@ -22,6 +22,7 @@ import {
   Info,
   BookOpen
 } from 'lucide-react';
+import { useCountryTheme } from '../../theme/CountryThemeProvider';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -40,6 +41,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeView,
   setActiveView
 }) => {
+  const { countryConfig } = useCountryTheme();
+
   const allTenantItems = [
     { label: 'Tableau de bord', icon: LayoutDashboard, roles: ['DIRECTOR', 'CENSOR', 'TEACHER', 'ACCOUNTANT', 'LIBRARIAN', 'DRIVER', 'STUDENT', 'PARENT'] },
     { label: 'Structure Pédago.', icon: GraduationCap, roles: ['DIRECTOR', 'CENSOR'] },
@@ -69,6 +72,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { label: 'Monitoring Technique', icon: Activity },
   ] : allTenantItems.filter(item => item.roles.includes(currentRole));
 
+  // Couleur d'accent dynamique : couleur pays pour les tenants, accent KPSyDesk pour superadmin
+  const accentColor = isSuperAdmin ? 'var(--accent)' : countryConfig.theme.primaryColor;
+
   return (
     <div style={{
       width: collapsed ? '80px' : '260px',
@@ -93,15 +99,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         borderBottom: '1px solid var(--bg-sidebar-active)'
       }}>
         {!collapsed && (
-          <span style={{
-            fontFamily: 'var(--font-title)',
-            color: '#FFFFFF',
-            fontSize: '1.25rem',
-            fontWeight: 700,
-            whiteSpace: 'nowrap'
-          }}>
-            {isSuperAdmin ? 'KPSyAdmin' : 'KPSySchool'}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{
+              fontFamily: 'var(--font-title)',
+              color: '#FFFFFF',
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              whiteSpace: 'nowrap'
+            }}>
+              {isSuperAdmin ? 'KPSyAdmin' : 'KPSySchool'}
+            </span>
+            {/* Drapeau emoji à côté du nom (tenants uniquement) */}
+            {!isSuperAdmin && (
+              <span style={{ fontSize: '1.15rem' }} title={countryConfig.name}>
+                {countryConfig.flag}
+              </span>
+            )}
+          </div>
         )}
         <button 
           onClick={() => setCollapsed(!collapsed)}
@@ -128,18 +142,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div style={{ fontWeight: 600, fontSize: '0.95rem', marginTop: '2px' }}>
             {isSuperAdmin ? 'Console SaaS' : 'Etablissement Démo'}
           </div>
-          <span style={{
-            display: 'inline-block',
-            marginTop: '6px',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            backgroundColor: 'var(--accent)',
-            color: '#FFFFFF'
-          }}>
-            {currentRole}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+            <span style={{
+              display: 'inline-block',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              backgroundColor: accentColor,
+              color: '#FFFFFF'
+            }}>
+              {currentRole}
+            </span>
+            {/* Badge devise (tenants uniquement) */}
+            {!isSuperAdmin && (
+              <span style={{
+                display: 'inline-block',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                backgroundColor: 'rgba(212, 168, 83, 0.2)',
+                color: '#D4A853',
+              }}>
+                {countryConfig.currency.symbol}
+              </span>
+            )}
+          </div>
         </div>
       )}
 
@@ -187,7 +216,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 textAlign: 'left'
               }}
             >
-              <Icon size={20} style={{ color: isActive ? 'var(--accent)' : 'inherit' }} />
+              <Icon size={20} style={{ color: isActive ? accentColor : 'inherit' }} />
               {!collapsed && (
                 <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>
                   {item.label}
@@ -197,6 +226,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </div>
+
+      {/* Pied de sidebar : mini-badge pays (sidebar non-collapsed, tenants uniquement) */}
+      {!collapsed && !isSuperAdmin && (
+        <div style={{
+          padding: '12px 20px',
+          borderTop: '1px solid var(--bg-sidebar-active)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          color: 'var(--text-secondary)',
+          fontSize: '0.78rem',
+        }}>
+          <span style={{ fontSize: '1rem' }}>{countryConfig.flag}</span>
+          <span>{countryConfig.name}</span>
+          <span style={{ marginLeft: 'auto', fontWeight: 600, color: '#D4A853' }}>{countryConfig.currency.symbol}</span>
+        </div>
+      )}
     </div>
   );
 };

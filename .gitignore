@@ -145,3 +145,8 @@ vite.config.ts.timestamp-*
 # Certificats et fichiers uploadés
 *.pem
 uploads/
+node_modules/ 
+frontend/node_modules/ 
+backend/node_modules/ 
+dist/ 
+frontend/dist/ 
