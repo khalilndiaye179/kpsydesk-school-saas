@@ -170,21 +170,9 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
         {isLoading ? <Loader2 className="lucide-spin" size={20} /> : 'SE CONNECTER'}
       </button>
 
-      {/* Liens secondaires : Inscription & Activation */}
-      <div style={{ textAlign: 'center', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <a 
-          href="/signup"
-          style={{
-            color: '#FFFFFF', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none', cursor: 'pointer',
-            backgroundColor: 'rgba(139, 38, 53, 0.25)', padding: '12px', borderRadius: '12px',
-            border: '1px solid #8B2635', boxShadow: '0 4px 15px rgba(139, 38, 53, 0.2)',
-            transition: 'background-color 0.2s ease'
-          }}
-        >
-          + Inscrire mon Établissement Scolaire
-        </a>
-
-        <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.78rem' }}>
+      {/* Lien secondaire : Activation de compte */}
+      <div style={{ textAlign: 'center', marginTop: '10px' }}>
+        <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.82rem' }}>
           Vous avez reçu une invitation ?{' '}
           <a 
             href="/activate-account"

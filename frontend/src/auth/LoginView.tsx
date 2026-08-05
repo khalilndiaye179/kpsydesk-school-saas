@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Shield, Mail, Phone, Bus, GraduationCap, Calendar, Users, 
-  AlertTriangle, FileText, CheckCircle2, Sparkles, HelpCircle, Lock
+  AlertTriangle, FileText, CheckCircle2, Sparkles, HelpCircle, Lock, X
 } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { PasswordStep } from './PasswordStep';
@@ -18,7 +18,10 @@ export const LoginView: React.FC = () => {
   const [role, setRole] = useState<'DIRECTOR' | 'PROFESSEUR' | 'ADMINISTRATEUR'>('DIRECTOR');
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>('');
-  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+
+  // MODALES INFORMATIVES
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
 
   // Étape 1A : Redirection automatique si le serveur exige l'enrôlement MFA initial
   const handleRequireEnrollment = (enrollToken: string, email: string) => {
@@ -99,226 +102,115 @@ export const LoginView: React.FC = () => {
       }}>
         {/* Éléments Décoratifs d'Arrière-Plan */}
         <div style={{
-          position: 'absolute',
-          top: '-10%',
-          left: '-10%',
-          width: '500px',
-          height: '500px',
-          background: 'radial-gradient(circle, rgba(13, 58, 42, 0.4) 0%, rgba(0,0,0,0) 70%)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute',
-          bottom: '-10%',
-          right: '-10%',
-          width: '400px',
-          height: '400px',
-          background: 'radial-gradient(circle, rgba(212, 168, 83, 0.15) 0%, rgba(0,0,0,0) 70%)',
-          pointerEvents: 'none',
+          position: 'absolute', top: '-100px', left: '-100px',
+          width: '350px', height: '350px', borderRadius: '50%',
+          backgroundColor: 'rgba(212, 168, 83, 0.04)', filter: 'blur(60px)', pointerEvents: 'none',
         }} />
 
-        {/* EN-TÊTE BRANDING */}
-        <div style={{ position: 'relative', zIndex: 2 }}>
-          {/* Logo & Marque */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '24px' }}>
+        {/* LOGO PLATEFORME & HEADER BRANDING */}
+        <div style={{ zIndex: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #D4A853 0%, #B8860B 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: designTokens.shadows.glowGold,
+              width: '42px', height: '42px', borderRadius: '12px',
+              backgroundColor: 'rgba(212, 168, 83, 0.15)', border: '1px solid rgba(212, 168, 83, 0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: designTokens.colors.brandGold,
             }}>
-              <GraduationCap size={28} color="#051C14" strokeWidth={2.2} />
+              <GraduationCap size={24} />
             </div>
             <div>
               <h1 style={{
-                margin: 0,
-                fontSize: '1.6rem',
-                fontWeight: 800,
-                color: '#FFFFFF',
-                fontFamily: designTokens.typography.fontTitle,
-                letterSpacing: '-0.5px',
+                margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#FFFFFF',
+                letterSpacing: '0.5px', fontFamily: designTokens.typography.fontTitle,
               }}>
-                KPSyDesk <span style={{ color: designTokens.colors.brandGold }}>School</span>
+                KPSyDesk School
               </h1>
-              <span style={{ color: designTokens.colors.textMuted, fontSize: '0.8rem', letterSpacing: '0.5px' }}>
-                GESTION SCOLAIRE SAAS MULTI-ÉTABLISSEMENTS
+              <span style={{ fontSize: '0.75rem', color: designTokens.colors.brandGold, fontWeight: 600, letterSpacing: '1px' }}>
+                ERP ÉDUCATIF SAAS MULTI-TENANT
               </span>
             </div>
           </div>
+        </div>
 
-          {/* Badge Pilule de Référence */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            borderRadius: designTokens.borderRadius.pill,
-            backgroundColor: 'rgba(212, 168, 83, 0.12)',
-            border: '1px solid rgba(212, 168, 83, 0.3)',
-            color: designTokens.colors.brandGold,
-            fontSize: '0.82rem',
-            fontWeight: 700,
-            letterSpacing: '0.5px',
-            marginBottom: '20px',
-          }}>
-            <Sparkles size={14} color={designTokens.colors.brandGold} />
-            LA RÉFÉRENCE SAAS ÉDUCATION EN AFRIQUE
+        {/* CONTENU CENTRAL : ILLUSTRATION VECTORIELLE INTERACTIVE */}
+        <div style={{
+          zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          my: 'auto', position: 'relative', height: '360px',
+        }}>
+          {/* Illustration de remise de diplômes / éducation */}
+          <div style={{ width: '280px', height: '280px', opacity: 0.9 }}>
+            <GraduationIllustration />
           </div>
 
-          <h2 style={{
-            fontSize: '2.1rem',
-            fontWeight: 800,
-            color: '#FFFFFF',
-            lineHeight: 1.25,
-            marginBottom: '16px',
-            fontFamily: designTokens.typography.fontTitle,
-          }}>
-            Pilotez votre établissement scolaire avec <span style={{
-              background: 'linear-gradient(90deg, #D4A853 0%, #F59E0B 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}>excellence et simplicité</span>.
-          </h2>
+          {/* Badges Flottants des Modules de la Solution ERP */}
+          {floatingModules.map((m, idx) => (
+            <div
+              key={idx}
+              style={{
+                position: 'absolute',
+                top: m.top,
+                left: m.left,
+                right: m.right,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 14px',
+                borderRadius: designTokens.borderRadius.pill,
+                backgroundColor: 'rgba(5, 28, 20, 0.85)',
+                border: '1px solid rgba(212, 168, 83, 0.25)',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.4)',
+                backdropFilter: 'blur(8px)',
+                color: '#FFFFFF',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                pointerEvents: 'none',
+              }}
+            >
+              <m.icon size={14} color={designTokens.colors.brandGold} />
+              <span>{m.label}</span>
+            </div>
+          ))}
+        </div>
 
-          {/* Liste à Puces */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '16px' }}>
-            {featurePoints.map((point, index) => (
-              <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                  border: '1px solid #10B981',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  <CheckCircle2 size={13} color="#10B981" />
-                </div>
-                <span style={{ color: designTokens.colors.textMuted, fontSize: '0.9rem' }}>{point}</span>
+        {/* FOOTER PANNEAU BRANDING */}
+        <div style={{ zIndex: 2 }}>
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: '8px',
+            backgroundColor: 'rgba(5, 28, 20, 0.6)', padding: '16px 20px', borderRadius: '16px',
+            border: '1px solid rgba(212, 168, 83, 0.15)',
+          }}>
+            {featurePoints.map((pt, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#E2E8F0', fontSize: '0.82rem' }}>
+                <CheckCircle2 size={15} color={designTokens.colors.brandGold} />
+                <span>{pt}</span>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* CENTRE : ILLUSTRATION VECTORIELLE & MODULES FLOTTANTS */}
-        <div style={{
-          position: 'relative',
-          height: '340px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '20px 0',
-          zIndex: 2,
-        }}>
-          {/* TODO_ILLUSTRATION: Remplaçable par un composant d'illustration SVG personnalisé si souhaité */}
-          <GraduationIllustration style={{ width: '85%', height: '85%', filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.5))' }} />
-
-          {/* Badges Flottants Autour de l'Illustration */}
-          {floatingModules.map((mod, i) => {
-            const IconComp = mod.icon;
-            return (
-              <div
-                key={i}
-                className="floating-module-badge"
-                style={{
-                  position: 'absolute',
-                  top: mod.top,
-                  left: mod.left,
-                  right: mod.right,
-                  backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(212, 168, 83, 0.25)',
-                  borderRadius: '30px',
-                  padding: '8px 14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  color: '#FFFFFF',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
-                  transition: 'transform 0.3s ease',
-                  cursor: 'default',
-                  zIndex: 3,
-                }}
-              >
-                <div style={{
-                  padding: '4px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(212, 168, 83, 0.2)',
-                  color: designTokens.colors.brandGold,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  <IconComp size={12} />
-                </div>
-                <span>{mod.label}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* PIED DU PANNEAU GAUCHE */}
-        <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: designTokens.colors.textDim, fontSize: '0.8rem' }}>
-            © {new Date().getFullYear()} KPSyDesk School — Tous droits réservés.
-          </span>
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <span style={{ color: designTokens.colors.brandGold, fontSize: '0.8rem', fontWeight: 600 }}>🇸🇳 Sénégal</span>
-            <span style={{ color: designTokens.colors.textMuted, fontSize: '0.8rem' }}>🇨🇮 Côte d'Ivoire</span>
-            <span style={{ color: designTokens.colors.textMuted, fontSize: '0.8rem' }}>🇲🇱 Mali</span>
           </div>
         </div>
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* PANNEAU DROITE : CARTE AUTHENTIFICATION                       */}
+      {/* PANNEAU DROIT : FORMULAIRE D'AUTHENTIFICATION COMPACT        */}
       {/* ------------------------------------------------------------- */}
       <div className="login-form-panel" style={{
-        flex: '1 1 50%',
-        backgroundColor: '#070E17',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 24px',
-        position: 'relative',
+        flex: '1 1 50%', display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        alignItems: 'center', padding: '40px', backgroundColor: '#020B08', position: 'relative',
       }}>
         <div style={{
-          width: '100%',
-          maxWidth: '460px',
-          backgroundColor: designTokens.colors.surfaceDark,
-          borderRadius: designTokens.borderRadius.card,
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          padding: '36px',
-          boxShadow: designTokens.shadows.cardShadow,
+          width: '100%', maxWidth: '420px', backgroundColor: 'rgba(5, 28, 20, 0.75)',
+          borderRadius: '24px', border: '1px solid rgba(255, 255, 255, 0.08)',
+          padding: '36px', boxShadow: designTokens.shadows.cardShadow,
         }}>
           {/* Titre & Message de Bienvenue */}
           <div style={{ textAlign: 'center', marginBottom: '28px' }}>
             <div style={{
-              display: 'inline-flex',
-              padding: '10px',
-              borderRadius: '12px',
-              backgroundColor: 'rgba(212, 168, 83, 0.1)',
-              color: designTokens.colors.brandGold,
-              marginBottom: '12px',
+              display: 'inline-flex', padding: '10px', borderRadius: '12px',
+              backgroundColor: 'rgba(212, 168, 83, 0.1)', color: designTokens.colors.brandGold, marginBottom: '12px',
             }}>
               <Lock size={22} />
             </div>
             <h2 style={{
-              margin: '0 0 6px 0',
-              fontSize: '1.5rem',
-              fontWeight: 700,
-              color: '#FFFFFF',
-              fontFamily: designTokens.typography.fontTitle,
+              margin: '0 0 6px 0', fontSize: '1.5rem', fontWeight: 700,
+              color: '#FFFFFF', fontFamily: designTokens.typography.fontTitle,
             }}>
               Espace de Connexion
             </h2>
@@ -329,11 +221,8 @@ export const LoginView: React.FC = () => {
 
           {/* SÉLECTEUR DE RÔLE EN PILLS */}
           <div style={{
-            display: 'flex',
-            backgroundColor: designTokens.colors.surfaceInput,
-            borderRadius: designTokens.borderRadius.pill,
-            padding: '4px',
-            marginBottom: '24px',
+            display: 'flex', backgroundColor: designTokens.colors.surfaceInput,
+            borderRadius: designTokens.borderRadius.pill, padding: '4px', marginBottom: '24px',
             border: '1px solid rgba(255, 255, 255, 0.05)',
           }}>
             {(['DIRECTOR', 'PROFESSEUR', 'ADMINISTRATEUR'] as const).map((r) => {
@@ -344,16 +233,10 @@ export const LoginView: React.FC = () => {
                   key={r}
                   onClick={() => setRole(r)}
                   style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    borderRadius: designTokens.borderRadius.pill,
-                    border: 'none',
-                    backgroundColor: isActive ? designTokens.colors.brandGold : 'transparent',
+                    flex: 1, padding: '8px 12px', borderRadius: designTokens.borderRadius.pill,
+                    border: 'none', backgroundColor: isActive ? designTokens.colors.brandGold : 'transparent',
                     color: isActive ? '#051C14' : designTokens.colors.textMuted,
-                    fontWeight: isActive ? 700 : 500,
-                    fontSize: '0.82rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
+                    fontWeight: isActive ? 700 : 500, fontSize: '0.82rem', cursor: 'pointer', transition: 'all 0.2s ease',
                   }}
                 >
                   {labels[r]}
@@ -362,7 +245,7 @@ export const LoginView: React.FC = () => {
             })}
           </div>
 
-          {/* SÉQUENCE D'AUTHENTIFICATION (Étape 1: Mot de passe -> Étape 2: OTP) */}
+          {/* SÉQUENCE D'AUTHENTIFICATION */}
           {!challengeId ? (
             <PasswordStep 
               onSuccess={handlePasswordSuccess} 
@@ -380,15 +263,10 @@ export const LoginView: React.FC = () => {
             />
           )}
 
-          {/* SÉPARATEUR & LIEN INSCRIPTION TENANT */}
-          <div style={{
-            marginTop: '28px',
-            paddingTop: '20px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            textAlign: 'center',
-          }}>
+          {/* BOUTON ÉLÉGANT INSCRIPTION D'ÉTABLISSEMENT */}
+          <div style={{ marginTop: '24px', paddingTop: '18px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', textAlign: 'center' }}>
             <p style={{ margin: '0 0 10px 0', color: designTokens.colors.textMuted, fontSize: '0.85rem' }}>
-              Nouveau sur KPSyDesk School ?
+              Vous souhaitez équiper votre établissement ?
             </p>
             <button
               onClick={() => navigate('/signup')}
@@ -404,52 +282,108 @@ export const LoginView: React.FC = () => {
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(212, 168, 83, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(212, 168, 83, 0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
             >
-              Inscrire un Établissement (Essai Gratuit)
+              Inscrire un Établissement (Essai Gratuit 7 Jours)
             </button>
           </div>
         </div>
 
-        {/* FOOTER BAS DE CARTE */}
+        {/* FOOTER BAS DE PAGE AVEC VRAIS LIENS PRIVACY & SUPPORT */}
         <div style={{
-          marginTop: '24px',
-          display: 'flex',
-          gap: '20px',
-          alignItems: 'center',
-          color: designTokens.colors.textDim,
-          fontSize: '0.78rem',
+          marginTop: '24px', display: 'flex', gap: '20px', alignItems: 'center',
+          color: designTokens.colors.textDim, fontSize: '0.78rem',
         }}>
           <button 
-            onClick={() => setShowPrivacyPolicy(!showPrivacyPolicy)} 
-            style={{ background: 'none', border: 'none', color: designTokens.colors.textMuted, cursor: 'pointer', fontSize: '0.78rem' }}
+            onClick={() => setShowPrivacyModal(true)} 
+            style={{ background: 'none', border: 'none', color: designTokens.colors.textMuted, cursor: 'pointer', fontSize: '0.78rem', textDecoration: 'underline' }}
           >
             Politique de confidentialité
           </button>
           <span>•</span>
-          <a href="mailto:support@kpsyinformatique.com" style={{ color: designTokens.colors.textMuted, textDecoration: 'none' }}>
+          <button 
+            onClick={() => setShowSupportModal(true)} 
+            style={{ background: 'none', border: 'none', color: designTokens.colors.textMuted, cursor: 'pointer', fontSize: '0.78rem', textDecoration: 'underline' }}
+          >
             Support Technique
-          </a>
+          </button>
         </div>
       </div>
 
-      {/* STYLES RESPONSIVE EMBARQUÉS */}
-      <style>{`
-        @media (max-width: 1024px) {
-          .login-branding-panel {
-            display: none !important;
-          }
-          .login-form-panel {
-            flex: 1 1 100% !important;
-            padding: 24px 16px !important;
-          }
-        }
-      `}</style>
+      {/* ------------------------------------------------------------- */}
+      {/* MODALE 1 : POLITIQUE DE CONFIDENTIALITÉ & PROTECTION          */}
+      {/* ------------------------------------------------------------- */}
+      {showPrivacyModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}>
+          <div style={{ backgroundColor: '#051C14', border: '1px solid rgba(212, 168, 83, 0.3)', padding: '28px', borderRadius: '20px', width: '550px', maxWidth: '90vw', color: 'white', position: 'relative', textAlign: 'left' }}>
+            <button onClick={() => setShowPrivacyModal(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={20} /></button>
+            <h3 style={{ margin: '0 0 12px 0', color: designTokens.colors.brandGold, fontFamily: designTokens.typography.fontTitle }}>
+              🛡️ Engagement & Protection des Données Personnelles
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: '#cbd5e1', lineHeight: '1.6' }}>
+              <strong>KPSyDesk School</strong> s'engage à garantir la confidentialité intégrale et la sécurité des données des établissements scolaires, enseignants, élèves et tuteurs.
+            </p>
+            <ul style={{ fontSize: '0.82rem', color: '#cbd5e1', lineHeight: '1.6', paddingLeft: '20px' }}>
+              <li><strong>Conformité Légale :</strong> Respect strict de la Loi Sénégalaise N° 2008-12 (CDP), de la Loi Ivoirienne N° 2013-450 (CPTDP) et Malienne sur la protection des données.</li>
+              <li><strong>Isolation Multi-Tenant :</strong> Vos données d'établissement sont hermétiquement isolées et chiffrées en base de données (AES-256 / SSL).</li>
+              <li><strong>Hébergement Sécurisé :</strong> Serveurs haute disponibilité et sauvegardes automatisées quotidiennes.</li>
+              <li><strong>Droit d'Accès :</strong> Chaque titulaire conserve un droit absolu de rectification et de suppression sur ses informations nominatives.</li>
+            </ul>
+            <button onClick={() => setShowPrivacyModal(false)} style={{ width: '100%', padding: '10px', backgroundColor: designTokens.colors.brandGold, color: '#051C14', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', marginTop: '12px' }}>
+              J'ai Compris
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* MODALE 2 : ASSISTANCE & SUPPORT TECHNIQUE CLIENT              */}
+      {/* ------------------------------------------------------------- */}
+      {showSupportModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}>
+          <div style={{ backgroundColor: '#051C14', border: '1px solid rgba(212, 168, 83, 0.3)', padding: '28px', borderRadius: '20px', width: '500px', maxWidth: '90vw', color: 'white', position: 'relative', textAlign: 'left' }}>
+            <button onClick={() => setShowSupportModal(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={20} /></button>
+            <h3 style={{ margin: '0 0 12px 0', color: designTokens.colors.brandGold, fontFamily: designTokens.typography.fontTitle }}>
+              🎧 Assistance & Support Technique 24/7
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '16px' }}>
+              Une équipe d'ingénieurs dédiée est à votre disposition pour vous accompagner dans le déploiement et l'utilisation quotidienne de KPSyDesk School.
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.88rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                <Mail color="#D4A853" size={18} />
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Email Support Direct</div>
+                  <strong style={{ color: 'white' }}>support@kpsyinformatique.com</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                <Phone color="#D4A853" size={18} />
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Ligne Téléphonique / Urgence</div>
+                  <strong style={{ color: 'white' }}>+221 33 825 00 00 / +221 77 000 00 00</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                <Phone color="#25D366" size={18} />
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Assistance Instantanée WhatsApp</div>
+                  <strong style={{ color: '#25D366' }}>+221 77 888 99 00</strong>
+                </div>
+              </div>
+            </div>
+
+            <button onClick={() => setShowSupportModal(false)} style={{ width: '100%', padding: '10px', backgroundColor: designTokens.colors.brandGold, color: '#051C14', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', marginTop: '16px' }}>
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
