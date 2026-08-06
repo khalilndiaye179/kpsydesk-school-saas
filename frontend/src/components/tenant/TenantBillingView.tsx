@@ -176,23 +176,25 @@ export const TenantBillingView: React.FC = () => {
                 </ul>
                 
                 <button 
-                  onClick={() => handleUpgradeClick(plan.id)}
-                  disabled={currentPlan === plan.id}
+                  onClick={() => handleUpgradeClick(plan)}
+                  disabled={currentPlan === plan.name}
                   style={{ 
                     width: '100%', padding: '14px', borderRadius: '8px', border: 'none', 
-                    backgroundColor: currentPlan === plan.id ? '#f1f5f9' : planColor, 
-                    color: currentPlan === plan.id ? '#94a3b8' : 'white', 
-                    cursor: currentPlan === plan.id ? 'not-allowed' : 'pointer', 
+                    backgroundColor: currentPlan === plan.name ? '#f1f5f9' : planColor, 
+                    color: currentPlan === plan.name ? '#94a3b8' : 'white', 
+                    cursor: currentPlan === plan.name ? 'not-allowed' : 'pointer', 
                     fontWeight: 600, fontSize: '1rem', transition: '0.2s'
                   }}
                 >
-                  {currentPlan === plan.id ? 'Plan Actuel' : 'Choisir ce plan'}
+                  {currentPlan === plan.name ? 'Plan Actuel' : 'Choisir ce plan'}
                 </button>
               </div>
             );
           })}
+        </div>
+      </div>
 
-             {/* Section des Preuves de Règlement Transmises */}
+      {/* Section des Preuves de Règlement Transmises */}
       <div style={{ backgroundColor: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '32px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div>
