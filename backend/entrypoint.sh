@@ -1,12 +1,13 @@
 #!/bin/sh
 set -e
 
-echo "[KPsySchool Backend] Application des migrations Prisma sur PostgreSQL..."
-npx prisma db push --accept-data-loss || npx prisma migrate deploy || {
-  echo "[KPsySchool Backend] AVERTISSEMENT : Échec de synchronisation Prisma DB, poursuite du démarrage..."
+echo "[KPsySchool Backend] Execution des migrations Prisma SQL..."
+npx prisma migrate deploy || {
+  echo "[KPsySchool Backend] ERREUR CRITIQUE : Echec de 'npx prisma migrate deploy'. Arret du conteneur."
+  exit 1
 }
 
-echo "[KPsySchool Backend] Démarrage du serveur NestJS en production..."
+echo "[KPsySchool Backend] Demarrage du serveur NestJS en production..."
 if [ -f "dist/src/main.js" ]; then
   exec node dist/src/main.js
 else

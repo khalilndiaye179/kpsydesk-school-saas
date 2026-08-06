@@ -14,7 +14,10 @@ export class MfaService {
    * Obtient la clé de chiffrement AES-256 de 32 octets à partir de MFA_ENCRYPTION_KEY
    */
   private getEncryptionKey(): Buffer {
-    const rawKey = process.env.MFA_ENCRYPTION_KEY || 'default_dev_mfa_encryption_key_32bytes_secret!';
+    const rawKey = process.env.MFA_ENCRYPTION_KEY;
+    if (!rawKey) {
+      throw new Error('CRITICAL SECURITY ERROR: MFA_ENCRYPTION_KEY environment variable is missing.');
+    }
     return crypto.scryptSync(rawKey, 'salt_kpsyschool_mfa', 32);
   }
 

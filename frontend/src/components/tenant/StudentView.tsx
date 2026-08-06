@@ -140,53 +140,28 @@ export const StudentView: React.FC = () => {
     fetchStudents();
   }, []);
 
+  const [networkError, setNetworkError] = useState('');
+
   const fetchClasses = async () => {
     try {
       const response = await api.get('/tenant/classes');
       setAvailableClasses(response.data);
       if (response.data.length > 0) setClassId(response.data[0].id);
-    } catch (err) {
-      console.warn('Erreur classes, fallback local:', err);
-      const savedClasses = localStorage.getItem('kpsydesk_classes');
-      if (savedClasses) {
-        const parsedClasses = JSON.parse(savedClasses);
-        setAvailableClasses(parsedClasses);
-        if (parsedClasses.length > 0) setClassId(parsedClasses[0].id);
-      } else {
-        setAvailableClasses([]);
-        setClassId('');
-        localStorage.setItem('kpsydesk_classes', JSON.stringify([]));
-      }
+    } catch (err: any) {
+      console.error('Erreur API /tenant/classes:', err);
+      setAvailableClasses([]);
     }
   };
 
-  const generateMatricule = (existing: any[]): string => {
-    let max = 0;
-    existing.forEach(s => {
-      if (s.matricule && s.matricule.startsWith('ELEV')) {
-        const num = parseInt(s.matricule.substring(4), 10);
-        if (!isNaN(num) && num > max) max = num;
-      }
-    });
-    return `ELEV${String(max + 1).padStart(5, '0')}`;
-  };
-
   const fetchStudents = async () => {
-    const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
-    const STUDENTS_STORAGE_KEY = `kpsydesk_students_${activeTenantId}`;
-
+    setNetworkError('');
     try {
       const response = await api.get('/tenant/students');
       setStudents(response.data);
-      localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(response.data));
-    } catch (err) {
-      const saved = localStorage.getItem(STUDENTS_STORAGE_KEY);
-      if (saved) {
-        setStudents(JSON.parse(saved));
-      } else {
-        setStudents([]);
-        localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify([]));
-      }
+    } catch (err: any) {
+      console.error('Erreur API /tenant/students:', err);
+      setNetworkError('Échec du chargement des élèves depuis le serveur. Vérifiez votre connexion.');
+      setStudents([]);
     }
   };
 

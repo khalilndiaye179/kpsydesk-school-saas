@@ -16,9 +16,14 @@ export class PlatformJwtGuard implements CanActivate {
 
     const token = authHeader.split(' ')[1];
 
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable is missing.');
+    }
+
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_SECRET || 'kpsydesk_jwt_super_secret_key_change_me_in_production',
+        secret,
       });
 
       // VÉRIFICATION STRICTE DU SCOPE : doit être exactement "platform"

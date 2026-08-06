@@ -1,6 +1,7 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, BadRequestException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { tenantLocalStorage } from './common/tenancy/tenant.middleware';
+import { isValidUUID } from './common/utils/uuid.util';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -22,6 +23,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     if (!tenantId) {
       // Pas de tenant context (ex: requête globale admin ou tâche asynchrone)
       return callback(this);
+    }
+
+    // Protection stricte contre l'injection SQL : validation du format UUID v4
+    if (!isValidUUID(tenantId)) {
+      throw new BadRequestException('Security Violation: Invalid Tenant ID format.');
     }
 
     // Exécution dans une transaction SQL pour appliquer le SET LOCAL du tenant_id

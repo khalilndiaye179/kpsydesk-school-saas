@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { DollarSign, TrendingDown, FileText, FileSpreadsheet, Plus, Download, Printer, Filter, Building2, CreditCard } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { DollarSign, TrendingDown, FileText, FileSpreadsheet, Plus, Download, Printer, Filter, Building2, CreditCard, RefreshCw } from 'lucide-react';
 import { CardKPI } from '../shared/CardKPI';
+import { api } from '../../lib/api';
 
 interface Transaction {
   id: string;
@@ -12,35 +13,45 @@ interface Transaction {
   status: 'PAID' | 'PENDING' | 'OVERDUE';
 }
 
-interface Quote {
-  id: string;
-  date: string;
-  client: string;
-  amount: number;
-  status: 'DRAFT' | 'SENT' | 'ACCEPTED' | 'REJECTED';
-}
-
 export const SuperAdminFinancesView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'TRANSACTIONS' | 'QUOTES' | 'REPORTS'>('TRANSACTIONS');
   const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
 
-  // Données simulées pour la comptabilité du SaaS
-  const transactions: Transaction[] = [
-    { id: 'TRX-001', date: '2023-10-15', description: 'Abonnement Mensuel - Lycée Excellence', category: 'Revenus SaaS', amount: 150000, type: 'INCOME', status: 'PAID' },
-    { id: 'TRX-002', date: '2023-10-14', description: 'Frais Hébergement AWS / Vercel', category: 'Infrastructure', amount: 45000, type: 'EXPENSE', status: 'PAID' },
-    { id: 'TRX-003', date: '2023-10-12', description: 'Campagne Facebook Ads (Rentrée)', category: 'Marketing', amount: 75000, type: 'EXPENSE', status: 'PAID' },
-    { id: 'TRX-004', date: '2023-10-10', description: 'Abonnement Annuel - Collège Mermoz', category: 'Revenus SaaS', amount: 1200000, type: 'INCOME', status: 'PAID' },
-    { id: 'TRX-005', date: '2023-10-05', description: 'Salaires Équipe Dev (Octobre)', category: 'Ressources Humaines', amount: 850000, type: 'EXPENSE', status: 'PENDING' },
-  ];
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [errorMsg, setErrorMsg] = useState<string>('');
 
-  const quotes: Quote[] = [
-    { id: 'DEV-23-01', date: '2023-10-16', client: 'Groupe Scolaire International (Multi-campus)', amount: 4500000, status: 'SENT' },
-    { id: 'DEV-23-02', date: '2023-10-10', client: 'Ministère de l\'Éducation (Projet Pilote)', amount: 12500000, status: 'ACCEPTED' },
-    { id: 'DEV-23-03', date: '2023-10-02', client: 'Institut Privé La Réussite', amount: 350000, status: 'REJECTED' },
-  ];
+  useEffect(() => {
+    fetchRealFinances();
+  }, []);
+
+  const fetchRealFinances = async () => {
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      // Charger les vraies preuves de paiement d'abonnements validées
+      const res = await api.get('/platform/billing/proofs');
+      if (Array.isArray(res.data)) {
+        const mappedTransactions: Transaction[] = res.data.map((proof: any) => ({
+          id: proof.id.slice(0, 8),
+          date: new Date(proof.createdAt).toISOString().split('T')[0],
+          description: `Abonnement ${proof.plan?.name || 'SaaS'} - ${proof.tenant?.name || 'Établissement'}`,
+          category: 'Revenus SaaS',
+          amount: proof.amount || 0,
+          type: 'INCOME',
+          status: proof.status === 'APPROVED' ? 'PAID' : proof.status === 'REJECTED' ? 'OVERDUE' : 'PENDING',
+        }));
+        setTransactions(mappedTransactions);
+      }
+    } catch (err: any) {
+      setErrorMsg('Erreur lors du chargement des données financières réelles.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const totalIncome = transactions.filter(t => t.type === 'INCOME' && t.status === 'PAID').reduce((acc, curr) => acc + curr.amount, 0);
-  const totalExpense = transactions.filter(t => t.type === 'EXPENSE').reduce((acc, curr) => acc + curr.amount, 0);
+  const totalExpense = 0; // Pas de dépenses internes enregistrées pour l'instant
   const balance = totalIncome - totalExpense;
 
   const filteredTransactions = transactions.filter(t => filterType === 'ALL' || t.type === filterType);

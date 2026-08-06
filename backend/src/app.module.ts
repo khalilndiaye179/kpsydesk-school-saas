@@ -11,8 +11,15 @@ import { PublicSignupModule } from './signup/signup.module';
 import { PlatformModule } from './platform/platform.module';
 import { PlatformBillingModule } from './platform/billing/platform-billing.module';
 
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
     TenantModule, 
     StudentModule, 
     TeacherModule,
@@ -24,7 +31,13 @@ import { PlatformBillingModule } from './platform/billing/platform-billing.modul
     PlatformBillingModule,
   ],
   controllers: [],
-  providers: [PrismaService],
+  providers: [
+    PrismaService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
   exports: [PrismaService],
 })
 export class AppModule implements NestModule {

@@ -9,19 +9,23 @@ export class MailService {
     const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
     const port = Number(process.env.SMTP_PORT) || 465;
     const isSecure = process.env.SMTP_SECURE === 'true' || port === 465;
-    const user = process.env.SMTP_USER || 'kpsydesk.support@kpsyinformatique.com';
-    const pass = process.env.SMTP_PASS || '';
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+
+    if (!user || !pass) {
+      throw new Error('CRITICAL SMTP CONFIGURATION ERROR: SMTP_USER and SMTP_PASS environment variables are required for sending emails.');
+    }
 
     return nodemailer.createTransport({
       host,
       port,
-      secure: isSecure, // true pour port 465 (SSL implicite Hostinger)
+      secure: isSecure,
       auth: {
         user,
         pass,
       },
       tls: {
-        rejectUnauthorized: false // Garantit la poignée de main SSL sans blocage de certificat
+        rejectUnauthorized: false
       }
     });
   }

@@ -4,11 +4,11 @@ import * as bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = process.env.INITIAL_SUPERADMIN_EMAIL || 'admin@kpsydesk.com';
-  const password = process.env.INITIAL_SUPERADMIN_PASSWORD || 'Admin2026!';
+  const email = process.env.INITIAL_SUPERADMIN_EMAIL;
+  const password = process.env.INITIAL_SUPERADMIN_PASSWORD;
 
   if (!email || !password) {
-    console.error('❌ ERREUR: Les variables d\'environnement INITIAL_SUPERADMIN_EMAIL et INITIAL_SUPERADMIN_PASSWORD doivent être définies.');
+    console.error('❌ ERREUR SÉCURITÉ CRITIQUE: Les variables INITIAL_SUPERADMIN_EMAIL et INITIAL_SUPERADMIN_PASSWORD sont obligatoires pour le seed.');
     process.exit(1);
   }
 

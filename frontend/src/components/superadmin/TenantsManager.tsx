@@ -30,26 +30,16 @@ export const TenantsManager: React.FC = () => {
     fetchTenants();
   }, []);
 
+  const [errorMsg, setErrorMsg] = useState('');
+
   const fetchTenants = async () => {
-    // Simulons la récupération des tenants (car on n'a pas encore la route admin/tenants dans le backend)
-    // Mais on prévoit l'hybride pour respecter la règle.
+    setErrorMsg('');
     try {
       const response = await api.get('/platform/tenants');
       setTenants(response.data);
-    } catch (err) {
-      console.warn('Erreur API /admin/tenants (Attendue en Phase 5), fallback local');
-      const saved = localStorage.getItem('kpsydesk_superadmin_tenants');
-      if (saved) {
-        setTenants(JSON.parse(saved));
-      } else {
-        const defaultTenants: TenantData[] = [
-          { id: '1', name: 'Lycée d\'Excellence', domain: 'excellence.kpsydesk.com', plan: 'Premium', status: 'ACTIVE', createdAt: '2023-01-15', studentsCount: 450 },
-          { id: '2', name: 'Collège Saint-Louis', domain: 'stlouis.kpsydesk.com', plan: 'Pro', status: 'ACTIVE', createdAt: '2023-03-22', studentsCount: 320 },
-          { id: '3', name: 'Groupe Scolaire Les Pédagogues', domain: 'pedagogues.kpsydesk.com', plan: 'Basic', status: 'SUSPENDED', createdAt: '2023-05-10', studentsCount: 150 },
-        ];
-        setTenants(defaultTenants);
-        localStorage.setItem('kpsydesk_superadmin_tenants', JSON.stringify(defaultTenants));
-      }
+    } catch (err: any) {
+      console.error('Erreur API /platform/tenants:', err);
+      setErrorMsg('Impossible de charger la liste des établissements depuis le serveur.');
     }
   };
 
