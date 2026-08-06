@@ -339,7 +339,7 @@ export const FleetView: React.FC = () => {
                 <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700 }}>Établissement</th>
                 <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700 }}>Contact Admin</th>
                 <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700 }}>Plan Actuel</th>
-                <th style={{ padding: '12px', textAlign: 'left', fontWeight 700 }}>Statut</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700 }}>Statut</th>
                 <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700 }}>Inscrit le</th>
                 <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700 }}>Actions d'Administration</th>
               </tr>
