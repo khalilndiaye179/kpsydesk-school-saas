@@ -24,7 +24,10 @@ interface TenantData {
   createdAt: string;
 }
 
+import { useSuperAdminTheme } from '../../context/SuperAdminThemeContext';
+
 export const FleetView: React.FC = () => {
+  const { isDark } = useSuperAdminTheme();
   const [tenants, setTenants] = useState<TenantData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState('');
@@ -294,14 +297,14 @@ export const FleetView: React.FC = () => {
       </div>
 
       {/* Main List */}
-      <div style={{ backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '24px' }}>
+      <div style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', borderRadius: '16px', border: isDark ? '1px solid #334155' : '1px solid #e2e8f0', padding: '24px', boxShadow: isDark ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-title)', color: 'white', margin: 0 }}>Parc de Tenants (Fleet Management)</h3>
+          <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-title)', color: isDark ? 'white' : '#0f172a', margin: 0 }}>Parc de Tenants (Fleet Management)</h3>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <button
               onClick={loadTenants}
               disabled={isLoading}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px', cursor: 'pointer', color: '#cbd5e1', fontWeight: 600 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: isDark ? '#0f172a' : '#f1f5f9', border: isDark ? '1px solid #334155' : '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', color: isDark ? '#cbd5e1' : '#334155', fontWeight: 600 }}
             >
               <RefreshCw size={15} style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
               Actualiser
@@ -325,57 +328,57 @@ export const FleetView: React.FC = () => {
 
         {/* Spinner de chargement */}
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '48px', color: '#94a3b8' }}>
+          <div style={{ textAlign: 'center', padding: '48px', color: isDark ? '#94a3b8' : '#64748b' }}>
             <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', opacity: 0.6 }} />
             <p style={{ marginTop: '12px' }}>Chargement du parc de tenants...</p>
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #334155', color: '#94a3b8', backgroundColor: '#0f172a' }}>
-                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Établissement</th>
-                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Contact Admin</th>
-                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Plan Actuel</th>
-                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Statut</th>
-                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Inscrit le</th>
-                <th style={{ padding: '12px', textAlign: 'right', fontWeight: 600 }}>Actions d'Administration</th>
+              <tr style={{ borderBottom: isDark ? '1px solid #334155' : '1px solid #e2e8f0', color: isDark ? '#94a3b8' : '#475569', backgroundColor: isDark ? '#0f172a' : '#f8fafc' }}>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700 }}>Établissement</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700 }}>Contact Admin</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700 }}>Plan Actuel</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight 700 }}>Statut</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700 }}>Inscrit le</th>
+                <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700 }}>Actions d'Administration</th>
               </tr>
             </thead>
             <tbody>
               {tenants.map(t => {
                 const tenantCode = t.code || t.subdomain.toUpperCase();
                 return (
-                  <tr key={t.id} style={{ borderBottom: '1px solid #334155' }}>
+                  <tr key={t.id} style={{ borderBottom: isDark ? '1px solid #334155' : '1px solid #e2e8f0' }}>
                     <td style={{ padding: '16px 12px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <strong style={{ fontSize: '0.98rem', color: '#ffffff', fontWeight: 700 }}>{t.name}</strong>
-                          <span style={{ backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 800, fontFamily: 'monospace' }}>
+                          <strong style={{ fontSize: '0.98rem', color: isDark ? '#ffffff' : '#0f172a', fontWeight: 800 }}>{t.name}</strong>
+                          <span style={{ backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : '#e0f2fe', color: isDark ? '#38bdf8' : '#0369a1', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 800, fontFamily: 'monospace' }}>
                             {tenantCode}
                           </span>
                         </div>
-                        <span style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: '2px' }}>{t.subdomain}.kpsyschool.com &bull; {t.studentsCount} élèves</span>
-                        <span style={{ fontSize: '0.78rem', color: '#38bdf8', fontFamily: 'monospace', fontWeight: 700, marginTop: '3px' }}>
+                        <span style={{ fontSize: '0.82rem', color: isDark ? '#94a3b8' : '#475569', marginTop: '2px', fontWeight: 500 }}>{t.subdomain}.kpsyschool.com &bull; {t.studentsCount} élèves</span>
+                        <span style={{ fontSize: '0.78rem', color: isDark ? '#38bdf8' : '#0284c7', fontFamily: 'monospace', fontWeight: 700, marginTop: '3px' }}>
                           🔑 Identifiant : {tenantCode}-0001
                         </span>
                       </div>
                     </td>
-                    <td style={{ padding: '16px 12px', color: '#cbd5e1', fontSize: '0.85rem' }}>
-                      <strong style={{ fontWeight: 600, color: '#ffffff', display: 'block' }}>{t.contactName ?? 'Non spécifié'}</strong>
-                      <span style={{ color: '#94a3b8' }}>{t.contactEmail ?? '—'}</span>
+                    <td style={{ padding: '16px 12px', color: isDark ? '#cbd5e1' : '#334155', fontSize: '0.85rem' }}>
+                      <strong style={{ fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a', display: 'block' }}>{t.contactName ?? 'Non spécifié'}</strong>
+                      <span style={{ color: isDark ? '#94a3b8' : '#64748b' }}>{t.contactEmail ?? '—'}</span>
                     </td>
-                    <td style={{ padding: '16px 12px', fontFamily: 'var(--font-data)', fontWeight: 700, color: '#38bdf8' }}>{t.plan}</td>
+                    <td style={{ padding: '16px 12px', fontFamily: 'var(--font-data)', fontWeight: 800, color: isDark ? '#38bdf8' : '#0284c7' }}>{t.plan}</td>
                     <td style={{ padding: '16px 12px' }}>
                       <span style={{
                         padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800,
-                        backgroundColor: t.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.15)' : t.status === 'TRIAL' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                        color: t.status === 'ACTIVE' ? '#34d399' : t.status === 'TRIAL' ? '#fbbf24' : '#f87171',
+                        backgroundColor: t.status === 'ACTIVE' ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#dcfce7') : t.status === 'TRIAL' ? (isDark ? 'rgba(245, 158, 11, 0.15)' : '#fef3c7') : (isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2'),
+                        color: t.status === 'ACTIVE' ? (isDark ? '#34d399' : '#166534') : t.status === 'TRIAL' ? (isDark ? '#fbbf24' : '#92400e') : (isDark ? '#f87171' : '#991b1b'),
                         border: `1px solid ${t.status === 'ACTIVE' ? '#10b981' : t.status === 'TRIAL' ? '#f59e0b' : '#ef4444'}`
                       }}>
                         {t.status}
                       </span>
                     </td>
-                    <td style={{ padding: '16px 12px', fontSize: '0.85rem', color: '#cbd5e1' }}>
+                    <td style={{ padding: '16px 12px', fontSize: '0.85rem', color: isDark ? '#cbd5e1' : '#475569', fontWeight: 600 }}>
                       {new Date(t.createdAt).toLocaleDateString('fr-FR')}
                     </td>
                   <td style={{ padding: '16px 12px', textAlign: 'right' }}>

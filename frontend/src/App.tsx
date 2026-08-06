@@ -25,6 +25,7 @@ import { AcademicSettingsView } from './components/tenant/AcademicSettingsView';
 import { WatermarkOverlay } from './components/shared/WatermarkOverlay';
 
 // SuperAdmin
+import { SuperAdminThemeProvider } from './context/SuperAdminThemeContext';
 import { SuperAdminLayout } from './components/superadmin/SuperAdminLayout';
 import { SuperAdminDashboard } from './components/superadmin/SuperAdminDashboard';
 import { FleetView } from './components/superadmin/FleetView';
@@ -57,23 +58,28 @@ const SuperAdminApp = () => {
   };
 
   return (
-    <SuperAdminLayout 
-      currentView={activeAdminView} 
-      onViewChange={setActiveAdminView}
-      onLogout={handleLogout}
-    >
-      {activeAdminView === 'dashboard' && <SuperAdminDashboard />}
-      {activeAdminView === 'tenants' && <FleetView />}
-      {activeAdminView === 'billing' && <SaaSBillingView onConfigureGateways={() => {
-        setTargetSettingsTab('PAYMENT');
-        setActiveAdminView('settings');
-      }} />}
-      {activeAdminView === 'finances' && <SuperAdminFinancesView />}
-      {activeAdminView === 'audits' && <SuperAdminAuditsView />}
-      {activeAdminView === 'collaborators' && <SuperAdminCollaboratorsView />}
-      {activeAdminView === 'settings' && <SuperAdminSettingsView initialTab={targetSettingsTab} />}
-      {activeAdminView === 'about' && <SuperAdminAboutView />}
-    </SuperAdminLayout>
+    <SuperAdminThemeProvider>
+      <SuperAdminLayout 
+        activeTab={activeAdminView} 
+        onTabChange={setActiveAdminView}
+        onLogout={handleLogout}
+      >
+        {activeAdminView === 'dashboard' && <SuperAdminDashboard />}
+        {activeAdminView === 'fleet' && <FleetView />}
+        {activeAdminView === 'tenants' && <FleetView />}
+        {activeAdminView === 'billing' && <SaaSBillingView onConfigureGateways={() => {
+          setTargetSettingsTab('PAYMENT');
+          setActiveAdminView('settings');
+        }} />}
+        {activeAdminView === 'finances' && <SuperAdminFinancesView />}
+        {activeAdminView === 'audits' && <SuperAdminAuditsView />}
+        {activeAdminView === 'audit' && <SuperAdminAuditsView />}
+        {activeAdminView === 'collaborators' && <SuperAdminCollaboratorsView />}
+        {activeAdminView === 'settings' && <SuperAdminSettingsView initialTab={targetSettingsTab} />}
+        {activeAdminView === 'system' && <SuperAdminSettingsView initialTab={targetSettingsTab} />}
+        {activeAdminView === 'about' && <SuperAdminAboutView />}
+      </SuperAdminLayout>
+    </SuperAdminThemeProvider>
   );
 };
 
