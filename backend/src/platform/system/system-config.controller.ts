@@ -1,9 +1,6 @@
 import { Controller, Get, Patch, Body, UseGuards } from '@nestjs/common';
 import { SystemConfigService } from './system-config.service';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/roles.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { UserRole } from '@prisma/client';
+import { PlatformJwtGuard } from '../../common/guards/platform-jwt.guard';
 
 @Controller('platform/system-config')
 export class SystemConfigController {
@@ -14,8 +11,7 @@ export class SystemConfigController {
     return this.systemConfigService.getConfig();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN)
+  @UseGuards(PlatformJwtGuard)
   @Patch()
   async updateConfig(
     @Body() body: { maintenanceMode?: boolean; maintenanceMessage?: string },
