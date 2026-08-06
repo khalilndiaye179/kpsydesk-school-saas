@@ -59,14 +59,14 @@ export const LoginView: React.FC = () => {
     setChallengeId(null);
   };
 
-  // Modules flottants positionnés autour de l'illustration
+  // Modules flottants positionnés autour de l'illustration pour meubler le panneau visuel
   const floatingModules = [
-    { icon: GraduationCap, label: 'Structure Pédagogique', top: '10%', left: '8%' },
-    { icon: Shield, label: 'Ressources Humaines', top: '18%', right: '6%' },
-    { icon: Calendar, label: 'Emploi du temps', top: '48%', left: '6%' },
-    { icon: Bus, label: 'Transport Scolaire', top: '42%', right: '8%' },
-    { icon: Users, label: 'Élèves & Inscriptions', top: '75%', left: '10%' },
-    { icon: FileText, label: 'Pointage Kiosque', top: '78%', right: '10%' },
+    { icon: GraduationCap, label: 'Structure Collège & Lycée', top: '5%', left: '4%' },
+    { icon: Shield, label: 'Bulletins Officiels & QR Code', top: '8%', right: '4%' },
+    { icon: Calendar, label: 'Emploi du Temps & Paie RH', top: '46%', left: '2%' },
+    { icon: Bus, label: 'Transport & Cantine Scolaire', top: '42%', right: '2%' },
+    { icon: Users, label: 'Séries L1, L2, S1, S2, A, C, D', top: '78%', left: '6%' },
+    { icon: FileText, label: 'Mobile Money (Wave, OM, MTN)', top: '80%', right: '6%' },
   ];
 
   // Points forts du produit affichés sur le panneau branding
@@ -100,12 +100,51 @@ export const LoginView: React.FC = () => {
         overflow: 'hidden',
         borderRight: '1px solid rgba(212, 168, 83, 0.15)',
       }}>
-        {/* Éléments Décoratifs d'Arrière-Plan */}
+        {/* Éléments Décoratifs & Filigranes Pédagogiques Translucides */}
         <div style={{
-          position: 'absolute', top: '-100px', left: '-100px',
+          position: 'absolute', top: '-80px', left: '-80px',
           width: '350px', height: '350px', borderRadius: '50%',
-          backgroundColor: 'rgba(212, 168, 83, 0.04)', filter: 'blur(60px)', pointerEvents: 'none',
+          backgroundColor: 'rgba(212, 168, 83, 0.05)', filter: 'blur(70px)', pointerEvents: 'none',
         }} />
+
+        {/* FILIGRANES PÉDAGOGIQUES VECTORIELS EN ARRIÈRE-PLAN */}
+        <svg
+          style={{
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            opacity: 0.06, pointerEvents: 'none', zIndex: 1,
+          }}
+          viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Filigrane 1 : Chapeau de Diplôme Géant en haut à droite */}
+          <g transform="translate(500, 40) scale(1.8)" stroke="#D4A853" strokeWidth="2">
+            <polygon points="60,20 110,40 60,60 10,40" fill="none" />
+            <path d="M 30 50 L 30 75 Q 60 95 90 75 L 90 50" fill="none" />
+            <path d="M 100 45 L 115 70 L 115 90" strokeWidth="3" />
+            <circle cx="115" cy="92" r="4" fill="#D4A853" />
+          </g>
+
+          {/* Filigrane 2 : Livre Ouvert et Boussole Éducation au centre gauche */}
+          <g transform="translate(40, 450) scale(1.5)" stroke="#D4A853" strokeWidth="2">
+            <path d="M 20 60 Q 60 40 100 60 L 100 120 Q 60 100 20 120 Z" fill="none" />
+            <path d="M 100 60 Q 140 40 180 60 L 180 120 Q 140 100 100 120 Z" fill="none" />
+            <line x1="100" y1="60" x2="100" y2="120" strokeWidth="3" />
+          </g>
+
+          {/* Filigrane 3 : Symboles Mathématiques & Scientifiques (pi, racine, delta) */}
+          <g fill="#D4A853" fontSize="48" fontFamily="sans-serif" fontWeight="bold">
+            <text x="650" y="420">π</text>
+            <text x="80" y="250">√x</text>
+            <text x="600" y="680">Δ</text>
+            <text x="120" y="720">∑</text>
+          </g>
+
+          {/* Filigrane 4 : Microscope Sciences en bas à droite */}
+          <g transform="translate(620, 520) scale(1.4)" stroke="#D4A853" strokeWidth="2">
+            <circle cx="50" cy="30" r="12" />
+            <line x1="50" y1="42" x2="50" y2="80" strokeWidth="4" />
+            <rect x="25" y="80" width="50" height="10" rx="2" fill="#D4A853" />
+          </g>
+        </svg>
 
         {/* LOGO PLATEFORME & HEADER BRANDING */}
         <div style={{ zIndex: 2 }}>
@@ -148,10 +187,10 @@ export const LoginView: React.FC = () => {
         {/* CONTENU CENTRAL : ILLUSTRATION VECTORIELLE INTERACTIVE */}
         <div style={{
           zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          margin: 'auto 0', position: 'relative', height: '320px',
+          margin: 'auto 0', position: 'relative', height: '380px', width: '100%',
         }}>
           {/* Illustration de remise de diplômes / éducation */}
-          <div style={{ width: '260px', height: '260px', opacity: 0.9 }}>
+          <div style={{ width: '330px', height: '330px', opacity: 0.95 }}>
             <GraduationIllustration />
           </div>
 
