@@ -287,9 +287,4 @@ export const TenantBillingView: React.FC = () => {
       />
     </div>
   );
-};       </div>
-      )}
-
-    </div>
-  );
 };

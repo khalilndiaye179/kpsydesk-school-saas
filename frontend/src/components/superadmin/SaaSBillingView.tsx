@@ -199,46 +199,7 @@ export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGat
             </table>
           </div>
         </div>
-
-        {/* Info Plans */}
-        <div style={{ backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '24px', flex: 1, minWidth: '300px' }}>
-          <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-title)', marginBottom: '24px', color: 'white', margin: '0 0 24px 0' }}>Répartition des Plans</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            
-            <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: '#0f172a', border: '1px solid #334155' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontWeight: 600, color: 'white' }}>STARTER</span>
-                <span style={{ fontFamily: 'var(--font-data)', color: '#94a3b8' }}>0 tenant</span>
-              </div>
-              <div style={{ width: '100%', height: '6px', backgroundColor: '#1e293b', borderRadius: '4px' }}>
-                <div style={{ width: '0%', height: '100%', backgroundColor: '#64748b', borderRadius: '4px' }}></div>
-              </div>
-            </div>
-            
-            <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: '#0f172a', border: '1px solid #334155' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontWeight: 600, color: 'white' }}>PRO</span>
-                <span style={{ fontFamily: 'var(--font-data)', color: '#94a3b8' }}>2 tenants</span>
-              </div>
-              <div style={{ width: '100%', height: '6px', backgroundColor: '#1e293b', borderRadius: '4px' }}>
-                <div style={{ width: '50%', height: '100%', backgroundColor: '#38bdf8', borderRadius: '4px' }}></div>
-              </div>
-            </div>
-            
-            <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: '#0f172a', border: '1px solid #334155' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontWeight: 600, color: 'white' }}>ENTERPRISE</span>
-                <span style={{ fontFamily: 'var(--font-data)', color: '#94a3b8' }}>2 tenants</span>
-              </div>
-              <div style={{ width: '100%', height: '6px', backgroundColor: '#1e293b', borderRadius: '4px' }}>
-                <div style={{ width: '50%', height: '100%', backgroundColor: '#8b5cf6', borderRadius: '4px' }}></div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
+      )}
     </div>
   );
 };
