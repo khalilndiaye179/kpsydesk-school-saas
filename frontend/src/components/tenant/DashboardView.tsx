@@ -170,7 +170,7 @@ export const DashboardView: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '18px' }}>
         <KpiCard title="Effectif Élèves" value={total} sub={`${femaleCount} Filles · ${maleCount} Garçons`} icon={Users} color="#0284c7" />
         <KpiCard title="Professeurs & Staff" value={totalTeachers} sub={`${totalClasses} Classes actives`} icon={GraduationCap} color="#8b5cf6" />
-        <KpiCard title="Taux d'Assiduité" value={`${stats?.attendanceRate || 0}%`} sub={`${stats?.absencesToday || 0} absences aujourd'hui`} icon={UserCheck} color="#10b981" />
+        <KpiCard title="Taux d'Assiduité" value={`${total > 0 ? (stats?.attendanceRate ?? 100) : 0}%`} sub={`${stats?.absencesToday || 0} absence(s) aujourd'hui`} icon={UserCheck} color="#10b981" />
         <KpiCard title="Recouvrement Scolarité" value={`${collectionRate}%`} sub={`Encaissé : ${formatCurrency(totalCollected)}`} icon={DollarSign} color="#f59e0b" />
       </div>
 
