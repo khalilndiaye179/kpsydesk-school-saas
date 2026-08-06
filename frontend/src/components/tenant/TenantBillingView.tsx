@@ -73,12 +73,10 @@ export const TenantBillingView: React.FC = () => {
     setPaymentModalOpen(true);
   };
 
-  const { 
-    currentLockedPrice, 
-    livePlanPrice, 
-    nextRenewalDate, 
-    isPriceChanged 
-  } = useSubscriptionPricing('samba_diouf');
+  const getPlanColor = (index: number) => {
+    const colors = ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444'];
+    return colors[index % colors.length];
+  };
 
   const formattedRenewalDate = new Date(nextRenewalDate).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 

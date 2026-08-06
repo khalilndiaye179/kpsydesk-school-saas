@@ -17,6 +17,9 @@
     "prisma:seed": "ts-node --transpile-only prisma/seed.ts",
     "seed": "ts-node --transpile-only prisma/seed.ts"
   },
+  "prisma": {
+    "seed": "ts-node --transpile-only prisma/seed.ts"
+  },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
