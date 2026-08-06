@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, CreditCard, Download, Search } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, CreditCard, Download, Search, Layers } from 'lucide-react';
 import { formatCurrency } from '../../config/countries.config';
+import { PaymentProofQueueView } from './PaymentProofQueueView';
+import { SaaSAdminManagementView } from './SaaSAdminManagementView';
 
 interface Invoice {
   id: string;
@@ -16,6 +18,7 @@ interface SaaSBillingViewProps {
 }
 
 export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGateways }) => {
+  const [activeTab, setActiveTab] = useState<'QUEUE' | 'MANAGEMENT' | 'HISTORY'>('QUEUE');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [mrr, setMrr] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,15 +71,12 @@ export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGat
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h2 style={{ fontSize: '1.8rem', fontWeight: 700, margin: '0 0 8px 0', color: 'white', fontFamily: 'var(--font-title)' }}>
-            Gestion des Abonnements
+            Console Financière & Validation SaaS
           </h2>
           <p style={{ color: '#94a3b8', margin: 0, fontSize: '1rem' }}>
-            Suivi du MRR, gestion des plans et suivi de la facturation des écoles.
+            Validation des récépissés, gestion dynamique des forfaits et suivi du chiffre d'affaires.
           </p>
         </div>
-        <button onClick={onConfigureGateways} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#38bdf8', color: '#0f172a', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
-          <CreditCard size={18} /> Configurer les Passerelles
-        </button>
       </div>
 
       {/* KPI Financiers */}
@@ -104,11 +104,49 @@ export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGat
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-        {/* Liste des Factures */}
-        <div style={{ backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '24px', flex: 2, minWidth: '400px' }}>
+      {/* Barres d'onglets SuperAdmin */}
+      <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
+        <button
+          onClick={() => setActiveTab('QUEUE')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px',
+            border: 'none', backgroundColor: activeTab === 'QUEUE' ? '#2563eb' : '#1e293b',
+            color: 'white', fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          <Clock size={18} /> File d'Attente Récépissés
+        </button>
+        <button
+          onClick={() => setActiveTab('MANAGEMENT')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px',
+            border: 'none', backgroundColor: activeTab === 'MANAGEMENT' ? '#2563eb' : '#1e293b',
+            color: 'white', fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          <Layers size={18} /> Gestion des Plans & Moyens de Règlement
+        </button>
+        <button
+          onClick={() => setActiveTab('HISTORY')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px',
+            border: 'none', backgroundColor: activeTab === 'HISTORY' ? '#2563eb' : '#1e293b',
+            color: 'white', fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          <CreditCard size={18} /> Historique des Factures
+        </button>
+      </div>
+
+      {/* CONTENU SELON L'ONGLET SÉLECTIONNÉ */}
+      {activeTab === 'QUEUE' && <PaymentProofQueueView />}
+
+      {activeTab === 'MANAGEMENT' && <SaaSAdminManagementView />}
+
+      {activeTab === 'HISTORY' && (
+        <div style={{ backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-title)', color: 'white', margin: 0 }}>Dernières Factures</h3>
+            <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-title)', color: 'white', margin: 0 }}>Dernières Factures Émises</h3>
             <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#0f172a', padding: '8px 12px', borderRadius: '8px', border: '1px solid #334155', width: '250px' }}>
               <Search size={16} color="#94a3b8" style={{ marginRight: '8px' }} />
               <input 

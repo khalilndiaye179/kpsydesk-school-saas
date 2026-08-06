@@ -1,94 +1,76 @@
-import React, { useState } from 'react';
-import { CreditCard, CheckCircle2, ShieldCheck, Zap, AlertCircle, Smartphone, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CreditCard, CheckCircle2, ShieldCheck, Zap, AlertCircle, Clock, FileText, Upload } from 'lucide-react';
 import { useSubscriptionPricing } from '../../hooks/useSubscriptionPricing';
 import { formatCurrency } from '../../config/countries.config';
+import { PaymentProofSubmissionModal } from './PaymentProofSubmissionModal';
+import { api } from '../../lib/api';
 
 export const TenantBillingView: React.FC = () => {
-  const [currentPlan, setCurrentPlan] = useState('ESSAI');
+  const [currentStatus, setCurrentStatus] = useState<'TRIAL' | 'ACTIVE' | 'SUSPENDED'>('TRIAL');
+  const [currentPlan, setCurrentPlan] = useState('STANDARD');
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<string | null>(null);
-  const [subscriptionMonths, setSubscriptionMonths] = useState(9); // 9 mois par défaut
+  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<any | null>(null);
 
-  const [plans, setPlans] = React.useState<any[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [submittedProofs, setSubmittedProofs] = useState<any[]>([]);
 
-  React.useEffect(() => {
-    const loadPlans = () => {
-      const saved = localStorage.getItem('kpsydesk_pricing_plans');
-      if (saved) {
-        let parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          parsed = parsed.map((p: any) => ({
-            ...p,
-            price: p.price === 50000 ? 25000 : (p.price === 150000 ? 45000 : (p.price === 350000 ? 75000 : p.price)),
-            maxStudents: p.maxStudents === 500 ? 350 : p.maxStudents
-          }));
-          setPlans(parsed);
+  const loadData = () => {
+    // Charger les plans publics
+    api.get('/public/plans')
+      .then((res) => {
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setPlans(res.data);
+        } else {
+          fallbackPlans();
         }
-      } else {
-        setPlans([
-          {
-            id: 'STANDARD',
-            name: 'Plan Standard',
-            price: 25000,
-            activeQuota: 30,
-            maxStudents: 500,
-            annualDiscount: 20,
-            description: 'Gestion essentielle : élèves, bulletins & pointage kiosque.',
-            features: ['Gestion Scolaire de base', 'Absences & Bulletins', 'Pointage Kiosque QR'],
-            tags: 'Standard, Populaire',
-            recommended: false
-          },
-          {
-            id: 'PREMIUM',
-            name: 'Plan Premium',
-            price: 50000,
-            activeQuota: 70,
-            maxStudents: 2000,
-            annualDiscount: 20,
-            description: 'Gestion complète avec RH et comptabilité.',
-            features: ['Gestion Scolaire complète', 'Module Financier & Paie RH', 'Kiosque Pointage', 'Messagerie Parents'],
-            tags: 'Premium, Recommandé',
-            recommended: true
-          },
-          {
-            id: 'PRO',
-            name: 'Plan Pro',
-            price: 75000,
-            activeQuota: 100,
-            maxStudents: 99999,
-            annualDiscount: 20,
-            description: 'Haute performance et multi-établissements.',
-            features: ['Tout le Plan Premium', 'Multi-campuses', 'Exports Illimités', 'Support Prioritaire 24/7'],
-            tags: 'Pro, Haute Performance',
-            recommended: false
-          }
-        ]);
-      }
-    };
+      })
+      .catch(fallbackPlans);
 
-    loadPlans();
-    
-    // Polling léger pour réactivité immédiate sans rechargement (mockup)
-    const interval = setInterval(loadPlans, 1000);
-    return () => clearInterval(interval);
+    // Charger les preuves soumises
+    api.get('/tenant/billing/proofs')
+      .then((res) => setSubmittedProofs(res.data || []))
+      .catch(() => {});
+  };
+
+  const fallbackPlans = () => {
+    setPlans([
+      {
+        id: 'STANDARD',
+        name: 'STANDARD',
+        price: 25000,
+        quotaStudents: 350,
+        description: 'Gestion essentielle : élèves, bulletins & pointage kiosque.',
+        features: ['Gestion Scolaire de base', 'Absences & Bulletins', 'Pointage Kiosque QR'],
+        recommended: false,
+      },
+      {
+        id: 'PREMIUM',
+        name: 'PREMIUM',
+        price: 50000,
+        quotaStudents: 2000,
+        description: 'Gestion complète avec RH et comptabilité.',
+        features: ['Gestion Scolaire complète', 'Module Financier & Paie RH', 'Kiosque Pointage', 'Messagerie Parents'],
+        recommended: true,
+      },
+      {
+        id: 'PRO',
+        name: 'PRO',
+        price: 75000,
+        quotaStudents: 99999,
+        description: 'Haute performance et multi-établissements.',
+        features: ['Tout le Plan Premium', 'Multi-campuses', 'Exports Illimités', 'Support Prioritaire 24/7'],
+        recommended: false,
+      },
+    ]);
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
-  const getPlanColor = (index: number) => {
-    const colors = ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444'];
-    return colors[index % colors.length];
-  };
-
-  const handleUpgradeClick = (planId: string) => {
-    setSelectedPlanForPayment(planId);
+  const handleUpgradeClick = (plan: any) => {
+    setSelectedPlanForPayment(plan);
     setPaymentModalOpen(true);
-  };
-
-  const handleSimulatePayment = (gateway: string) => {
-    alert(`Simulation de paiement via ${gateway} pour le plan ${selectedPlanForPayment}... Paiement réussi !`);
-    if (selectedPlanForPayment) {
-      setCurrentPlan(selectedPlanForPayment);
-    }
-    setPaymentModalOpen(false);
   };
 
   const { 
@@ -210,115 +192,102 @@ export const TenantBillingView: React.FC = () => {
             );
           })}
 
-        </div>
-      </div>
-
-      {/* Section Factures */}
+             {/* Section des Preuves de Règlement Transmises */}
       <div style={{ backgroundColor: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '32px' }}>
-        <h3 style={{ margin: '0 0 24px 0', color: '#1e293b', fontSize: '1.4rem' }}>Dernières Factures KPsyDesk</h3>
-        {currentPlan === 'ESSAI' ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div>
+            <h3 style={{ margin: '0 0 4px 0', color: '#1e293b', fontSize: '1.3rem' }}>Historique des Preuves de Règlement Transmises</h3>
+            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Suivi des demandes d'activation et de changement de plan en cours.</span>
+          </div>
+          <button
+            onClick={() => {
+              setSelectedPlanForPayment(plans[0] || null);
+              setPaymentModalOpen(true);
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px',
+              backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '10px',
+              fontWeight: 600, fontSize: '0.88rem', cursor: 'pointer',
+            }}
+          >
+            <Upload size={16} /> Transmettre un Récépissé
+          </button>
+        </div>
+
+        {submittedProofs.length === 0 ? (
           <div style={{ padding: '32px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1', color: '#64748b' }}>
-            Vous êtes en période d'essai. Aucune facture n'a encore été générée.
+            <FileText size={32} color="#94a3b8" style={{ margin: '0 auto 8px auto', display: 'block' }} />
+            Aucun récépissé de paiement transmis pour le moment. Cliquez sur "Choisir ce plan" ci-dessus pour soumettre votre règlement.
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.95rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>
-                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 500 }}>N° Facture</th>
-                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 500 }}>Date</th>
-                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 500 }}>Plan</th>
-                <th style={{ padding: '12px', textAlign: 'right', fontWeight: 500 }}>Montant</th>
-                <th style={{ padding: '12px', textAlign: 'center', fontWeight: 500 }}>Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '16px 12px', fontWeight: 600, color: '#1e293b' }}>FAC-2023-10-01</td>
-                <td style={{ padding: '16px 12px', color: '#64748b' }}>01 Oct 2023</td>
-                <td style={{ padding: '16px 12px', color: '#64748b' }}>Professionnel</td>
-                <td style={{ padding: '16px 12px', textAlign: 'right', fontWeight: 600, color: '#1e293b' }}>150 000 F</td>
-                <td style={{ padding: '16px 12px', textAlign: 'center' }}>
-                  <span style={{ padding: '4px 8px', backgroundColor: '#dcfce7', color: '#16a34a', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>PAYÉ</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>
+                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Date de Soumission</th>
+                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Plan Demandé</th>
+                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Moyen de Règlement</th>
+                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Référence</th>
+                  <th style={{ padding: '12px', textAlign: 'right', fontWeight: 600 }}>Montant</th>
+                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600 }}>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {submittedProofs.map((proof) => (
+                  <tr key={proof.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <td style={{ padding: '14px 12px', color: '#475569' }}>
+                      {new Date(proof.submittedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td style={{ padding: '14px 12px', fontWeight: 700, color: '#1e293b' }}>
+                      Plan {proof.planCode}
+                    </td>
+                    <td style={{ padding: '14px 12px', color: '#475569' }}>
+                      {proof.paymentMethod?.label || proof.paymentMethodId}
+                    </td>
+                    <td style={{ padding: '14px 12px', fontFamily: 'var(--font-data)', color: '#475569' }}>
+                      {proof.transactionReference || 'Non renseignée'}
+                    </td>
+                    <td style={{ padding: '14px 12px', textAlign: 'right', fontWeight: 700, color: '#1e293b' }}>
+                      {formatCurrency(proof.amount)}
+                    </td>
+                    <td style={{ padding: '14px 12px', textAlign: 'center' }}>
+                      {proof.status === 'PENDING' && (
+                        <span style={{ padding: '4px 10px', backgroundColor: '#fef3c7', color: '#d97706', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Clock size={12} /> EN ATTENTE DE VALIDATION
+                        </span>
+                      )}
+                      {proof.status === 'APPROVED' && (
+                        <span style={{ padding: '4px 10px', backgroundColor: '#dcfce7', color: '#16a34a', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <CheckCircle2 size={12} /> VALIDÉ & ACTIF
+                        </span>
+                      )}
+                      {proof.status === 'REJECTED' && (
+                        <span style={{ padding: '4px 10px', backgroundColor: '#fef2f2', color: '#dc2626', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }} title={proof.rejectionReason}>
+                          <AlertCircle size={12} /> REJETÉ
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      {/* Modale de Paiement Mobile Money */}
-      {paymentModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '24px', width: '100%', maxWidth: '500px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-            <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '1.4rem', color: '#1e293b' }}>Paiement Sécurisé</h3>
-              <button onClick={() => setPaymentModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#94a3b8', cursor: 'pointer' }}>&times;</button>
-            </div>
-            
-            <div style={{ padding: '32px' }}>
-              <p style={{ margin: '0 0 16px 0', color: '#64748b', fontSize: '1rem', lineHeight: '1.5' }}>
-                Sélectionnez votre moyen de paiement pour souscrire au forfait <strong>{plans.find(p => p.id === selectedPlanForPayment)?.name}</strong>.
-              </p>
-
-              <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <label style={{ display: 'block', color: '#475569', fontWeight: 600, marginBottom: '8px' }}>Durée de l'abonnement (mois)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <input 
-                    type="number" 
-                    min={1} 
-                    max={12} 
-                    value={subscriptionMonths} 
-                    onChange={(e) => setSubscriptionMonths(Number(e.target.value) || 1)}
-                    style={{ width: '80px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '1rem' }} 
-                  />
-                  <span style={{ color: '#64748b', fontSize: '0.95rem' }}>
-                    x {(plans.find(p => p.id === selectedPlanForPayment)?.price || 0).toLocaleString('fr-FR')} F
-                  </span>
-                </div>
-                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 600, color: '#1e293b' }}>Total à payer :</span>
-                  <span style={{ fontWeight: 800, color: '#2563eb', fontSize: '1.2rem' }}>
-                    {((plans.find(p => p.id === selectedPlanForPayment)?.price || 0) * subscriptionMonths).toLocaleString('fr-FR')} F
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <button 
-                  onClick={() => handleSimulatePayment('Wave')}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', backgroundColor: '#f0fdf4', border: '1px solid #10b981', borderRadius: '12px', cursor: 'pointer', transition: '0.2s' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <Smartphone size={28} color="#10b981" />
-                    <div style={{ textAlign: 'left' }}>
-                      <strong style={{ display: 'block', color: '#1e293b', fontSize: '1.1rem' }}>Payer avec Wave</strong>
-                      <span style={{ color: '#10b981', fontSize: '0.85rem' }}>Immédiat & Sécurisé</span>
-                    </div>
-                  </div>
-                  <ShieldCheck size={24} color="#10b981" />
-                </button>
-
-                <button 
-                  onClick={() => handleSimulatePayment('Orange Money')}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', backgroundColor: '#fff7ed', border: '1px solid #f97316', borderRadius: '12px', cursor: 'pointer', transition: '0.2s' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <Smartphone size={28} color="#f97316" />
-                    <div style={{ textAlign: 'left' }}>
-                      <strong style={{ display: 'block', color: '#1e293b', fontSize: '1.1rem' }}>Payer avec Orange Money</strong>
-                      <span style={{ color: '#f97316', fontSize: '0.85rem' }}>Code marchand (#144#)</span>
-                    </div>
-                  </div>
-                  <ShieldCheck size={24} color="#f97316" />
-                </button>
-              </div>
-              
-              <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '0.85rem', justifyContent: 'center' }}>
-                <ShieldCheck size={16} /> Transaction protégée par chiffrement 256-bit
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Modal de Soumission de Preuve de Paiement */}
+      <PaymentProofSubmissionModal
+        isOpen={paymentModalOpen}
+        onClose={() => setPaymentModalOpen(false)}
+        selectedPlan={selectedPlanForPayment}
+        currentStatus={currentStatus}
+        onSuccess={() => {
+          loadData();
+        }}
+      />
+    </div>
+  );
+};       </div>
       )}
 
     </div>
