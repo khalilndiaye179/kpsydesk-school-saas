@@ -78,7 +78,7 @@ export const TenantBillingView: React.FC = () => {
     return colors[index % colors.length];
   };
 
-  const formattedRenewalDate = new Date(nextRenewalDate).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const activePlanObj = plans.find(p => p.name === currentPlan) || plans[0];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', textAlign: 'left', paddingBottom: '40px' }}>
@@ -95,21 +95,21 @@ export const TenantBillingView: React.FC = () => {
         </div>
       </div>
 
-      {/* État actuel & Tarif Verrouillé au Contrat */}
+      {/* État actuel & Tarif au Contrat */}
       <div style={{ backgroundColor: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h3 style={{ margin: '0 0 8px 0', color: '#64748b', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Plan & Tarif Actuel (Prix Verrouillé au Contrat)</h3>
+            <h3 style={{ margin: '0 0 8px 0', color: '#64748b', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Plan & Statut Actuel</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <h2 style={{ margin: 0, color: '#1e293b', fontSize: '2rem', fontWeight: 800 }}>
-                {currentPlan === 'ESSAI' ? 'Période d\'Essai (14 jours restants)' : (plans.find(p => p.id === currentPlan)?.name || 'Professionnel')}
+                {currentStatus === 'TRIAL' ? 'Période d\'Essai Gratuit' : `Plan ${currentPlan}`}
               </h2>
-              {currentPlan === 'ESSAI' && (
+              {currentStatus === 'TRIAL' && (
                 <span style={{ padding: '6px 12px', backgroundColor: '#fef3c7', color: '#d97706', borderRadius: '8px', fontWeight: 600, fontSize: '0.85rem' }}>
-                  Expire Bientôt
+                  Mode Essai Limité
                 </span>
               )}
-              {currentPlan !== 'ESSAI' && (
+              {currentStatus === 'ACTIVE' && (
                 <span style={{ padding: '6px 12px', backgroundColor: '#dcfce7', color: '#16a34a', borderRadius: '8px', fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <CheckCircle2 size={16} /> Contrat Actif
                 </span>
@@ -117,28 +117,12 @@ export const TenantBillingView: React.FC = () => {
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: '0 0 4px 0', color: '#64748b', fontSize: '0.9rem' }}>Votre tarif actuel (jusqu'au {formattedRenewalDate}) :</p>
+            <p style={{ margin: '0 0 4px 0', color: '#64748b', fontSize: '0.9rem' }}>Tarif applicables :</p>
             <strong style={{ color: '#2563eb', fontSize: '1.6rem', fontWeight: 800 }}>
-              {currentPlan === 'ESSAI' ? formatCurrency(0) : `${formatCurrency(currentLockedPrice)} / mois`}
+              {currentStatus === 'TRIAL' ? formatCurrency(0) : `${formatCurrency(activePlanObj?.price || 0)} / mois`}
             </strong>
           </div>
         </div>
-
-        {/* AFFICHAGE CONDITIONNEL DU NOUVEAU TARIF À VENIR (Affiché uniquement s'il diffère du prix verrouillé) */}
-        {isPriceChanged && (
-          <div style={{ padding: '16px 20px', borderRadius: '12px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Clock size={22} color="#2563eb" />
-              <div>
-                <strong style={{ color: '#1e3a8a', fontSize: '0.95rem', display: 'block' }}>Nouveau tarif à partir du {formattedRenewalDate}</strong>
-                <span style={{ color: '#3b82f6', fontSize: '0.85rem' }}>Le prix public de votre formule a évolué et s'appliquera lors de votre prochain renouvellement.</span>
-              </div>
-            </div>
-            <span style={{ padding: '6px 14px', backgroundColor: '#2563eb', color: 'white', borderRadius: '20px', fontWeight: 700, fontSize: '0.95rem' }}>
-              {formatCurrency(livePlanPrice)} / mois
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Choix des Plans */}
