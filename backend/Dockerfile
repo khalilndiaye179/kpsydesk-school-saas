@@ -17,11 +17,11 @@ COPY prisma ./prisma/
 # Installation de toutes les dépendances
 RUN npm install
 
-# Génération du client Prisma compilé
-RUN npx prisma generate
-
 # Copie du code source
 COPY . .
+
+# Génération du client Prisma compilé
+RUN npx prisma generate
 
 # Compilation NestJS en JavaScript pur (/dist)
 RUN npm run build

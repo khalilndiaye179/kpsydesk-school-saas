@@ -13,6 +13,7 @@ export interface SubmitPaymentProofDto {
   planCode: string;
   amount: number;
   currency?: string;
+  requestedQuota?: number;
   paymentMethodId: string;
   transactionReference?: string;
   proofFileUrl: string;
