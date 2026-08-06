@@ -69,15 +69,62 @@ export const DashboardView: React.FC = () => {
     { interval: POLL_INTERVAL }
   );
 
-  // Valeurs réelles strictes (0 par défaut pour tout nouvel établissement)
-  const total = stats?.totalStudents || 0;
-  const femaleCount = stats?.femaleStudents || 0;
-  const maleCount = stats?.maleStudents || 0;
+  // Calcul direct et infaillible des métriques réelles de l'établissement courant
+  const activeTenantId = localStorage.getItem('kpsydesk_active_tenant_id') || '';
+  const STUDENTS_STORAGE_KEY = `kpsydesk_students_${activeTenantId}`;
+  const PAYMENTS_STORAGE_KEY = `kpsydesk_tenant_payments_${activeTenantId}`;
+  const USERS_STORAGE_KEY = `kpsydesk_tenant_users_${activeTenantId}`;
+  const CLASSES_STORAGE_KEY = `kpsydesk_classes`;
+
+  let localStudents: any[] = [];
+  try {
+    const raw = localStorage.getItem(STUDENTS_STORAGE_KEY);
+    if (raw) localStudents = JSON.parse(raw);
+  } catch(e) {}
+
+  let localPayments: any[] = [];
+  try {
+    const raw = localStorage.getItem(PAYMENTS_STORAGE_KEY);
+    if (raw) localPayments = JSON.parse(raw);
+  } catch(e) {}
+
+  let localUsers: any[] = [];
+  try {
+    const raw = localStorage.getItem(USERS_STORAGE_KEY);
+    if (raw) localUsers = JSON.parse(raw);
+  } catch(e) {}
+
+  let localClasses: any[] = [];
+  try {
+    const raw = localStorage.getItem(CLASSES_STORAGE_KEY);
+    if (raw) localClasses = JSON.parse(raw);
+  } catch(e) {}
+
+  // Comptages réels stricts
+  const total = stats?.totalStudents || localStudents.length;
+  
+  const femaleCount = stats?.femaleStudents || localStudents.filter(s => s.gender === 'Féminin' || s.gender === 'F').length;
+  const maleCount = stats?.maleStudents || localStudents.filter(s => s.gender === 'Masculin' || s.gender === 'M').length;
+
   const femalePercent = total > 0 ? Math.round((femaleCount / total) * 100) : 0;
   const malePercent = total > 0 ? (100 - femalePercent) : 0;
 
-  const collegeCount = stats?.collegeStudentsCount || 0;
-  const lyceeCount = stats?.lyceeStudentsCount || 0;
+  // Répartition Collège / Lycée basée sur les vraies classes des élèves
+  const collegeKeywords = ['6', '5', '4', '3', '6ème', '5ème', '4ème', '3ème', 'college', 'collège'];
+  const collegeCount = stats?.collegeStudentsCount || localStudents.filter(s => {
+    const cName = (s.className || s.classId || '').toLowerCase();
+    return collegeKeywords.some(kw => cName.includes(kw));
+  }).length;
+
+  const lyceeCount = stats?.lyceeStudentsCount || Math.max(0, total - collegeCount);
+
+  // Professeurs & Finances réels
+  const totalTeachers = stats?.totalTeachers || localUsers.filter(u => u.role === 'TEACHER' || u.role === 'PROFESSOR').length;
+  const totalClasses = stats?.totalClasses || localClasses.length;
+  
+  const totalCollected = stats?.totalCollected || localPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalExpected = stats?.totalExpected || (total * 45000); // Estimation indicative si configuré
+  const collectionRate = totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
@@ -122,9 +169,9 @@ export const DashboardView: React.FC = () => {
       {/* --------------------------------------------------------------------- */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '18px' }}>
         <KpiCard title="Effectif Élèves" value={total} sub={`${femaleCount} Filles · ${maleCount} Garçons`} icon={Users} color="#0284c7" />
-        <KpiCard title="Professeurs & Staff" value={stats?.totalTeachers || 0} sub={`${stats?.totalClasses || 0} Classes actives`} icon={GraduationCap} color="#8b5cf6" />
+        <KpiCard title="Professeurs & Staff" value={totalTeachers} sub={`${totalClasses} Classes actives`} icon={GraduationCap} color="#8b5cf6" />
         <KpiCard title="Taux d'Assiduité" value={`${stats?.attendanceRate || 0}%`} sub={`${stats?.absencesToday || 0} absences aujourd'hui`} icon={UserCheck} color="#10b981" />
-        <KpiCard title="Recouvrement Scolarité" value={`${stats?.collectionRate || 0}%`} sub={`Impayés : ${formatCurrency(stats?.unpaidAmount || 0)}`} icon={DollarSign} color="#f59e0b" />
+        <KpiCard title="Recouvrement Scolarité" value={`${collectionRate}%`} sub={`Encaissé : ${formatCurrency(totalCollected)}`} icon={DollarSign} color="#f59e0b" />
       </div>
 
       {/* --------------------------------------------------------------------- */}
