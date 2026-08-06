@@ -120,7 +120,7 @@ export const PaymentProofQueueView: React.FC<PaymentProofQueueViewProps> = ({ on
           </span>
         </div>
         <button
-          onClick={fetchQueue}
+          onClick={() => fetchQueue(false)}
           style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#334155', color: '#cbd5e1', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem' }}
         >
           <RefreshCw size={14} /> Rafraîchir
