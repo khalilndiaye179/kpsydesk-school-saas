@@ -289,24 +289,29 @@ export const LoginView: React.FC = () => {
           </div>
         </div>
 
-        {/* FOOTER BAS DE PAGE AVEC VRAIS LIENS PRIVACY & SUPPORT */}
+        {/* FOOTER BAS DE PAGE AVEC VRAIS LIENS PRIVACY, SUPPORT & COPYRIGHT */}
         <div style={{
-          marginTop: '24px', display: 'flex', gap: '20px', alignItems: 'center',
+          marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center',
           color: designTokens.colors.textDim, fontSize: '0.78rem',
         }}>
-          <button 
-            onClick={() => setShowPrivacyModal(true)} 
-            style={{ background: 'none', border: 'none', color: designTokens.colors.textMuted, cursor: 'pointer', fontSize: '0.78rem', textDecoration: 'underline' }}
-          >
-            Politique de confidentialité
-          </button>
-          <span>•</span>
-          <button 
-            onClick={() => setShowSupportModal(true)} 
-            style={{ background: 'none', border: 'none', color: designTokens.colors.textMuted, cursor: 'pointer', fontSize: '0.78rem', textDecoration: 'underline' }}
-          >
-            Support Technique
-          </button>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <button 
+              onClick={() => setShowPrivacyModal(true)} 
+              style={{ background: 'none', border: 'none', color: designTokens.colors.textMuted, cursor: 'pointer', fontSize: '0.78rem', textDecoration: 'underline' }}
+            >
+              Politique de confidentialité
+            </button>
+            <span>•</span>
+            <button 
+              onClick={() => setShowSupportModal(true)} 
+              style={{ background: 'none', border: 'none', color: designTokens.colors.textMuted, cursor: 'pointer', fontSize: '0.78rem', textDecoration: 'underline' }}
+            >
+              Support Technique
+            </button>
+          </div>
+          <div style={{ color: designTokens.colors.textDim, fontSize: '0.75rem', opacity: 0.85, marginTop: '4px', textAlign: 'center' }}>
+            © 2026 KPSyDesk School · Conçu et développé par <strong>KPSY Informatique</strong>. Tous droits réservés.
+          </div>
         </div>
       </div>
 
