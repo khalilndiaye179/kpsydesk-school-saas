@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Tenant" ADD COLUMN "quotaStudents" INTEGER NOT NULL DEFAULT 500;

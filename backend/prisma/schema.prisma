@@ -19,6 +19,7 @@ model Tenant {
   plan            SaaSPlan       @default(TRIAL_7D)
   planId          String?        @db.Uuid
   country         String         @default("SN")
+  quotaStudents   Int            @default(500)
   isDemo          Boolean        @default(false)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
