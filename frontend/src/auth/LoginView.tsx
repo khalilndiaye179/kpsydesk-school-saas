@@ -355,7 +355,7 @@ export const LoginView: React.FC = () => {
                 <Mail color="#D4A853" size={18} />
                 <div>
                   <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Email Support Direct</div>
-                  <strong style={{ color: 'white' }}>support@kpsyinformatique.com</strong>
+                  <strong style={{ color: 'white' }}>kpsydesk.support@kpsyinformatique.com</strong>
                 </div>
               </div>
 
@@ -363,7 +363,7 @@ export const LoginView: React.FC = () => {
                 <Phone color="#D4A853" size={18} />
                 <div>
                   <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Ligne Téléphonique / Urgence</div>
-                  <strong style={{ color: 'white' }}>+221 33 825 00 00 / +221 77 000 00 00</strong>
+                  <strong style={{ color: 'white' }}>+221 76 261 39 39 / +221 33 858 51 24</strong>
                 </div>
               </div>
 
@@ -371,7 +371,7 @@ export const LoginView: React.FC = () => {
                 <Phone color="#25D366" size={18} />
                 <div>
                   <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Assistance Instantanée WhatsApp</div>
-                  <strong style={{ color: '#25D366' }}>+221 77 888 99 00</strong>
+                  <strong style={{ color: '#25D366' }}>+221 76 261 39 39</strong>
                 </div>
               </div>
             </div>
