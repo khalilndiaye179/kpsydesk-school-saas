@@ -89,6 +89,26 @@ const TenantApp = () => {
     navigate('/login');
   };
 
+  // Purge unique des anciennes données de démo conservées dans le localStorage du navigateur
+  React.useEffect(() => {
+    try {
+      const isPurged = localStorage.getItem('kpsydesk_demo_purged_v2');
+      if (!isPurged) {
+        Object.keys(localStorage).forEach(key => {
+          if (
+            key.startsWith('kpsydesk_tenant_payments_') ||
+            key.startsWith('kpsydesk_tenant_expenses_') ||
+            key.startsWith('kpsydesk_tenant_salaries_') ||
+            key.startsWith('kpsydesk_tenant_closures_')
+          ) {
+            localStorage.removeItem(key);
+          }
+        });
+        localStorage.setItem('kpsydesk_demo_purged_v2', 'true');
+      }
+    } catch(e) {}
+  }, []);
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-page)' }}>
       <Sidebar 
