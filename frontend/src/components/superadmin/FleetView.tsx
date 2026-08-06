@@ -294,21 +294,21 @@ export const FleetView: React.FC = () => {
       </div>
 
       {/* Main List */}
-      <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid var(--border)', padding: '24px' }}>
+      <div style={{ backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-title)' }}>Parc de Tenants (Fleet Management)</h3>
+          <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-title)', color: 'white', margin: 0 }}>Parc de Tenants (Fleet Management)</h3>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <button
               onClick={loadTenants}
               disabled={isLoading}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: 500 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px', cursor: 'pointer', color: '#cbd5e1', fontWeight: 600 }}
             >
               <RefreshCw size={15} style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
               Actualiser
             </button>
             <button
               onClick={() => setShowAddModal(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
             >
               <Plus size={18} /> Provisionner un Tenant
             </button>
@@ -317,7 +317,7 @@ export const FleetView: React.FC = () => {
 
         {/* Erreur API */}
         {apiError && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', marginBottom: '16px', color: '#991b1b' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', backgroundColor: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', borderRadius: '8px', marginBottom: '16px', color: '#f87171' }}>
             <AlertCircle size={16} />
             <span>{apiError}</span>
           </div>
@@ -325,56 +325,57 @@ export const FleetView: React.FC = () => {
 
         {/* Spinner de chargement */}
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-secondary)' }}>
-            <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', opacity: 0.4 }} />
+          <div style={{ textAlign: 'center', padding: '48px', color: '#94a3b8' }}>
+            <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', opacity: 0.6 }} />
             <p style={{ marginTop: '12px' }}>Chargement du parc de tenants...</p>
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
             <thead>
-              <tr style={{ borderBottom: '2px solid var(--border)', color: 'var(--text-secondary)' }}>
-                <th style={{ padding: '12px', textAlign: 'left' }}>Établissement</th>
-                <th style={{ padding: '12px', textAlign: 'left' }}>Contact Admin</th>
-                <th style={{ padding: '12px', textAlign: 'left' }}>Plan Actuel</th>
-                <th style={{ padding: '12px', textAlign: 'left' }}>Statut</th>
-                <th style={{ padding: '12px', textAlign: 'left' }}>Inscrit le</th>
-                <th style={{ padding: '12px', textAlign: 'right' }}>Actions d'Administration</th>
+              <tr style={{ borderBottom: '1px solid #334155', color: '#94a3b8', backgroundColor: '#0f172a' }}>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Établissement</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Contact Admin</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Plan Actuel</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Statut</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600 }}>Inscrit le</th>
+                <th style={{ padding: '12px', textAlign: 'right', fontWeight: 600 }}>Actions d'Administration</th>
               </tr>
             </thead>
             <tbody>
               {tenants.map(t => {
                 const tenantCode = t.code || t.subdomain.toUpperCase();
                 return (
-                  <tr key={t.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <tr key={t.id} style={{ borderBottom: '1px solid #334155' }}>
                     <td style={{ padding: '16px 12px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{t.name}</strong>
-                          <span style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 800, fontFamily: 'monospace' }}>
+                          <strong style={{ fontSize: '0.98rem', color: '#ffffff', fontWeight: 700 }}>{t.name}</strong>
+                          <span style={{ backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 800, fontFamily: 'monospace' }}>
                             {tenantCode}
                           </span>
                         </div>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{t.subdomain}.kpsyschool.com &bull; {t.studentsCount} élèves</span>
-                        <span style={{ fontSize: '0.75rem', color: '#0284c7', fontFamily: 'monospace', fontWeight: 700, marginTop: '3px' }}>
+                        <span style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: '2px' }}>{t.subdomain}.kpsyschool.com &bull; {t.studentsCount} élèves</span>
+                        <span style={{ fontSize: '0.78rem', color: '#38bdf8', fontFamily: 'monospace', fontWeight: 700, marginTop: '3px' }}>
                           🔑 Identifiant : {tenantCode}-0001
                         </span>
                       </div>
                     </td>
-                    <td style={{ padding: '16px 12px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                      <span style={{ fontWeight: 500, color: 'var(--text)' }}>{t.contactName ?? 'Non spécifié'}</span><br />
-                      {t.contactEmail ?? '—'}
+                    <td style={{ padding: '16px 12px', color: '#cbd5e1', fontSize: '0.85rem' }}>
+                      <strong style={{ fontWeight: 600, color: '#ffffff', display: 'block' }}>{t.contactName ?? 'Non spécifié'}</strong>
+                      <span style={{ color: '#94a3b8' }}>{t.contactEmail ?? '—'}</span>
                     </td>
-                    <td style={{ padding: '16px 12px', fontFamily: 'var(--font-data)', fontWeight: 600 }}>{t.plan}</td>
+                    <td style={{ padding: '16px 12px', fontFamily: 'var(--font-data)', fontWeight: 700, color: '#38bdf8' }}>{t.plan}</td>
                     <td style={{ padding: '16px 12px' }}>
                       <span style={{
-                        padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700,
-                        backgroundColor: t.status === 'ACTIVE' ? '#dcfce7' : t.status === 'TRIAL' ? '#fef3c7' : '#fee2e2',
-                        color: t.status === 'ACTIVE' ? '#166534' : t.status === 'TRIAL' ? '#92400e' : '#991b1b'
+                        padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800,
+                        backgroundColor: t.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.15)' : t.status === 'TRIAL' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                        color: t.status === 'ACTIVE' ? '#34d399' : t.status === 'TRIAL' ? '#fbbf24' : '#f87171',
+                        border: `1px solid ${t.status === 'ACTIVE' ? '#10b981' : t.status === 'TRIAL' ? '#f59e0b' : '#ef4444'}`
                       }}>
                         {t.status}
                       </span>
                     </td>
-                    <td style={{ padding: '16px 12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    <td style={{ padding: '16px 12px', fontSize: '0.85rem', color: '#cbd5e1' }}>
                       {new Date(t.createdAt).toLocaleDateString('fr-FR')}
                     </td>
                   <td style={{ padding: '16px 12px', textAlign: 'right' }}>
