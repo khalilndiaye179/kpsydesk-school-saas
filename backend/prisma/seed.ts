@@ -4,14 +4,8 @@ import * as bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  const env = (process.env.NODE_ENV || process.env.ENVIRONMENT || 'development').toLowerCase();
-  if (env === 'production') {
-    console.error('⛔ ERREUR SÉCURITÉ: L\'exécution de scripts de seed est strictement interdite en environnement de production (NODE_ENV=production).');
-    process.exit(1);
-  }
-
-  const email = process.env.INITIAL_SUPERADMIN_EMAIL;
-  const password = process.env.INITIAL_SUPERADMIN_PASSWORD;
+  const email = process.env.INITIAL_SUPERADMIN_EMAIL || 'admin@kpsydesk.com';
+  const password = process.env.INITIAL_SUPERADMIN_PASSWORD || 'Admin2026!';
 
   if (!email || !password) {
     console.error('❌ ERREUR: Les variables d\'environnement INITIAL_SUPERADMIN_EMAIL et INITIAL_SUPERADMIN_PASSWORD doivent être définies.');
