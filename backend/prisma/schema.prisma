@@ -648,3 +648,12 @@ model Notification {
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
+
+// --- System Configuration (Global SaaS) ---
+
+model SystemConfig {
+  id                 String   @id @default("global")
+  maintenanceMode    Boolean  @default(false)
+  maintenanceMessage String   @default("La plateforme KPSyDesk SaaS est actuellement en maintenance planifiée pour amélioration de nos services. Seuls les administrateurs globaux sont autorisés.")
+  updatedAt          DateTime @updatedAt
+}

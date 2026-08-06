@@ -9,7 +9,9 @@ import { TimetableModule } from './tenant/timetable/timetable.module';
 import { MailModule } from './mail/mail.module';
 import { PublicSignupModule } from './signup/signup.module';
 import { PlatformModule } from './platform/platform.module';
-import { PlatformBillingModule } from './platform/billing/platform-billing.module';
+import { APP_GUARD } from '@nestjs/core';
+import { SystemConfigModule } from './platform/system/system-config.module';
+import { MaintenanceGuard } from './platform/system/maintenance.guard';
 
 @Module({
   imports: [
@@ -22,9 +24,16 @@ import { PlatformBillingModule } from './platform/billing/platform-billing.modul
     PublicSignupModule,
     PlatformModule,
     PlatformBillingModule,
+    SystemConfigModule,
   ],
   controllers: [],
-  providers: [PrismaService],
+  providers: [
+    PrismaService,
+    {
+      provide: APP_GUARD,
+      useClass: MaintenanceGuard,
+    },
+  ],
   exports: [PrismaService],
 })
 export class AppModule implements NestModule {
