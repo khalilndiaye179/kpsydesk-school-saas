@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Save, Server, Mail, CreditCard, Shield, Globe, AlertTriangle, Layers, Edit2, Trash2, Plus } from 'lucide-react';
+import { SaaSAdminManagementView } from './SaaSAdminManagementView';
 
 interface SuperAdminSettingsViewProps {
   initialTab?: 'GENERAL' | 'SMTP' | 'PAYMENT' | 'SECURITY' | 'PLANS';
@@ -287,56 +288,7 @@ export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ 
           )}
 
           {activeTab === 'PLANS' && (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.95rem' }}>Configurez et redimensionnez librement vos offres SaaS pour vos clients.</p>
-                <button type="button" onClick={handleAddPlan} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: '#38bdf8', color: '#0f172a', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
-                  <Plus size={16} /> Nouveau Plan
-                </button>
-              </div>
-
-              <div style={{ padding: '20px', borderRadius: '12px', backgroundColor: '#0f172a', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <div>
-                  <h4 style={{ margin: '0 0 8px 0', color: 'white', fontSize: '1.1rem' }}>Durée de l'année scolaire (par défaut)</h4>
-                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>Les locataires pourront payer ce nombre de mois en une seule fois (Abonnement Annuel).</p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input 
-                    type="number" 
-                    min={1} 
-                    max={12} 
-                    value={defaultSubscriptionMonths} 
-                    onChange={(e) => setDefaultSubscriptionMonths(Number(e.target.value))}
-                    style={{ width: '80px', padding: '10px', borderRadius: '8px', backgroundColor: '#1e293b', border: '1px solid #334155', color: 'white', fontSize: '1rem', outline: 'none' }} 
-                  />
-                  <span style={{ color: '#cbd5e1' }}>mois</span>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {pricingPlans.map(plan => (
-                  <div key={plan.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', borderRadius: '12px', backgroundColor: '#0f172a', border: plan.recommended ? '1px solid #38bdf8' : '1px solid #334155' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                        <h4 style={{ margin: 0, color: 'white', fontSize: '1.2rem' }}>{plan.name}</h4>
-                        {plan.recommended && <span style={{ padding: '4px 8px', backgroundColor: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>RECOMMANDÉ</span>}
-                      </div>
-                      <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.9rem' }}>
-                        <strong style={{ color: 'white' }}>{plan.price.toLocaleString('fr-FR')} F / mois</strong> — Max Élèves : {plan.maxStudents === 99999 ? 'Illimité' : plan.maxStudents}
-                      </p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button type="button" onClick={() => handleEditPlan(plan.id)} style={{ padding: '8px', background: 'transparent', border: '1px solid #334155', borderRadius: '8px', color: '#38bdf8', cursor: 'pointer' }} title="Modifier le prix">
-                        <Edit2 size={18} />
-                      </button>
-                      <button type="button" onClick={() => handleDeletePlan(plan.id)} style={{ padding: '8px', background: 'transparent', border: '1px solid #334155', borderRadius: '8px', color: '#ef4444', cursor: 'pointer' }} title="Supprimer ce plan">
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
+            <SaaSAdminManagementView />
           )}
 
         </form>
