@@ -139,9 +139,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
           borderBottom: '1px solid var(--bg-sidebar-active)',
           color: '#FFFFFF'
         }}>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Espace courant</div>
-          <div style={{ fontWeight: 600, fontSize: '0.95rem', marginTop: '2px' }}>
-            {isSuperAdmin ? 'Console SaaS' : 'Etablissement Démo'}
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Établissement</div>
+          <div style={{ fontWeight: 700, fontSize: '0.92rem', marginTop: '2px', color: '#FFFFFF', wordBreak: 'break-word' }}>
+            {isSuperAdmin ? 'Console SaaS SuperAdmin' : (
+              (() => {
+                try {
+                  const saved = localStorage.getItem('kpsydesk_school_settings');
+                  if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.schoolName) return parsed.schoolName;
+                  }
+                } catch(e){}
+                return localStorage.getItem('kpsydesk_active_tenant_name') || 'Établissement Scolaire Excellence';
+              })()
+            )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
             <span style={{

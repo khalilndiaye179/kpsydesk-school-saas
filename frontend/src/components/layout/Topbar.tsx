@@ -60,11 +60,27 @@ export const Topbar: React.FC<TopbarProps> = ({
         top: 0,
         zIndex: 90
       }}>
-        {/* Titre + Drapeau pays */}
+        {/* Titre + Nom Établissement + Drapeau pays */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>
-            {title}
-          </h2>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--text-primary)', fontFamily: 'var(--font-title)' }}>
+              {title}
+            </h2>
+            {!isSuperAdmin && (
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {(() => {
+                  try {
+                    const saved = localStorage.getItem('kpsydesk_school_settings');
+                    if (saved) {
+                      const parsed = JSON.parse(saved);
+                      if (parsed.schoolName) return parsed.schoolName;
+                    }
+                  } catch(e){}
+                  return localStorage.getItem('kpsydesk_active_tenant_name') || 'Établissement Scolaire Excellence';
+                })()}
+              </span>
+            )}
+          </div>
           {/* Badge drapeau du pays (tenants uniquement) */}
           {!isSuperAdmin && (
             <div style={{
