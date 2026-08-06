@@ -147,13 +147,6 @@ export class DashboardService {
         ? Math.round((presentToday / totalStudentsToday) * 100)
         : 0;
 
-    // Comptages par genre réels
-    const femaleStudents = await this.prisma.student.count({
-      where: { tenantId, gender: { in: ['F', 'FEMININ', 'FEMALE', 'Féminin'] } },
-    });
-    const maleStudents = await this.prisma.student.count({
-      where: { tenantId, gender: { in: ['M', 'MASCULIN', 'MALE', 'Masculin'] } },
-    });
 
     // Revenus et impayés
     const totalExpected = totalFees._sum.amount ?? 0;
@@ -166,8 +159,6 @@ export class DashboardService {
     return {
       // KPIs principaux
       totalStudents,
-      femaleStudents,
-      maleStudents,
       totalTeachers,
       totalClasses,
       totalUsers,
