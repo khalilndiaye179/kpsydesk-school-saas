@@ -10,45 +10,10 @@ interface SuperAdminSettingsViewProps {
 export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ initialTab = 'GENERAL' }) => {
   const [activeTab, setActiveTab] = useState<'GENERAL' | 'SMTP' | 'PAYMENT' | 'SECURITY' | 'PLANS'>(initialTab);
   
-  // States réels Maintenance
   const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [maintenanceMessage, setMaintenanceMessage] = useState('');
-  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
-  const [maintenanceSuccess, setMaintenanceSuccess] = useState('');
-
   const [smtpHost, setSmtpHost] = useState('smtp.mailgun.org');
   const [smtpPort, setSmtpPort] = useState('587');
   const [selectedPaymentCountry, setSelectedPaymentCountry] = useState<'SN' | 'CI' | 'ML'>('SN');
-
-  // Charger la configuration de maintenance réelle depuis le backend
-  useEffect(() => {
-    api.get('/platform/system-config')
-      .then((res) => {
-        if (res.data) {
-          setMaintenanceMode(!!res.data.maintenanceMode);
-          setMaintenanceMessage(res.data.maintenanceMessage || '');
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const handleToggleMaintenance = async (newVal: boolean) => {
-    setMaintenanceLoading(true);
-    setMaintenanceSuccess('');
-    try {
-      const res = await api.patch('/platform/system-config', {
-        maintenanceMode: newVal,
-        maintenanceMessage: maintenanceMessage || undefined
-      });
-      setMaintenanceMode(!!res.data.maintenanceMode);
-      setMaintenanceSuccess(newVal ? '🚨 Mode Maintenance Globale ACTIVÉ. Toutes les écoles sont déconnectées.' : '✅ Mode Maintenance DÉSACTIVÉ. Accès rétabli pour toutes les écoles.');
-      setTimeout(() => setMaintenanceSuccess(''), 5000);
-    } catch (err: any) {
-      alert("Erreur lors du basculement du mode maintenance : " + (err?.response?.data?.message || err.message));
-    } finally {
-      setMaintenanceLoading(false);
-    }
-  };
   const [countryApiKeys, setCountryApiKeys] = useState<Record<string, { wave: string; orange: string }>>({
     SN: { wave: 'wave_live_sn_xxxxxxxx', orange: 'orange_prod_sn_xxxxxxxx' },
     CI: { wave: 'wave_live_ci_xxxxxxxx', orange: 'orange_prod_ci_xxxxxxxx' },
@@ -295,88 +260,6 @@ export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ 
 
           {activeTab === 'SECURITY' && (
             <>
-              {/* BLOC DE MAINTENANCE GLOBALE HAUTE PRIORITÉ */}
-              <div style={{
-                padding: '24px', borderRadius: '16px',
-                backgroundColor: maintenanceMode ? 'rgba(239, 68, 68, 0.12)' : '#0f172a',
-                border: maintenanceMode ? '2px solid #ef4444' : '1px solid #334155',
-                display: 'flex', flexDirection: 'column', gap: '16px',
-                boxShadow: maintenanceMode ? '0 0 20px rgba(239, 68, 68, 0.2)' : 'none',
-                transition: 'all 0.3s ease'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{
-                      padding: '12px', borderRadius: '12px',
-                      backgroundColor: maintenanceMode ? '#ef4444' : '#334155',
-                      color: 'white'
-                    }}>
-                      <Wrench size={24} />
-                    </div>
-                    <div>
-                      <h4 style={{ margin: 0, color: 'white', fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        Mode Maintenance Globale
-                        {maintenanceMode && (
-                          <span style={{ backgroundColor: '#ef4444', color: 'white', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px', textTransform: 'uppercase', animation: 'pulse 1.5s infinite' }}>
-                            ACTIF 🚨
-                          </span>
-                        )}
-                      </h4>
-                      <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '0.88rem' }}>
-                        Une fois la case cochée, toutes les écoles sont instantanément déconnectées et un écran de maintenance s'affiche. Seuls les super-admins restent autorisés.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Interrupteur Switch */}
-                  <label style={{ position: 'relative', display: 'inline-block', width: '60px', height: '32px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={maintenanceMode}
-                      disabled={maintenanceLoading}
-                      onChange={(e) => handleToggleMaintenance(e.target.checked)}
-                      style={{ opacity: 0, width: 0, height: 0 }}
-                    />
-                    <span style={{
-                      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                      backgroundColor: maintenanceMode ? '#ef4444' : '#334155',
-                      borderRadius: '34px', transition: '0.3s ease',
-                      boxShadow: maintenanceMode ? '0 0 10px rgba(239, 68, 68, 0.5)' : 'none'
-                    }}>
-                      <span style={{
-                        position: 'absolute', height: '24px', width: '24px',
-                        left: maintenanceMode ? '32px' : '4px', bottom: '4px',
-                        backgroundColor: 'white', borderRadius: '50%', transition: '0.3s ease',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
-                        {maintenanceLoading && <RefreshCw size={14} color="#ef4444" style={{ animation: 'spin 1s linear infinite' }} />}
-                      </span>
-                    </span>
-                  </label>
-                </div>
-
-                {/* Champ d'édition du message de maintenance */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                  <label style={{ color: '#cbd5e1', fontSize: '0.85rem', fontWeight: 600 }}>Message d'explication affiché aux établissements</label>
-                  <textarea
-                    rows={2}
-                    value={maintenanceMessage}
-                    onChange={(e) => setMaintenanceMessage(e.target.value)}
-                    placeholder="Message d'information affiché sur l'écran de maintenance..."
-                    style={{
-                      padding: '12px', borderRadius: '8px', backgroundColor: '#1e293b',
-                      border: '1px solid #334155', color: 'white', outline: 'none', resize: 'vertical', fontSize: '0.9rem'
-                    }}
-                  />
-                </div>
-
-                {maintenanceSuccess && (
-                  <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: maintenanceMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)', border: `1px solid ${maintenanceMode ? '#ef4444' : '#10b981'}`, color: 'white', fontSize: '0.85rem', fontWeight: 600 }}>
-                    {maintenanceSuccess}
-                  </div>
-                )}
-              </div>
-
               <div style={{ padding: '20px', borderRadius: '12px', backgroundColor: '#0f172a', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h4 style={{ margin: '0 0 8px 0', color: 'white', fontSize: '1.1rem' }}>Double Authentification (2FA) Forcée</h4>

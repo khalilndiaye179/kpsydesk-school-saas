@@ -24,7 +24,6 @@ import { TenantBillingView } from './components/tenant/TenantBillingView';
 import { TenantGuideView } from './components/tenant/TenantGuideView';
 import { AcademicSettingsView } from './components/tenant/AcademicSettingsView';
 import { WatermarkOverlay } from './components/shared/WatermarkOverlay';
-import { MaintenanceOverlay } from './components/common/MaintenanceOverlay';
 
 // SuperAdmin
 import { SuperAdminThemeProvider } from './context/SuperAdminThemeContext';
@@ -89,8 +88,6 @@ const TenantApp = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [activeTenantView, setActiveTenantView] = useState('Tableau de bord'); 
   const [period, setPeriod] = useState('Mensuel');
-  const [isMaintenance, setIsMaintenance] = useState(false);
-  const [maintenanceMsg, setMaintenanceMsg] = useState('');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -98,37 +95,6 @@ const TenantApp = () => {
     logout();
     navigate('/login');
   };
-
-  // Écoute réactive du Mode Maintenance Globale
-  useEffect(() => {
-    const checkMaintenance = () => {
-      api.get('/platform/system-config')
-        .then((res) => {
-          if (res.data?.maintenanceMode && user?.role !== 'SUPER_ADMIN') {
-            setIsMaintenance(true);
-            setMaintenanceMsg(res.data.maintenanceMessage);
-            logout(); // Déconnexion automatique des établissements
-          } else {
-            setIsMaintenance(false);
-          }
-        })
-        .catch((err) => {
-          if (err?.response?.status === 503 && user?.role !== 'SUPER_ADMIN') {
-            setIsMaintenance(true);
-            setMaintenanceMsg(err?.response?.data?.message || 'Maintenance planifiée.');
-            logout();
-          }
-        });
-    };
-
-    checkMaintenance();
-    const interval = setInterval(checkMaintenance, 10000);
-    return () => clearInterval(interval);
-  }, [user, logout]);
-
-  if (isMaintenance && user?.role !== 'SUPER_ADMIN') {
-    return <MaintenanceOverlay message={maintenanceMsg} onRefresh={() => window.location.reload()} />;
-  }
 
   // Purge unique des anciennes données de démo conservées dans le localStorage du navigateur
   React.useEffect(() => {
