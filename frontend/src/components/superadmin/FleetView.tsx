@@ -16,6 +16,8 @@ interface TenantData {
   status: 'ACTIVE' | 'TRIAL' | 'SUSPENDED';
   studentsCount: number;
   usersCount: number;
+  country?: string;
+  countryCode?: string;
   contactEmail: string | null;
   contactName: string | null;
   contactPhone: string | null;
@@ -209,10 +211,28 @@ export const FleetView: React.FC = () => {
 
   const estimatedArr = estimatedMrr * 12;
 
-  // Répartition par Pays (Déduite du sous-domaine / code tenant)
-  const senegalCount = tenants.filter(t => (t.code && t.code.startsWith('SN')) || t.subdomain.includes('sn') || t.name.toLowerCase().includes('dakar') || t.name.toLowerCase().includes('senegal')).length || Math.round(totalTenantsCount * 0.6);
-  const ciCount = tenants.filter(t => (t.code && t.code.startsWith('CI')) || t.subdomain.includes('ci') || t.name.toLowerCase().includes('abidjan') || t.name.toLowerCase().includes('ivoire')).length || Math.round(totalTenantsCount * 0.25);
-  const maliCount = Math.max(0, totalTenantsCount - (senegalCount + ciCount));
+  // Fonction de détection précise du pays d'un tenant
+  const getTenantCountry = (t: any): 'SN' | 'CI' | 'ML' => {
+    const country = (t.country || t.countryCode || '').toUpperCase();
+    if (country === 'CI') return 'CI';
+    if (country === 'ML') return 'ML';
+    if (country === 'SN') return 'SN';
+
+    const code = (t.code || '').toUpperCase();
+    if (code.startsWith('CI')) return 'CI';
+    if (code.startsWith('ML')) return 'ML';
+    if (code.startsWith('SN')) return 'SN';
+
+    const text = `${t.name || ''} ${t.subdomain || ''}`.toLowerCase();
+    if (text.includes('ci') || text.includes('ivoire') || text.includes('abidjan') || text.includes('yamoussoukro')) return 'CI';
+    if (text.includes('ml') || text.includes('mali') || text.includes('bamako') || text.includes('sikasso')) return 'ML';
+    
+    return 'SN'; // Fallback par défaut Sénégal
+  };
+
+  const ciCount = tenants.filter(t => getTenantCountry(t) === 'CI').length;
+  const maliCount = tenants.filter(t => getTenantCountry(t) === 'ML').length;
+  const senegalCount = tenants.filter(t => getTenantCountry(t) === 'SN').length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
