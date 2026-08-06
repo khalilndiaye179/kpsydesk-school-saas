@@ -163,6 +163,8 @@ export const StudentView: React.FC = () => {
       setNetworkError('Échec du chargement des élèves depuis le serveur. Vérifiez votre connexion.');
       setStudents([]);
     }
+  };
+
   const generateMatricule = (existing: any[]): string => {
     let max = 0;
     existing.forEach(s => {
