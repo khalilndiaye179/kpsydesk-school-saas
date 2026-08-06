@@ -69,15 +69,15 @@ export const DashboardView: React.FC = () => {
     { interval: POLL_INTERVAL }
   );
 
-  // Valeurs de secours calculées si API en attente
-  const total = stats?.totalStudents || 450;
-  const femaleCount = stats?.femaleStudents || Math.round(total * 0.52); // 52% Filles
-  const maleCount = stats?.maleStudents || (total - femaleCount);         // 48% Garçons
-  const femalePercent = Math.round((femaleCount / total) * 100);
-  const malePercent = 100 - femalePercent;
+  // Valeurs réelles strictes (0 par défaut pour tout nouvel établissement)
+  const total = stats?.totalStudents || 0;
+  const femaleCount = stats?.femaleStudents || 0;
+  const maleCount = stats?.maleStudents || 0;
+  const femalePercent = total > 0 ? Math.round((femaleCount / total) * 100) : 0;
+  const malePercent = total > 0 ? (100 - femalePercent) : 0;
 
-  const collegeCount = stats?.collegeStudentsCount || Math.round(total * 0.58);
-  const lyceeCount = stats?.lyceeStudentsCount || (total - collegeCount);
+  const collegeCount = stats?.collegeStudentsCount || 0;
+  const lyceeCount = stats?.lyceeStudentsCount || 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
@@ -117,11 +117,14 @@ export const DashboardView: React.FC = () => {
       {/* --------------------------------------------------------------------- */}
       {/* SECTION 1 : CARTES KPIs CLÉS                                           */}
       {/* --------------------------------------------------------------------- */}
+      {/* --------------------------------------------------------------------- */}
+      {/* SECTION 1 : KPI STRATÉGIQUES (ACCÈS RAPIDE)                           */}
+      {/* --------------------------------------------------------------------- */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '18px' }}>
-        <KpiCard title="Effectif Élèves" value={total} sub={`${femaleCount} Filles · ${maleCount} Garçons`} icon={Users} color="#0284c7" trend="+8% / an" />
-        <KpiCard title="Professeurs & Staff" value={stats?.totalTeachers || 32} sub={`${stats?.totalClasses || 16} Classes actives`} icon={GraduationCap} color="#8b5cf6" />
-        <KpiCard title="Taux d'Assiduité" value={`${stats?.attendanceRate || 96}%`} sub={`${stats?.absencesToday || 4} absences aujourd'hui`} icon={UserCheck} color="#10b981" trend="Excellente" />
-        <KpiCard title="Recouvrement Scolarité" value={`${stats?.collectionRate || 82}%`} sub={`Impayés : ${formatCurrency(850000)}`} icon={DollarSign} color="#f59e0b" trend="Actif" />
+        <KpiCard title="Effectif Élèves" value={total} sub={`${femaleCount} Filles · ${maleCount} Garçons`} icon={Users} color="#0284c7" />
+        <KpiCard title="Professeurs & Staff" value={stats?.totalTeachers || 0} sub={`${stats?.totalClasses || 0} Classes actives`} icon={GraduationCap} color="#8b5cf6" />
+        <KpiCard title="Taux d'Assiduité" value={`${stats?.attendanceRate || 0}%`} sub={`${stats?.absencesToday || 0} absences aujourd'hui`} icon={UserCheck} color="#10b981" />
+        <KpiCard title="Recouvrement Scolarité" value={`${stats?.collectionRate || 0}%`} sub={`Impayés : ${formatCurrency(stats?.unpaidAmount || 0)}`} icon={DollarSign} color="#f59e0b" />
       </div>
 
       {/* --------------------------------------------------------------------- */}
@@ -134,7 +137,7 @@ export const DashboardView: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ margin: 0, fontSize: '1.05rem', fontFamily: 'var(--font-title)' }}>Démographie & Parité Élèves</h3>
             <span style={{ fontSize: '0.78rem', backgroundColor: '#f0fdf4', color: '#166534', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>
-              Parité F/G : 1.08 ♀️
+              {total > 0 ? `Parité F/G : ${(femaleCount / (maleCount || 1)).toFixed(2)} ♀️` : 'Données Vierges'}
             </span>
           </div>
 
@@ -183,8 +186,8 @@ export const DashboardView: React.FC = () => {
             {/* Premier Cycle (Collège) */}
             <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-page)', border: '1px solid var(--border)' }}>
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600 }}>Premier Cycle (Collège)</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', margin: '4px 0' }}>{collegeCount} Élèves</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Classes de 6ème, 5ème, 4ème, 3ème (BFEM/BEPC)</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', margin: '4px 0' }}>{collegeCount} Élèves</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Classes de 6ème, 5ème, 4ème, 3ème</div>
             </div>
 
             {/* Second Cycle (Lycée) */}
@@ -206,11 +209,11 @@ export const DashboardView: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
           <div style={{ padding: '14px', borderRadius: '10px', backgroundColor: '#f0fdf4', border: '1px solid #86efac' }}>
             <div style={{ fontSize: '0.78rem', color: '#166534', fontWeight: 600 }}>Recettes Encaissées ce Mois</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#14532d', marginTop: '4px' }}>{formatCurrency(stats?.totalCollected || 4850000)}</div>
+            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#14532d', marginTop: '4px' }}>{formatCurrency(stats?.totalCollected || 0)}</div>
           </div>
           <div style={{ padding: '14px', borderRadius: '10px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}>
             <div style={{ fontSize: '0.78rem', color: '#9a3412', fontWeight: 600 }}>Objectif Recouvrement Attendu</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#7c2d12', marginTop: '4px' }}>{formatCurrency(stats?.totalExpected || 5700000)}</div>
+            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#7c2d12', marginTop: '4px' }}>{formatCurrency(stats?.totalExpected || 0)}</div>
           </div>
         </div>
       </div>

@@ -153,14 +153,9 @@ export const StudentView: React.FC = () => {
         setAvailableClasses(parsedClasses);
         if (parsedClasses.length > 0) setClassId(parsedClasses[0].id);
       } else {
-        const defaultClasses = [
-          { id: 'cls-1', name: 'Classe de 6ème A' },
-          { id: 'cls-2', name: 'Classe de 5ème B' },
-          { id: 'cls-3', name: 'Classe de 3ème' }
-        ];
-        setAvailableClasses(defaultClasses);
-        setClassId(defaultClasses[0].id);
-        localStorage.setItem('kpsydesk_classes', JSON.stringify(defaultClasses));
+        setAvailableClasses([]);
+        setClassId('');
+        localStorage.setItem('kpsydesk_classes', JSON.stringify([]));
       }
     }
   };

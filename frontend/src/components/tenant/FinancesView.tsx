@@ -141,57 +141,44 @@ export const FinancesView: React.FC = () => {
   }, []);
 
   const fetchFinancialData = () => {
-    // 1. Encaissements
+    // 1. Encaissements (0 par défaut pour tout nouvel établissement)
     const savedP = localStorage.getItem(PAYMENTS_KEY);
     if (savedP) {
       setPayments(JSON.parse(savedP));
     } else {
-      const defaultPayments: StudentPayment[] = [
-        {
-          id: 'p-1', receiptNumber: 'REC-2026-0001', studentId: 'std-1',
-          studentName: 'Mamadou DIOP', studentMatricule: 'ELEV00001', className: 'Terminale S2',
-          feeLabel: 'Scolarité Mensuelle (Janvier)', amount: 45000,
-          paymentMethod: 'WAVE_SN', transactionRef: 'WAVE-77894125',
-          paymentDate: new Date().toISOString().split('T')[0], cashierName: 'Fatou Sow (Comptable)', status: 'COMPLETED'
-        },
-        {
-          id: 'p-2', receiptNumber: 'REC-2026-0002', studentId: 'std-2',
-          studentName: 'Awa FALL', studentMatricule: 'ELEV00002', className: '3ème A',
-          feeLabel: 'Frais d\'Inscription & Uniforme', amount: 65000,
-          paymentMethod: 'ORANGE_MONEY_SN', transactionRef: 'OM-4512998',
-          paymentDate: new Date().toISOString().split('T')[0], cashierName: 'Fatou Sow (Comptable)', status: 'COMPLETED'
-        }
-      ];
-      setPayments(defaultPayments);
-      localStorage.setItem(PAYMENTS_KEY, JSON.stringify(defaultPayments));
+      setPayments([]);
     }
 
-    // 2. Dépenses
+    // 2. Dépenses (0 par défaut pour tout nouvel établissement)
     const savedE = localStorage.getItem(EXPENSES_KEY);
     if (savedE) {
       setExpenses(JSON.parse(savedE));
     } else {
-      const defaultExpenses: FinancialExpense[] = [
-        {
-          id: 'e-1', voucherNumber: 'DEP-2026-001', category: 'EAU_EDF_INTERNET',
-          description: 'Facture Électricité Senelec / CIE du mois', amount: 125000,
-          recipientName: 'SENELEC / CIE', expenseDate: new Date().toISOString().split('T')[0],
-          approvalStatus: 'APPROVED', approvedBy: 'M. le Directeur'
-        }
-      ];
-      setExpenses(defaultExpenses);
-      localStorage.setItem(EXPENSES_KEY, JSON.stringify(defaultExpenses));
+      setExpenses([]);
     }
 
-    // 3. Élèves pour l'encaissement
-    const savedStd = localStorage.getItem(STUDENTS_KEY);
-    if (savedStd) {
-      setStudents(JSON.parse(savedStd));
+    // 3. Salaires (0 par défaut)
+    const savedS = localStorage.getItem(SALARIES_KEY);
+    if (savedS) {
+      setSalaries(JSON.parse(savedS));
     } else {
-      setStudents([
-        { id: 'std-1', firstName: 'Mamadou', lastName: 'DIOP', matricule: 'ELEV00001', className: 'Terminale S2' },
-        { id: 'std-2', firstName: 'Awa', lastName: 'FALL', matricule: 'ELEV00002', className: '3ème A' }
-      ]);
+      setSalaries([]);
+    }
+
+    // 4. Clôtures (0 par défaut)
+    const savedC = localStorage.getItem(CLOSURES_KEY);
+    if (savedC) {
+      setCashClosures(JSON.parse(savedC));
+    } else {
+      setCashClosures([]);
+    }
+
+    // 5. Élèves du Tenant (0 par défaut)
+    const savedSt = localStorage.getItem(STUDENTS_KEY);
+    if (savedSt) {
+      setStudents(JSON.parse(savedSt));
+    } else {
+      setStudents([]);
     }
   };
 
