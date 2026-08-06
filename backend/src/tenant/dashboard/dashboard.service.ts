@@ -139,13 +139,21 @@ export class DashboardService {
       };
     });
 
-    // Taux de présence du jour
+    // Taux de présence du jour (0% si aucun élève)
     const totalStudentsToday = totalStudents;
     const presentToday = totalStudentsToday - absencesToday;
     const attendanceRate =
       totalStudentsToday > 0
         ? Math.round((presentToday / totalStudentsToday) * 100)
-        : 100;
+        : 0;
+
+    // Comptages par genre réels
+    const femaleStudents = await this.prisma.student.count({
+      where: { tenantId, gender: { in: ['F', 'FEMININ', 'FEMALE', 'Féminin'] } },
+    });
+    const maleStudents = await this.prisma.student.count({
+      where: { tenantId, gender: { in: ['M', 'MASCULIN', 'MALE', 'Masculin'] } },
+    });
 
     // Revenus et impayés
     const totalExpected = totalFees._sum.amount ?? 0;
@@ -158,6 +166,8 @@ export class DashboardService {
     return {
       // KPIs principaux
       totalStudents,
+      femaleStudents,
+      maleStudents,
       totalTeachers,
       totalClasses,
       totalUsers,
