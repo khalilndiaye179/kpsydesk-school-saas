@@ -132,7 +132,7 @@ export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGat
           style={{
             display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px',
             border: 'none', backgroundColor: activeTab === 'MANAGEMENT' ? '#2563eb' : '#1e293b',
-            color: 'white', fontWeight 700, cursor: 'pointer',
+            color: 'white', fontWeight: 700, cursor: 'pointer',
           }}
         >
           <Layers size={18} /> Gestion des Plans & Moyens de Règlement
@@ -142,7 +142,7 @@ export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGat
           style={{
             display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px',
             border: 'none', backgroundColor: activeTab === 'HISTORY' ? '#2563eb' : '#1e293b',
-            color: 'white', fontWeight 700, cursor: 'pointer',
+            color: 'white', fontWeight: 700, cursor: 'pointer',
           }}
         >
           <CreditCard size={18} /> Historique des Factures
