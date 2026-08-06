@@ -29,30 +29,32 @@ export class PlatformStatsService {
       tenantsByCountry,
       tenantsTrend,
     ] = await Promise.all([
-      this.prisma.tenant.count(),
-      this.prisma.tenant.count({ where: { status: 'ACTIVE' } }),
-      this.prisma.tenant.count({ where: { status: 'TRIAL' } }),
-      this.prisma.tenant.count({ where: { status: 'SUSPENDED' } }),
-      this.prisma.student.count(),
-      this.prisma.teacher.count(),
-      this.prisma.tenantUser.count(),
-      this.prisma.tenant.count({ where: { createdAt: { gte: startOfMonth, lte: endOfMonth } } }),
+      this.prisma.tenant.count({ where: { isDemo: false } }),
+      this.prisma.tenant.count({ where: { isDemo: false, status: 'ACTIVE' } }),
+      this.prisma.tenant.count({ where: { isDemo: false, status: 'TRIAL' } }),
+      this.prisma.tenant.count({ where: { isDemo: false, status: 'SUSPENDED' } }),
+      this.prisma.student.count({ where: { tenant: { isDemo: false } } }),
+      this.prisma.teacher.count({ where: { tenant: { isDemo: false } } }),
+      this.prisma.tenantUser.count({ where: { tenant: { isDemo: false } } }),
+      this.prisma.tenant.count({ where: { isDemo: false, createdAt: { gte: startOfMonth, lte: endOfMonth } } }),
 
       // Répartition par plan SaaS
       this.prisma.tenant.groupBy({
         by: ['plan'],
+        where: { isDemo: false },
         _count: { id: true },
       }),
 
       // Répartition par pays
       this.prisma.tenant.groupBy({
         by: ['country'],
+        where: { isDemo: false },
         _count: { id: true },
       }),
 
       // Nouveaux tenants sur 30 jours (pour sparkline)
       this.prisma.tenant.findMany({
-        where: { createdAt: { gte: thirtyDaysAgo } },
+        where: { isDemo: false, createdAt: { gte: thirtyDaysAgo } },
         select: { createdAt: true, status: true, plan: true, country: true },
         orderBy: { createdAt: 'asc' },
       }),
