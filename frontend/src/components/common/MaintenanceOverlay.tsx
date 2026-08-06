@@ -20,7 +20,7 @@ export const MaintenanceOverlay: React.FC<MaintenanceOverlayProps> = ({
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justify: 'center',
+      justifyContent: 'center',
       padding: '24px',
       textAlign: 'center',
       fontFamily: 'system-ui, -apple-system, sans-serif'
