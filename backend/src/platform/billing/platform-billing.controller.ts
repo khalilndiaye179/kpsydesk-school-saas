@@ -19,10 +19,12 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { existsSync, mkdirSync } from 'fs';
+import { SetMetadata } from '@nestjs/common';
 import { JwtAuthGuard } from '../../tenant/auth/jwt-auth.guard';
-import { Public } from '../../tenant/auth/public.decorator';
 import { PlatformBillingService } from './platform-billing.service';
 import { PaymentProofStatus } from '@prisma/client';
+
+export const Public = () => SetMetadata('isPublic', true);
 
 // Dossier de destination du volume Docker /app/uploads/payment-proofs/
 const UPLOAD_DIR = join(process.cwd(), 'uploads', 'payment-proofs');
