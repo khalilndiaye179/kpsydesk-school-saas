@@ -109,35 +109,49 @@ export const LoginView: React.FC = () => {
 
         {/* LOGO PLATEFORME & HEADER BRANDING */}
         <div style={{ zIndex: 2 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
             <div style={{
-              width: '42px', height: '42px', borderRadius: '12px',
-              backgroundColor: 'rgba(212, 168, 83, 0.15)', border: '1px solid rgba(212, 168, 83, 0.4)',
+              width: '48px', height: '48px', borderRadius: '14px',
+              backgroundColor: 'rgba(212, 168, 83, 0.15)', border: '1.5px solid rgba(212, 168, 83, 0.5)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', color: designTokens.colors.brandGold,
             }}>
-              <GraduationCap size={24} />
+              <GraduationCap size={28} />
             </div>
             <div>
               <h1 style={{
-                margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#FFFFFF',
+                margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#FFFFFF',
                 letterSpacing: '0.5px', fontFamily: designTokens.typography.fontTitle,
               }}>
                 KPSyDesk School
               </h1>
-              <span style={{ fontSize: '0.75rem', color: designTokens.colors.brandGold, fontWeight: 600, letterSpacing: '1px' }}>
+              <span style={{ fontSize: '0.8rem', color: designTokens.colors.brandGold, fontWeight: 700, letterSpacing: '1px' }}>
                 ERP ÉDUCATIF SAAS MULTI-TENANT
               </span>
             </div>
+          </div>
+
+          {/* ENCART POINTS FORTS PRODUIT - POSITIONNÉ HAUT GAUCHE & POLICES AGRANDIES */}
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: '14px',
+            backgroundColor: 'rgba(5, 28, 20, 0.85)', padding: '24px 28px', borderRadius: '20px',
+            border: '1.5px solid rgba(212, 168, 83, 0.4)', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.45)',
+          }}>
+            {featurePoints.map((pt, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', color: '#FFFFFF', fontSize: '1.05rem', fontWeight: 700 }}>
+                <CheckCircle2 size={24} color={designTokens.colors.brandGold} style={{ flexShrink: 0 }} />
+                <span style={{ lineHeight: '1.4', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>{pt}</span>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* CONTENU CENTRAL : ILLUSTRATION VECTORIELLE INTERACTIVE */}
         <div style={{
           zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          margin: 'auto 0', position: 'relative', height: '360px',
+          margin: 'auto 0', position: 'relative', height: '320px',
         }}>
           {/* Illustration de remise de diplômes / éducation */}
-          <div style={{ width: '280px', height: '280px', opacity: 0.9 }}>
+          <div style={{ width: '260px', height: '260px', opacity: 0.9 }}>
             <GraduationIllustration />
           </div>
 
@@ -169,22 +183,6 @@ export const LoginView: React.FC = () => {
               <span>{m.label}</span>
             </div>
           ))}
-        </div>
-
-        {/* ENCART POINTS FORTS PRODUIT - POLICES ET ICÔNES AGRANDIES */}
-        <div style={{ zIndex: 2, marginTop: '20px' }}>
-          <div style={{
-            display: 'flex', flexDirection: 'column', gap: '14px',
-            backgroundColor: 'rgba(5, 28, 20, 0.85)', padding: '24px 28px', borderRadius: '20px',
-            border: '1.5px solid rgba(212, 168, 83, 0.35)', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
-          }}>
-            {featurePoints.map((pt, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', color: '#F8FAFC', fontSize: '0.98rem', fontWeight: 600 }}>
-                <CheckCircle2 size={22} color={designTokens.colors.brandGold} style={{ flexShrink: 0 }} />
-                <span style={{ lineHeight: '1.4' }}>{pt}</span>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
