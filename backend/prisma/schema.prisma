@@ -18,6 +18,7 @@ model Tenant {
   status          TenantStatus   @default(TRIAL)
   plan            SaaSPlan       @default(TRIAL_7D)
   country         String         @default("SN")
+  isDemo          Boolean        @default(false)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   
