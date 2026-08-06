@@ -19,8 +19,8 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { existsSync, mkdirSync } from 'fs';
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
-import { Public } from '../../auth/public.decorator';
+import { JwtAuthGuard } from '../../tenant/auth/jwt-auth.guard';
+import { Public } from '../../tenant/auth/public.decorator';
 import { PlatformBillingService } from './platform-billing.service';
 import { PaymentProofStatus } from '@prisma/client';
 
