@@ -28,7 +28,11 @@ interface PaymentProof {
   rejectionReason?: string;
 }
 
-export const PaymentProofQueueView: React.FC = () => {
+interface PaymentProofQueueViewProps {
+  onPendingCountChange?: (count: number) => void;
+}
+
+export const PaymentProofQueueView: React.FC<PaymentProofQueueViewProps> = ({ onPendingCountChange }) => {
   const [proofs, setProofs] = useState<PaymentProof[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProof, setSelectedProof] = useState<PaymentProof | null>(null);
@@ -37,18 +41,29 @@ export const PaymentProofQueueView: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const fetchQueue = () => {
-    setLoading(true);
+  const fetchQueue = (silent = false) => {
+    if (!silent) setLoading(true);
     api.get('/admin/payment-proofs?status=PENDING')
       .then((res) => {
-        setProofs(res.data?.items || []);
+        const items = res.data?.items || [];
+        setProofs(items);
+        if (onPendingCountChange) {
+          onPendingCountChange(items.length);
+        }
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!silent) setLoading(false);
+      });
   };
 
+  // Polling automatique en temps réel toutes les 15 secondes
   useEffect(() => {
-    fetchQueue();
+    fetchQueue(false);
+    const interval = setInterval(() => {
+      fetchQueue(true);
+    }, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleApprove = async (proof: PaymentProof) => {
@@ -155,6 +170,9 @@ export const PaymentProofQueueView: React.FC = () => {
                   </td>
                   <td style={{ padding: '14px', color: '#38bdf8', fontWeight: 700 }}>
                     Plan {p.planCode}
+                    <span style={{ display: 'block', fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 500, marginTop: '2px' }}>
+                      Quota : {(p as any).requestedQuota || 500} élèves
+                    </span>
                   </td>
                   <td style={{ padding: '14px', color: '#cbd5e1' }}>
                     <strong style={{ display: 'block', color: 'white' }}>{p.paymentMethod?.label || 'Paiement Manuel'}</strong>

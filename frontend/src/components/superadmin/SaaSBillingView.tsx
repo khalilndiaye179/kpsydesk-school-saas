@@ -19,6 +19,7 @@ interface SaaSBillingViewProps {
 
 export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGateways }) => {
   const [activeTab, setActiveTab] = useState<'QUEUE' | 'MANAGEMENT' | 'HISTORY'>('QUEUE');
+  const [pendingProofsCount, setPendingProofsCount] = useState(0);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [mrr, setMrr] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -111,17 +112,27 @@ export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGat
           style={{
             display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px',
             border: 'none', backgroundColor: activeTab === 'QUEUE' ? '#2563eb' : '#1e293b',
-            color: 'white', fontWeight: 700, cursor: 'pointer',
+            color: 'white', fontWeight: 700, cursor: 'pointer', position: 'relative',
           }}
         >
           <Clock size={18} /> File d'Attente Récépissés
+          {pendingProofsCount > 0 && (
+            <span style={{
+              backgroundColor: '#ef4444', color: 'white', fontSize: '0.75rem', fontWeight: 800,
+              padding: '2px 8px', borderRadius: '12px', marginLeft: '6px',
+              boxShadow: '0 0 10px rgba(239, 68, 68, 0.6)',
+              animation: 'pulse 1.5s infinite',
+            }}>
+              {pendingProofsCount} NOUVEAU
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab('MANAGEMENT')}
           style={{
             display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px',
             border: 'none', backgroundColor: activeTab === 'MANAGEMENT' ? '#2563eb' : '#1e293b',
-            color: 'white', fontWeight: 700, cursor: 'pointer',
+            color: 'white', fontWeight 700, cursor: 'pointer',
           }}
         >
           <Layers size={18} /> Gestion des Plans & Moyens de Règlement
@@ -131,7 +142,7 @@ export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGat
           style={{
             display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px',
             border: 'none', backgroundColor: activeTab === 'HISTORY' ? '#2563eb' : '#1e293b',
-            color: 'white', fontWeight: 700, cursor: 'pointer',
+            color: 'white', fontWeight 700, cursor: 'pointer',
           }}
         >
           <CreditCard size={18} /> Historique des Factures
@@ -139,7 +150,9 @@ export const SaaSBillingView: React.FC<SaaSBillingViewProps> = ({ onConfigureGat
       </div>
 
       {/* CONTENU SELON L'ONGLET SÉLECTIONNÉ */}
-      {activeTab === 'QUEUE' && <PaymentProofQueueView />}
+      {activeTab === 'QUEUE' && (
+        <PaymentProofQueueView onPendingCountChange={(c) => setPendingProofsCount(c)} />
+      )}
 
       {activeTab === 'MANAGEMENT' && <SaaSAdminManagementView />}
 

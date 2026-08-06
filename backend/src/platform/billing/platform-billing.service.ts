@@ -74,6 +74,7 @@ export class PlatformBillingService {
         planCode: dto.planCode,
         amount: Number(dto.amount),
         currency: dto.currency || 'XOF',
+        requestedQuota: dto.requestedQuota || 500,
         paymentMethodId: dto.paymentMethodId,
         transactionReference: dto.transactionReference,
         proofFileUrl: dto.proofFileUrl,
@@ -168,13 +169,14 @@ export class PlatformBillingService {
         },
       });
 
-      // 2. Mettre à jour le tenant en statut ACTIVE et lier au Plan
+      // 2. Mettre à jour le tenant en statut ACTIVE et lier au Plan et au Quota autorisé
       await tx.tenant.update({
         where: { id: proof.tenantId },
         data: {
           status: 'ACTIVE',
           planId: targetPlan?.id,
-          plan: (proof.planCode as any) || 'STANDARD',
+          plan: (proof.planCode as any) || 'Pro (Full Pack)',
+          quotaStudents: proof.requestedQuota || 500,
         },
       });
 

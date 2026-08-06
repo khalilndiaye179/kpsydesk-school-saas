@@ -128,6 +128,7 @@ model PaymentProof {
   planCode             String             // Ex: STANDARD, PREMIUM, PRO
   amount               Float
   currency             String             @default("XOF")
+  requestedQuota       Int                @default(500)
   transactionReference String?
   proofFileUrl         String?            // Chemin relatif dans le volume Docker /app/uploads/payment-proofs/
   status               PaymentProofStatus @default(PENDING)

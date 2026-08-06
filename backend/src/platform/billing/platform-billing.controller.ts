@@ -105,9 +105,10 @@ export class PlatformBillingController {
 
     return this.billingService.submitPaymentProof(tenantId, {
       planId: body.planId,
-      planCode: body.planCode || 'STANDARD',
+      planCode: body.planCode || 'Pro (Full Pack)',
       amount: body.amount,
       currency: body.currency || 'XOF',
+      requestedQuota: body.requestedQuota ? parseInt(body.requestedQuota, 10) : 500,
       paymentMethodId: body.paymentMethodId,
       transactionReference: body.transactionReference,
       proofFileUrl: relativeProofUrl,
