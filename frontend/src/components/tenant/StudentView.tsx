@@ -163,6 +163,15 @@ export const StudentView: React.FC = () => {
       setNetworkError('Échec du chargement des élèves depuis le serveur. Vérifiez votre connexion.');
       setStudents([]);
     }
+  const generateMatricule = (existing: any[]): string => {
+    let max = 0;
+    existing.forEach(s => {
+      if (s.matricule && s.matricule.startsWith('ELEV')) {
+        const num = parseInt(s.matricule.substring(4), 10);
+        if (!isNaN(num) && num > max) max = num;
+      }
+    });
+    return `ELEV${String(max + 1).padStart(5, '0')}`;
   };
 
   const resetForm = () => {

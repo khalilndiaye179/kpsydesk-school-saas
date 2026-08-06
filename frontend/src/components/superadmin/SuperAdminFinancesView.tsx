@@ -18,6 +18,7 @@ export const SuperAdminFinancesView: React.FC = () => {
   const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [quotes, setQuotes] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string>('');
 
