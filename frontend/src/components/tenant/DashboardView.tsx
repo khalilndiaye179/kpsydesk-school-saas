@@ -102,12 +102,6 @@ export const DashboardView: React.FC = () => {
 
   // Comptages réels stricts
   const total = stats?.totalStudents || localStudents.length;
-  
-  const femaleCount = stats?.femaleStudents || localStudents.filter(s => s.gender === 'Féminin' || s.gender === 'F').length;
-  const maleCount = stats?.maleStudents || localStudents.filter(s => s.gender === 'Masculin' || s.gender === 'M').length;
-
-  const femalePercent = total > 0 ? Math.round((femaleCount / total) * 100) : 0;
-  const malePercent = total > 0 ? (100 - femalePercent) : 0;
 
   // Répartition Collège / Lycée basée sur les vraies classes des élèves
   const collegeKeywords = ['6', '5', '4', '3', '6ème', '5ème', '4ème', '3ème', 'college', 'collège'];
@@ -136,7 +130,7 @@ export const DashboardView: React.FC = () => {
             Tableau de Bord & Analytics — {countryConfig.name} {countryConfig.flag}
           </h2>
           <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Tour de contrôle académique, démographie et finances de l'établissement.
+            Tour de contrôle académique et finances de l'établissement.
           </span>
         </div>
 
@@ -162,90 +156,41 @@ export const DashboardView: React.FC = () => {
       )}
 
       {/* --------------------------------------------------------------------- */}
-      {/* SECTION 1 : CARTES KPIs CLÉS                                           */}
-      {/* --------------------------------------------------------------------- */}
-      {/* --------------------------------------------------------------------- */}
       {/* SECTION 1 : KPI STRATÉGIQUES (ACCÈS RAPIDE)                           */}
       {/* --------------------------------------------------------------------- */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '18px' }}>
-        <KpiCard title="Effectif Élèves" value={total} sub={`${femaleCount} Filles · ${maleCount} Garçons`} icon={Users} color="#0284c7" />
+        <KpiCard title="Effectif Élèves" value={total} sub="Élèves inscrits" icon={Users} color="#0284c7" />
         <KpiCard title="Professeurs & Staff" value={totalTeachers} sub={`${totalClasses} Classes actives`} icon={GraduationCap} color="#8b5cf6" />
         <KpiCard title="Taux d'Assiduité" value={`${total > 0 ? (stats?.attendanceRate ?? 100) : 0}%`} sub={`${stats?.absencesToday || 0} absence(s) aujourd'hui`} icon={UserCheck} color="#10b981" />
         <KpiCard title="Recouvrement Scolarité" value={`${collectionRate}%`} sub={`Encaissé : ${formatCurrency(totalCollected)}`} icon={DollarSign} color="#f59e0b" />
       </div>
 
       {/* --------------------------------------------------------------------- */}
-      {/* SECTION 2 : DÉMOGRAPHIE PAR SEXE & CYCLE ACADÉMIQUE                    */}
+      {/* SECTION 2 : CYCLE ACADÉMIQUE                                          */}
       {/* --------------------------------------------------------------------- */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-        
-        {/* CARTE 1 : RÉPARTITION PAR SEXE (FILLES VS GARÇONS) */}
-        <div style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.05rem', fontFamily: 'var(--font-title)' }}>Démographie & Parité Élèves</h3>
-            <span style={{ fontSize: '0.78rem', backgroundColor: '#f0fdf4', color: '#166534', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>
-              {total > 0 ? `Parité F/G : ${(femaleCount / (maleCount || 1)).toFixed(2)} ♀️` : 'Données Vierges'}
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            {/* Jauge / Barre de progression visuelle */}
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.88rem', fontWeight: 700 }}>
-                <span style={{ color: '#ec4899', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  ♀️ Filles : {femaleCount} ({femalePercent}%)
-                </span>
-                <span style={{ color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  ♂️ Garçons : {maleCount} ({malePercent}%)
-                </span>
-              </div>
-
-              {/* BARRE BICOLORE */}
-              <div style={{ height: '16px', width: '100%', borderRadius: '8px', backgroundColor: '#e2e8f0', overflow: 'hidden', display: 'flex' }}>
-                <div style={{ width: `${femalePercent}%`, backgroundColor: '#ec4899', transition: 'width 0.5s' }} title={`Filles : ${femaleCount}`} />
-                <div style={{ width: `${malePercent}%`, backgroundColor: '#3b82f6', transition: 'width 0.5s' }} title={`Garçons : ${maleCount}`} />
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '20px' }}>
-            <div style={{ backgroundColor: '#fdf2f8', padding: '12px', borderRadius: '10px', border: '1px solid #fbcfe8' }}>
-              <div style={{ fontSize: '0.78rem', color: '#be185d', fontWeight: 600 }}>Filles Inscrites</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#9d174d' }}>{femaleCount}</div>
-            </div>
-            <div style={{ backgroundColor: '#eff6ff', padding: '12px', borderRadius: '10px', border: '1px solid #bfdbfe' }}>
-              <div style={{ fontSize: '0.78rem', color: '#1d4ed8', fontWeight: 600 }}>Garçons Inscrits</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1e40af' }}>{maleCount}</div>
-            </div>
-          </div>
+      <div style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ margin: 0, fontSize: '1.05rem', fontFamily: 'var(--font-title)' }}>Répartition par Cycle d'Enseignement</h3>
+          <span style={{ fontSize: '0.78rem', backgroundColor: '#f0f9ff', color: '#0369a1', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>
+            Collège & Lycée
+          </span>
         </div>
 
-        {/* CARTE 2 : RÉPARTITION COLLÈGE VS LYCÉE */}
-        <div style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.05rem', fontFamily: 'var(--font-title)' }}>Répartition par Cycle d'Enseignement</h3>
-            <span style={{ fontSize: '0.78rem', backgroundColor: '#f0f9ff', color: '#0369a1', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>
-              Collège & Lycée
-            </span>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          {/* Premier Cycle (Collège) */}
+          <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-page)', border: '1px solid var(--border)' }}>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600 }}>Premier Cycle (Collège)</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', margin: '4px 0' }}>{collegeCount} Élèves</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Classes de 6ème, 5ème, 4ème, 3ème</div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            {/* Premier Cycle (Collège) */}
-            <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-page)', border: '1px solid var(--border)' }}>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600 }}>Premier Cycle (Collège)</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', margin: '4px 0' }}>{collegeCount} Élèves</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Classes de 6ème, 5ème, 4ème, 3ème</div>
-            </div>
-
-            {/* Second Cycle (Lycée) */}
-            <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-page)', border: '1px solid var(--border)' }}>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600 }}>Second Cycle (Lycée)</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#D4A853', margin: '4px 0' }}>{lyceeCount} Élèves</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Séries L1, L2, S1, S2, A, C, D, G</div>
-            </div>
+          {/* Second Cycle (Lycée) */}
+          <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-page)', border: '1px solid var(--border)' }}>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600 }}>Second Cycle (Lycée)</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#D4A853', margin: '4px 0' }}>{lyceeCount} Élèves</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Séries L1, L2, S1, S2, A, C, D, G</div>
           </div>
         </div>
-
       </div>
 
       {/* --------------------------------------------------------------------- */}
