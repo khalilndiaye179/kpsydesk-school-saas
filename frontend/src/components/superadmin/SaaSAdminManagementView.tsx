@@ -191,8 +191,9 @@ export const SaaSAdminManagementView: React.FC = () => {
                         {p.isActive ? 'Désactiver' : 'Activer'}
                       </button>
                     </div>
-                  </tr>
-                );
+                  </td>
+                </tr>
+              );
               })}
             </tbody>
           </table>
