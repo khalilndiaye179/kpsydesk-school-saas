@@ -146,20 +146,35 @@ export const SaaSAdminManagementView: React.FC = () => {
                 <th style={{ padding: '12px', textAlign: 'left' }}>Nom du Plan</th>
                 <th style={{ padding: '12px', textAlign: 'right' }}>Prix Mensuel</th>
                 <th style={{ padding: '12px', textAlign: 'center' }}>Quota Élèves</th>
+                <th style={{ padding: '12px', textAlign: 'left' }}>Modules Inclus</th>
                 <th style={{ padding: '12px', textAlign: 'center' }}>Affichage Public</th>
                 <th style={{ padding: '12px', textAlign: 'center' }}>Statut Système</th>
                 <th style={{ padding: '12px', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {plans.map((p) => (
-                <tr key={p.id} style={{ borderBottom: '1px solid #334155', opacity: p.isActive ? 1 : 0.6 }}>
-                  <td style={{ padding: '14px', color: 'white', fontWeight: 700 }}>{p.name}</td>
-                  <td style={{ padding: '14px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>{formatCurrency(p.price)}</td>
-                  <td style={{ padding: '14px', textAlign: 'center', color: '#cbd5e1' }}>{p.quotaStudents.toLocaleString()} élèves</td>
-                  <td style={{ padding: '14px', textAlign: 'center' }}>
-                    {p.isPublic ? <span style={{ color: '#38bdf8' }}>Public</span> : <span style={{ color: '#94a3b8' }}>Privé</span>}
-                  </td>
+              {plans.map((p) => {
+                const featuresList: string[] = Array.isArray(p.features) 
+                  ? p.features 
+                  : (typeof p.features === 'string' ? JSON.parse(p.features || '[]') : []);
+
+                return (
+                  <tr key={p.id} style={{ borderBottom: '1px solid #334155', opacity: p.isActive ? 1 : 0.6 }}>
+                    <td style={{ padding: '14px', color: 'white', fontWeight: 700 }}>{p.name}</td>
+                    <td style={{ padding: '14px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>{formatCurrency(p.price, 'SN')}</td>
+                    <td style={{ padding: '14px', textAlign: 'center', color: '#cbd5e1' }}>{(p.quotaStudents || 500).toLocaleString()} élèves</td>
+                    <td style={{ padding: '14px' }}>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        {featuresList.length > 0 ? featuresList.map((f: string, i: number) => (
+                          <span key={i} style={{ fontSize: '0.72rem', backgroundColor: 'rgba(56,189,248,0.15)', color: '#38bdf8', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(56,189,248,0.3)' }}>
+                            {f}
+                          </span>
+                        )) : <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Tous les modules de base</span>}
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px', textAlign: 'center' }}>
+                      {p.isPublic ? <span style={{ color: '#38bdf8' }}>Public</span> : <span style={{ color: '#94a3b8' }}>Privé</span>}
+                    </td>
                   <td style={{ padding: '14px', textAlign: 'center' }}>
                     {p.isActive ? (
                       <span style={{ backgroundColor: 'rgba(16,185,129,0.15)', color: '#34d399', padding: '4px 10px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700 }}>ACTIF</span>
@@ -176,9 +191,9 @@ export const SaaSAdminManagementView: React.FC = () => {
                         {p.isActive ? 'Désactiver' : 'Activer'}
                       </button>
                     </div>
-                  </td>
-                </tr>
-              ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -251,8 +266,51 @@ export const SaaSAdminManagementView: React.FC = () => {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>Description :</label>
+              <label style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>Description Marketing :</label>
               <textarea rows={2} value={editingPlan.description || ''} onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', backgroundColor: '#0f172a', border: '1px solid #334155', color: 'white', marginTop: '4px' }} />
+            </div>
+
+            {/* Selection des Modules inclus dans le Plan */}
+            <div>
+              <label style={{ fontSize: '0.85rem', color: '#38bdf8', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
+                🧩 Modules & Fonctionnalités Incluses :
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', backgroundColor: '#0f172a', padding: '12px', borderRadius: '8px', border: '1px solid #334155' }}>
+                {[
+                  { code: 'FINANCE', label: '💳 Module Financier & Paie' },
+                  { code: 'KIOSK', label: '⏱️ Kiosque Pointage QR' },
+                  { code: 'PARENTS', label: '👨‍👩‍👧 Portail Parents & SMS' },
+                  { code: 'HR', label: '👔 Gestion RH & Contrats' },
+                  { code: 'BULLETINS', label: '📄 Bulletins PDF & Notes' },
+                  { code: 'TRANSPORT', label: '🚌 Transport Scolaire' },
+                  { code: 'BI', label: '📊 Tableau de Bord & BI' },
+                ].map((mod) => {
+                  const featuresList: string[] = Array.isArray(editingPlan.features) 
+                    ? editingPlan.features 
+                    : (typeof editingPlan.features === 'string' ? JSON.parse(editingPlan.features || '[]') : []);
+                  const isChecked = featuresList.includes(mod.code) || featuresList.includes(mod.label);
+
+                  return (
+                    <label key={mod.code} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: 'white', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          let updated = [...featuresList];
+                          if (e.target.checked) {
+                            if (!updated.includes(mod.code)) updated.push(mod.code);
+                          } else {
+                            updated = updated.filter(f => f !== mod.code && f !== mod.label);
+                          }
+                          setEditingPlan({ ...editingPlan, features: updated });
+                        }}
+                        style={{ accentColor: '#38bdf8', width: '16px', height: '16px' }}
+                      />
+                      {mod.label}
+                    </label>
+                  );
+                })}
+              </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
