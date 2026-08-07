@@ -37,29 +37,16 @@ export class PlatformAuthService {
       throw new UnauthorizedException('Identifiants invalides.');
     }
 
-    // Si l'utilisateur n'est pas encore enrôlé MFA, délivrer un jeton restreint platform:enroll
-    if (!user.isMfaEnrolled) {
-      const enrollPayload = {
-        sub: user.id,
-        email: user.email,
-        scope: 'platform:enroll',
-      };
-      const enrollToken = await this.jwtService.signAsync(enrollPayload, { expiresIn: '15m' });
-      return {
-        status: 'mfa_enrollment_required',
-        enroll_token: enrollToken,
-      };
-    }
-
-    // Délivrance du JWT platform complet si déjà enrôlé (scope: "platform")
+    // Génération et délivrance directe du jeton JWT platform SuperAdmin
     const payload = {
       sub: user.id,
       email: user.email,
       role: user.role,
       scope: 'platform',
     };
-
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '8h' });
+    
+    const tokenSecret = process.env.JWT_SECRET;
+    const accessToken = await this.jwtService.signAsync(payload, { secret: tokenSecret, expiresIn: '12h' });
 
     return {
       access_token: accessToken,
@@ -67,8 +54,6 @@ export class PlatformAuthService {
         id: user.id,
         email: user.email,
         role: user.role,
-        mustChangePassword: user.mustChangePassword,
-        isMfaEnrolled: user.isMfaEnrolled,
       },
     };
   }
