@@ -987,15 +987,82 @@ export const HRView: React.FC = () => {
                     <h4 style={{ margin: '16px 0 0 0', fontSize: '1rem', color: '#0f172a', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>
                       Affectations Pédagogiques (Pour Enseignants)
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      
+                      {/* Sélection des Classes par Cases à Cocher */}
                       <div>
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Classes & Matières Enseignées</label>
-                        <input type="text" value={assignedClasses} onChange={e => setAssignedClasses(e.target.value)} placeholder="Ex: 6ème A, 5ème B - Mathématiques" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', marginTop: '4px' }} />
+                        <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', marginBottom: '6px', display: 'block' }}>
+                          🏫 Classes Attribuées (Cocher une ou plusieurs classes)
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '8px', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}>
+                          {['6ème A', '6ème B', '5ème A', '5ème B', '4ème A', '4ème B', '3ème A', '3ème B', 'Seconde S', 'Première S1', 'Terminale S1', 'Terminale L2'].map((clsName) => {
+                            const isChecked = assignedClasses.includes(clsName);
+                            return (
+                              <label key={clsName} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: '#0f172a', cursor: 'pointer', fontWeight: isChecked ? 700 : 400 }}>
+                                <input 
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    let currentList = assignedClasses ? assignedClasses.split(', ').filter(Boolean) : [];
+                                    if (e.target.checked) {
+                                      if (!currentList.includes(clsName)) currentList.push(clsName);
+                                    } else {
+                                      currentList = currentList.filter(c => c !== clsName);
+                                    }
+                                    setAssignedClasses(currentList.join(', '));
+                                  }}
+                                  style={{ accentColor: '#0284c7', width: '16px', height: '16px' }}
+                                />
+                                {clsName}
+                              </label>
+                            );
+                          })}
+                        </div>
                       </div>
+
+                      {/* Sélection des Matières par Cases à Cocher */}
                       <div>
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Volume Horaire Hebdomadaire (Heures)</label>
-                        <input type="number" value={weeklyHours} onChange={e => setWeeklyHours(parseInt(e.target.value) || 0)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', marginTop: '4px' }} />
+                        <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', marginBottom: '6px', display: 'block' }}>
+                          📚 Matières Enseignées (Cocher une ou plusieurs matières)
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '8px', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}>
+                          {['Mathématiques', 'Physique-Chimie', 'SVT', 'Français', 'Anglais', 'Histoire-Géographie', 'Philosophie', 'EPS', 'Informatique'].map((subjectName) => {
+                            const isChecked = assignedClasses.includes(subjectName);
+                            return (
+                              <label key={subjectName} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: '#0f172a', cursor: 'pointer', fontWeight: isChecked ? 700 : 400 }}>
+                                <input 
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    let currentList = assignedClasses ? assignedClasses.split(', ').filter(Boolean) : [];
+                                    if (e.target.checked) {
+                                      if (!currentList.includes(subjectName)) currentList.push(subjectName);
+                                    } else {
+                                      currentList = currentList.filter(s => s !== subjectName);
+                                    }
+                                    setAssignedClasses(currentList.join(', '));
+                                  }}
+                                  style={{ accentColor: '#0284c7', width: '16px', height: '16px' }}
+                                />
+                                {subjectName}
+                              </label>
+                            );
+                          })}
+                        </div>
                       </div>
+
+                      {/* Aperçu et Volume Horaire */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', alignItems: 'center' }}>
+                        <div>
+                          <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Résumé des Affectations</label>
+                          <input type="text" value={assignedClasses} readOnly style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', marginTop: '4px', backgroundColor: '#f1f5f9', fontWeight: 600, color: '#0f172a' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Volume Horaire (H/Semaine)</label>
+                          <input type="number" value={weeklyHours} onChange={e => setWeeklyHours(parseInt(e.target.value) || 0)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', marginTop: '4px' }} />
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 )}
