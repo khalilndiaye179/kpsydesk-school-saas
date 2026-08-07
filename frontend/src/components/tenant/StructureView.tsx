@@ -12,6 +12,8 @@ interface ClassData {
 export const StructureView: React.FC = () => {
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [students, setStudents] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -27,11 +29,21 @@ export const StructureView: React.FC = () => {
       .replace(/^-|-$/g, "");
   };
 
-  // 1. Appel API + Persistance locale avec LocalStorage (Règle Personnalisée)
   useEffect(() => {
     fetchClasses();
     fetchStudents();
+    fetchTeachers();
   }, []);
+
+  const fetchTeachers = async () => {
+    try {
+      const res = await api.get('/tenant/teachers');
+      setTeachers(res.data || []);
+    } catch (err) {
+      const saved = localStorage.getItem('kpsydesk_teachers');
+      if (saved) setTeachers(JSON.parse(saved));
+    }
+  };
 
   const fetchStudents = async () => {
     try {
@@ -194,6 +206,30 @@ export const StructureView: React.FC = () => {
                   color: 'var(--text-secondary)'
                 }}
               />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Professeur Responsable / Principal</label>
+              <select
+                value={selectedTeacherId}
+                onChange={e => setSelectedTeacherId(e.target.value)}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border)',
+                  outline: 'none',
+                  fontSize: '0.9rem',
+                  backgroundColor: 'var(--bg-card)',
+                  color: 'var(--text-primary)'
+                }}
+              >
+                <option value="">-- Aucun professeur assigné --</option>
+                {teachers.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.firstName} {t.lastName} ({t.specialty || 'Enseignant'})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <button type="submit" style={{

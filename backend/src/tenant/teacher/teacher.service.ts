@@ -8,6 +8,15 @@ export class TeacherService {
   async findAll(tenantId: string) {
     return this.prisma.teacher.findMany({
       where: { tenantId },
+      include: {
+        availabilities: true,
+        assignedRequirements: {
+          include: {
+            class: true,
+            course: true,
+          },
+        },
+      },
       orderBy: { lastName: 'asc' },
     });
   }
@@ -21,6 +30,15 @@ export class TeacherService {
         email: data.email,
         phone: data.phone || null,
         specialty: data.specialty || '',
+      },
+      include: {
+        availabilities: true,
+        assignedRequirements: {
+          include: {
+            class: true,
+            course: true,
+          },
+        },
       },
     });
   }
@@ -41,6 +59,59 @@ export class TeacherService {
     return this.prisma.teacher.update({
       where: { id },
       data: updateData,
+      include: {
+        availabilities: true,
+        assignedRequirements: {
+          include: {
+            class: true,
+            course: true,
+          },
+        },
+      },
+    });
+  }
+
+  async assignToClass(teacherId: string, classId: string, courseId: string, weeklyHours: number, tenantId: string) {
+    return this.prisma.classCourseRequirement.upsert({
+      where: {
+        classId_courseId: { classId, courseId },
+      },
+      update: {
+        assignedTeacherId: teacherId,
+        weeklyHours: weeklyHours || 2,
+      },
+      create: {
+        tenantId,
+        classId,
+        courseId,
+        assignedTeacherId: teacherId,
+        weeklyHours: weeklyHours || 2,
+      },
+      include: {
+        class: true,
+        course: true,
+        assignedTeacher: true,
+      },
+    });
+  }
+
+  async updateAvailabilities(teacherId: string, availabilities: any[], tenantId: string) {
+    // Remplacement atomique des disponibilites
+    await this.prisma.teacherAvailability.deleteMany({
+      where: { teacherId, tenantId },
+    });
+
+    if (!availabilities || availabilities.length === 0) return [];
+
+    return this.prisma.teacherAvailability.createMany({
+      data: availabilities.map((a) => ({
+        tenantId,
+        teacherId,
+        dayOfWeek: Number(a.dayOfWeek),
+        startTime: a.startTime,
+        endTime: a.endTime,
+        preference: a.preference || 'AVAILABLE',
+      })),
     });
   }
 

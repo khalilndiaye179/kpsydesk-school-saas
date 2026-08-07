@@ -128,47 +128,33 @@ export const TeacherView: React.FC = () => {
   const handleSaveTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { firstName, lastName, email, phone, specialty };
-    let savedId: string = editingId || `local-t-${Date.now()}`;
 
-    if (editingId) {
-      try {
-        await api.put(`/tenant/teachers/${editingId}`, payload);
-        fetchTeachers();
-      } catch (err) {
-        const updated = teachers.map(t => t.id === editingId ? { ...t, ...payload } : t);
-        setTeachers(updated);
-        localStorage.setItem('kpsydesk_teachers', JSON.stringify(updated));
-      }
-    } else {
-      try {
+    try {
+      let savedTeacher: any;
+      if (editingId) {
+        const res = await api.put(`/tenant/teachers/${editingId}`, payload);
+        savedTeacher = res.data;
+      } else {
         const res = await api.post('/tenant/teachers', payload);
-        savedId = res.data.id;
-        fetchTeachers();
-      } catch (err) {
-        const newT: TeacherData = { id: savedId, ...payload };
-        const updated = [...teachers, newT];
-        setTeachers(updated);
-        localStorage.setItem('kpsydesk_teachers', JSON.stringify(updated));
+        savedTeacher = res.data;
       }
-    }
 
-    // Sauvegarder les disponibilités
-    if (savedId) {
-      try {
-        await api.post(`/tenant/availabilities/${savedId}`, { availabilities });
-      } catch (err) {
-        localStorage.setItem(`kpsydesk_availabilities_${savedId}`, JSON.stringify(availabilities));
+      // ⚡ PERSISTANCE : Sauvegarde des disponibilités sur le backend
+      if (savedTeacher && savedTeacher.id && availabilities.length > 0) {
+        await api.post(`/tenant/teachers/${savedTeacher.id}/availabilities`, { availabilities }).catch(() => {});
       }
-    }
 
-    // Reset form
-    setEditingId(null);
-    setFirstName('');
-    setLastName('');
-    setEmail('');
-    setPhone('');
-    setSpecialty('');
-    setAvailabilities([]);
+      setEditingId(null);
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setPhone('');
+      setSpecialty('');
+      setAvailabilities([]);
+      fetchTeachers();
+    } catch (err) {
+      console.error('Erreur sauvegarde professeur:', err);
+    }
   };
 
   // --- Logique Grille ---
@@ -344,6 +330,16 @@ export const TeacherView: React.FC = () => {
                   <div>
                     <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{t.firstName} {t.lastName}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{t.specialty}</div>
+                    {/* Badges de Classes attribuées */}
+                    {(t as any).assignedRequirements && (t as any).assignedRequirements.length > 0 && (
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                        {(t as any).assignedRequirements.map((req: any) => (
+                          <span key={req.id} style={{ fontSize: '0.72rem', backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                            {req.class?.name || 'Classe'} ({req.course?.name || 'Matière'})
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 
