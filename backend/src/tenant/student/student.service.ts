@@ -21,7 +21,7 @@ export class StudentService {
   async create(data: any, tenantId: string) {
     const matricule = data.matricule || (await this.generateMatricule(tenantId));
 
-    return this.prisma.student.create({
+    const newStudent = await this.prisma.student.create({
       data: {
         tenantId,
         classId: data.classId,
@@ -42,6 +42,48 @@ export class StudentService {
       },
       include: { class: true },
     });
+
+    // ⚡ AUTOMATISME ERP : Génération automatique des échéances financières initiales
+    try {
+      const now = new Date();
+      const currentYear = `${now.getFullYear()}-${now.getFullYear() + 1}`;
+
+      await this.prisma.schoolFee.createMany({
+        data: [
+          {
+            tenantId,
+            studentId: newStudent.id,
+            classId: data.classId,
+            label: 'Frais d\'Inscription & Dossier',
+            amount: 25000,
+            dueDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000), // Échéance 7j
+            schoolYear: currentYear,
+          },
+          {
+            tenantId,
+            studentId: newStudent.id,
+            classId: data.classId,
+            label: 'Scolarité — Semestre 1',
+            amount: 15000,
+            dueDate: new Date(now.getFullYear(), 9, 31), // 31 Octobre
+            schoolYear: currentYear,
+          },
+          {
+            tenantId,
+            studentId: newStudent.id,
+            classId: data.classId,
+            label: 'Scolarité — Semestre 2',
+            amount: 15000,
+            dueDate: new Date(now.getFullYear() + 1, 1, 28), // 28 Février
+            schoolYear: currentYear,
+          },
+        ],
+      });
+    } catch (feeError) {
+      console.warn('Création des frais d\'inscription automatiques (non critique) :', feeError);
+    }
+
+    return newStudent;
   }
 
   async update(id: string, data: any, tenantId: string) {
