@@ -21,82 +21,9 @@ export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ 
   });
   const [defaultSubscriptionMonths, setDefaultSubscriptionMonths] = useState(9);
 
-  // Gestion des plans tarifaires
-  const defaultPlans = [
-    { id: 'BASIC', name: 'Starter (Basic)', price: 25000, activeQuota: 25, maxStudents: 350, annualDiscount: 0, description: 'Le plan idéal pour commencer.', features: ['Gestion Scolaire de base', 'Support par email'], tags: 'Basic', recommended: false },
-    { id: 'PRO', name: 'Professionnel', price: 45000, activeQuota: 50, maxStudents: 750, annualDiscount: 10, description: 'Pour les écoles en pleine croissance.', features: ['Gestion Scolaire de base', 'Module Financier', 'Kiosque Pointage'], tags: 'Pro, Recommandé', recommended: true },
-    { id: 'PREMIUM', name: 'Premium / Enterprise', price: 75000, activeQuota: 100, maxStudents: 99999, annualDiscount: 15, description: 'La suite complète avec serveur dédié.', features: ['Gestion Scolaire de base', 'Module Financier', 'Kiosque Pointage', 'Espace RH', 'Multi-campus'], tags: 'Enterprise, Illimité', recommended: false }
-  ];
-
-  const [pricingPlans, setPricingPlans] = useState<any[]>(() => {
-    const saved = localStorage.getItem('kpsydesk_pricing_plans');
-    if (saved) {
-      try {
-        let parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Migration automatique des anciens tarifs 50k, 150k, 350k -> 25k, 45k, 75k
-          parsed = parsed.map((p: any) => ({
-            ...p,
-            price: p.price === 50000 ? 25000 : (p.price === 150000 ? 45000 : (p.price === 350000 ? 75000 : p.price)),
-            maxStudents: p.maxStudents === 500 ? 350 : p.maxStudents
-          }));
-          localStorage.setItem('kpsydesk_pricing_plans', JSON.stringify(parsed));
-          return parsed;
-        }
-      } catch (e) {
-        // Fallback en cas d'erreur de parsing
-      }
-    }
-    localStorage.setItem('kpsydesk_pricing_plans', JSON.stringify(defaultPlans));
-    return defaultPlans;
-  });
-
-  React.useEffect(() => {
-    localStorage.setItem('kpsydesk_pricing_plans', JSON.stringify(pricingPlans));
-  }, [pricingPlans]);
-
-  const [editingPlan, setEditingPlan] = useState<any | null>(null);
-
-  const handleDeletePlan = (id: string) => {
-    if (window.confirm("Voulez-vous vraiment supprimer ce plan ? (Ceci n'affectera pas les locataires déjà abonnés)")) {
-      setPricingPlans(pricingPlans.filter(p => p.id !== id));
-    }
-  };
-
-  const handleEditPlan = (id: string) => {
-    const plan = pricingPlans.find(p => p.id === id);
-    if (plan) setEditingPlan({ ...plan });
-  };
-
-  const handleAddPlan = () => {
-    setEditingPlan({
-      id: `PLAN_${Date.now()}`,
-      name: 'Nouveau Plan',
-      price: 0,
-      activeQuota: 0,
-      maxStudents: 0,
-      annualDiscount: 0,
-      description: '',
-      features: [],
-      tags: '',
-      recommended: false
-    });
-  };
-
-  const saveEditedPlan = () => {
-    if (!editingPlan) return;
-    const exists = pricingPlans.find(p => p.id === editingPlan.id);
-    if (exists) {
-      setPricingPlans(pricingPlans.map(p => p.id === editingPlan.id ? editingPlan : p));
-    } else {
-      setPricingPlans([...pricingPlans, editingPlan]);
-    }
-    setEditingPlan(null);
-  };
-
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Paramètres globaux sauvegardés avec succès ! (Simulation)");
+    alert("Paramètres enregistrés avec succès.");
   };
 
   const tabs = [
@@ -293,82 +220,6 @@ export const SuperAdminSettingsView: React.FC<SuperAdminSettingsViewProps> = ({ 
 
         </form>
       </div>
-
-      {/* Modale d'édition de plan */}
-      {editingPlan && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
-          <div style={{ backgroundColor: '#18181b', borderRadius: '12px', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid #27272a', padding: '32px' }}>
-            <h3 style={{ margin: '0 0 24px 0', color: 'white', fontSize: '1.4rem' }}>{editingPlan.id.startsWith('PLAN_') ? 'Créer un Plan' : `Modifier le plan : ${editingPlan.name}`}</h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ color: '#a1a1aa', fontSize: '0.9rem', fontWeight: 600 }}>Nom du Plan</label>
-                <input type="text" value={editingPlan.name} onChange={e => setEditingPlan({...editingPlan, name: e.target.value})} style={{ padding: '12px', backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '8px', color: 'white', outline: 'none' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ color: '#a1a1aa', fontSize: '0.9rem', fontWeight: 600 }}>Tarif Mensuel (FCFA)</label>
-                <input type="number" value={editingPlan.price} onChange={e => setEditingPlan({...editingPlan, price: Number(e.target.value)})} style={{ padding: '12px', backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '8px', color: 'white', outline: 'none' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ color: '#a1a1aa', fontSize: '0.9rem', fontWeight: 600 }}>Comptes Admin & Profs (Actifs)</label>
-                <input type="number" value={editingPlan.activeQuota} onChange={e => setEditingPlan({...editingPlan, activeQuota: Number(e.target.value)})} style={{ padding: '12px', backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '8px', color: 'white', outline: 'none' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ color: '#a1a1aa', fontSize: '0.9rem', fontWeight: 600 }}>Nombre maximum d'élèves</label>
-                <input type="number" value={editingPlan.maxStudents} onChange={e => setEditingPlan({...editingPlan, maxStudents: Number(e.target.value)})} style={{ padding: '12px', backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '8px', color: 'white', outline: 'none' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ color: '#a1a1aa', fontSize: '0.9rem', fontWeight: 600 }}>Réduction abonnement annuel (%)</label>
-                <input type="number" value={editingPlan.annualDiscount} onChange={e => setEditingPlan({...editingPlan, annualDiscount: Number(e.target.value)})} style={{ padding: '12px', backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '8px', color: 'white', outline: 'none' }} />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
-              <label style={{ color: '#a1a1aa', fontSize: '0.9rem', fontWeight: 600 }}>Description Marketing</label>
-              <textarea rows={3} value={editingPlan.description} onChange={e => setEditingPlan({...editingPlan, description: e.target.value})} style={{ padding: '12px', backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '8px', color: 'white', outline: 'none', resize: 'vertical' }} />
-            </div>
-
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ color: '#a1a1aa', fontSize: '0.9rem', fontWeight: 600, display: 'block', marginBottom: '12px' }}>Fonctionnalités activées</label>
-              <div style={{ backgroundColor: '#27272a', padding: '16px', borderRadius: '8px', border: '1px solid #3f3f46', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                {[
-                  'Module Financier', 'Kiosque Pointage', 'Portail Parents', 
-                  'Espace RH', 'Génération Bulletins', 'Transport Scolaire'
-                ].map(feat => (
-                  <label key={feat} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white', cursor: 'pointer', fontSize: '0.9rem' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={editingPlan.features.includes(feat)}
-                      onChange={e => {
-                        const newFeatures = e.target.checked 
-                          ? [...editingPlan.features, feat] 
-                          : editingPlan.features.filter((f: string) => f !== feat);
-                        setEditingPlan({...editingPlan, features: newFeatures});
-                      }}
-                      style={{ accentColor: '#3b82f6', width: '16px', height: '16px' }}
-                    />
-                    {feat}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '32px' }}>
-              <label style={{ color: '#a1a1aa', fontSize: '0.9rem', fontWeight: 600 }}>Tags Marketing (séparés par des virgules)</label>
-              <input type="text" value={editingPlan.tags} onChange={e => setEditingPlan({...editingPlan, tags: e.target.value})} style={{ padding: '12px', backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '8px', color: 'white', outline: 'none' }} />
-            </div>
-
-            <div style={{ display: 'flex', gap: '16px' }}>
-              <button onClick={() => setEditingPlan(null)} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: '1px solid #3f3f46', color: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, transition: '0.2s' }}>
-                Annuler
-              </button>
-              <button onClick={saveEditedPlan} style={{ flex: 1, padding: '14px', backgroundColor: '#3b82f6', border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, transition: '0.2s' }}>
-                Enregistrer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
