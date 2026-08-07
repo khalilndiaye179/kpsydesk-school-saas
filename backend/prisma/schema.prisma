@@ -62,6 +62,7 @@ enum SaaSPlan {
   PREMIUM
   PRO
   ENTERPRISE
+  DEMO
 }
 
 model Plan {

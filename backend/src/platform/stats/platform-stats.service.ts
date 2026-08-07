@@ -16,9 +16,8 @@ export class PlatformStatsService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const nonDemoFilter = { plan: { notIn: ['DEMO', 'TEST'] } };
-
-    const demoFilter = { plan: { in: ['DEMO', 'TEST'] } };
+    const nonDemoFilter = { isDemo: false };
+    const demoFilter = { isDemo: true };
 
     const [
       totalTenants,

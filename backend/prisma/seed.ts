@@ -141,6 +141,7 @@ async function main() {
     await prisma.tenant.update({
       where: { id: lsnTenant.id },
       data: {
+        isDemo: true,
         plan: 'DEMO',
         status: 'ACTIVE'
       }
