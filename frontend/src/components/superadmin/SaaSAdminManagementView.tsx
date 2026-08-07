@@ -92,6 +92,7 @@ export const SaaSAdminManagementView: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '16px' }}>
         <div style={{ display: 'flex', gap: '12px' }}>
           <button
+            type="button"
             onClick={() => setActiveTab('PLANS')}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px',
@@ -102,6 +103,7 @@ export const SaaSAdminManagementView: React.FC = () => {
             <Layers size={18} /> Gestion Dynamique des Plans
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('METHODS')}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px',
@@ -114,6 +116,7 @@ export const SaaSAdminManagementView: React.FC = () => {
         </div>
 
         <button
+          type="button"
           onClick={() => {
             if (activeTab === 'PLANS') {
               setEditingPlan({ name: '', price: 25000, quotaStudents: 500, description: '', features: [], isActive: true, isPublic: true });
@@ -166,10 +169,10 @@ export const SaaSAdminManagementView: React.FC = () => {
                   </td>
                   <td style={{ padding: '14px', textAlign: 'right' }}>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                      <button onClick={() => setEditingPlan(p)} style={{ padding: '6px 10px', backgroundColor: '#334155', color: '#cbd5e1', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                      <button type="button" onClick={() => setEditingPlan(p)} style={{ padding: '6px 10px', backgroundColor: '#334155', color: '#cbd5e1', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
                         <Edit2 size={14} /> Éditer
                       </button>
-                      <button onClick={() => handleTogglePlanActive(p)} style={{ padding: '6px 10px', backgroundColor: p.isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)', color: p.isActive ? '#ef4444' : '#10b981', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>
+                      <button type="button" onClick={() => handleTogglePlanActive(p)} style={{ padding: '6px 10px', backgroundColor: p.isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)', color: p.isActive ? '#ef4444' : '#10b981', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>
                         {p.isActive ? 'Désactiver' : 'Activer'}
                       </button>
                     </div>
@@ -210,10 +213,10 @@ export const SaaSAdminManagementView: React.FC = () => {
                   </td>
                   <td style={{ padding: '14px', textAlign: 'right' }}>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                      <button onClick={() => setEditingMethod(m)} style={{ padding: '6px 10px', backgroundColor: '#334155', color: '#cbd5e1', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                      <button type="button" onClick={() => setEditingMethod(m)} style={{ padding: '6px 10px', backgroundColor: '#334155', color: '#cbd5e1', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
                         <Edit2 size={14} /> Éditer
                       </button>
-                      <button onClick={() => handleToggleMethodActive(m)} style={{ padding: '6px 10px', backgroundColor: m.isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)', color: m.isActive ? '#ef4444' : '#10b981', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>
+                      <button type="button" onClick={() => handleToggleMethodActive(m)} style={{ padding: '6px 10px', backgroundColor: m.isActive ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)', color: m.isActive ? '#ef4444' : '#10b981', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>
                         {m.isActive ? 'Désactiver' : 'Activer'}
                       </button>
                     </div>
