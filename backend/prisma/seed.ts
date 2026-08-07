@@ -125,6 +125,28 @@ async function main() {
     });
   }
   console.log('✅ Moyens de paiement par défaut initialisés avec succès');
+
+  // Ajustement du tenant Lycée Seydou Nourou TALL au statut DEMO
+  const lsnTenant = await prisma.tenant.findFirst({
+    where: {
+      OR: [
+        { subdomain: { contains: 'seydou-nourou', mode: 'insensitive' } },
+        { code: 'LSN' },
+        { name: { contains: 'Seydou Nourou', mode: 'insensitive' } }
+      ]
+    }
+  });
+
+  if (lsnTenant) {
+    await prisma.tenant.update({
+      where: { id: lsnTenant.id },
+      data: {
+        plan: 'DEMO',
+        status: 'ACTIVE'
+      }
+    });
+    console.log(`✅ Tenant ${lsnTenant.name} (${lsnTenant.subdomain}) mis à jour avec le statut/plan DEMO.`);
+  }
 }
 
 main()

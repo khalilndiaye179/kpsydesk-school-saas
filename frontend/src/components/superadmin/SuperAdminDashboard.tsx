@@ -16,6 +16,8 @@ interface GlobalStats {
   totalUsers: number;
   newTenantsThisMonth: number;
   mrrEstimate: number;
+  demoTenantsCount?: number;
+  demoStudentsCount?: number;
   tenantsByPlan: { plan: string; count: number; monthlyRevenue: number }[];
   countryStats: { code: string; name: string; flag: string; color: string; count: number; perc: number }[];
   updatedAt: string;
@@ -25,7 +27,7 @@ const POLL_INTERVAL = 30_000; // 30 secondes
 
 const PlanBadge: React.FC<{ plan: string }> = ({ plan }) => {
   const colors: Record<string, string> = {
-    TRIAL_7D: '#94a3b8', STANDARD: '#38bdf8', PREMIUM: '#f59e0b', PRO: '#10b981', ENTERPRISE: '#8b5cf6',
+    TRIAL_7D: '#94a3b8', STANDARD: '#38bdf8', PREMIUM: '#f59e0b', PRO: '#10b981', ENTERPRISE: '#8b5cf6', DEMO: '#a855f7',
   };
   const color = colors[plan] ?? '#94a3b8';
   return (
@@ -37,8 +39,8 @@ const PlanBadge: React.FC<{ plan: string }> = ({ plan }) => {
 
 const KpiCard: React.FC<{
   title: string; value: string | number; sub?: string;
-  icon: React.ElementType; color: string; trend?: string;
-}> = ({ title, value, sub, icon: Icon, color, trend }) => (
+  icon: React.ElementType; color: string; trend?: string; isDemoBadge?: boolean;
+}> = ({ title, value, sub, icon: Icon, color, trend, isDemoBadge }) => (
   <div style={{ backgroundColor: '#1e293b', padding: '24px', borderRadius: '16px', border: `1px solid ${color}30`, position: 'relative', overflow: 'hidden' }}>
     <div style={{ position: 'absolute', top: '-10px', right: '-10px', opacity: 0.06, color }}>
       <Icon size={90} />
@@ -47,7 +49,11 @@ const KpiCard: React.FC<{
       <div style={{ backgroundColor: '#0f172a', padding: '10px', borderRadius: '10px', color, border: '1px solid #334155' }}>
         <Icon size={20} />
       </div>
-      {trend && (
+      {isDemoBadge ? (
+        <span style={{ backgroundColor: 'rgba(168,85,247,0.15)', color: '#c084fc', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, border: '1px solid rgba(168,85,247,0.3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          🧪 DEMO
+        </span>
+      ) : trend && (
         <span style={{ backgroundColor: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '4px 8px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600 }}>
           {trend}
         </span>
@@ -118,7 +124,7 @@ export const SuperAdminDashboard: React.FC = () => {
           {/* KPIs PRINCIPAUX */}
           <div>
             <h3 style={{ margin: '0 0 16px 0', fontSize: '0.95rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 600 }}>
-              Indicateurs Clés de la Plateforme
+              Indicateurs Clés de la Plateforme (Production)
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
               <KpiCard title="Établissements Actifs" value={stats.activeTenants} sub={`${stats.totalTenants} au total`} icon={Building2} color="#10b981" trend={`+${stats.newTenantsThisMonth} ce mois`} />
@@ -129,6 +135,16 @@ export const SuperAdminDashboard: React.FC = () => {
               <KpiCard title="Utilisateurs Plateforme" value={stats.totalUsers.toLocaleString('fr-FR')} icon={Users} color="#34d399" />
               <KpiCard title="Nouveaux ce mois" value={stats.newTenantsThisMonth} sub="établissements" icon={TrendingUp} color="#fb923c" />
               <KpiCard title="MRR Estimé" value={`${(stats.mrrEstimate / 1000).toFixed(0)}K FCFA`} sub="Revenu mensuel récurrent" icon={DollarSign} color="#f59e0b" />
+              
+              {/* CARTE ÉTABLISSEMENTS DE DÉMO ET TEST À L'ÉCART */}
+              <KpiCard
+                title="Établissements de Démo"
+                value={stats.demoTenantsCount || 0}
+                sub={`${(stats.demoStudentsCount || 0).toLocaleString('fr-FR')} élèves de test`}
+                icon={Building2}
+                color="#c084fc"
+                isDemoBadge={true}
+              />
             </div>
           </div>
 

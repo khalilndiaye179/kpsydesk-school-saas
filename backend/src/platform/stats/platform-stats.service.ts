@@ -16,6 +16,10 @@ export class PlatformStatsService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    const nonDemoFilter = { plan: { notIn: ['DEMO', 'TEST'] } };
+
+    const demoFilter = { plan: { in: ['DEMO', 'TEST'] } };
+
     const [
       totalTenants,
       activeTenants,
@@ -28,36 +32,42 @@ export class PlatformStatsService {
       tenantsByPlan,
       tenantsByCountry,
       tenantsTrend,
+      demoTenantsCount,
+      demoStudentsCount,
     ] = await Promise.all([
-      this.prisma.tenant.count({ where: { isDemo: false } }),
-      this.prisma.tenant.count({ where: { isDemo: false, status: 'ACTIVE' } }),
-      this.prisma.tenant.count({ where: { isDemo: false, status: 'TRIAL' } }),
-      this.prisma.tenant.count({ where: { isDemo: false, status: 'SUSPENDED' } }),
-      this.prisma.student.count({ where: { tenant: { isDemo: false } } }),
-      this.prisma.teacher.count({ where: { tenant: { isDemo: false } } }),
-      this.prisma.tenantUser.count({ where: { tenant: { isDemo: false } } }),
-      this.prisma.tenant.count({ where: { isDemo: false, createdAt: { gte: startOfMonth, lte: endOfMonth } } }),
+      this.prisma.tenant.count({ where: nonDemoFilter }),
+      this.prisma.tenant.count({ where: { ...nonDemoFilter, status: 'ACTIVE' } }),
+      this.prisma.tenant.count({ where: { ...nonDemoFilter, status: 'TRIAL' } }),
+      this.prisma.tenant.count({ where: { ...nonDemoFilter, status: 'SUSPENDED' } }),
+      this.prisma.student.count({ where: { tenant: nonDemoFilter } }),
+      this.prisma.teacher.count({ where: { tenant: nonDemoFilter } }),
+      this.prisma.tenantUser.count({ where: { tenant: nonDemoFilter } }),
+      this.prisma.tenant.count({ where: { ...nonDemoFilter, createdAt: { gte: startOfMonth, lte: endOfMonth } } }),
 
       // Répartition par plan SaaS
       this.prisma.tenant.groupBy({
         by: ['plan'],
-        where: { isDemo: false },
+        where: nonDemoFilter,
         _count: { id: true },
       }),
 
       // Répartition par pays
       this.prisma.tenant.groupBy({
         by: ['country'],
-        where: { isDemo: false },
+        where: nonDemoFilter,
         _count: { id: true },
       }),
 
       // Nouveaux tenants sur 30 jours (pour sparkline)
       this.prisma.tenant.findMany({
-        where: { isDemo: false, createdAt: { gte: thirtyDaysAgo } },
+        where: { ...nonDemoFilter, createdAt: { gte: thirtyDaysAgo } },
         select: { createdAt: true, status: true, plan: true, country: true },
         orderBy: { createdAt: 'asc' },
       }),
+
+      // Comptage spécifique des établissements de Démo / Test
+      this.prisma.tenant.count({ where: demoFilter }),
+      this.prisma.student.count({ where: { tenant: demoFilter } }),
     ]);
 
     // Calcul du MRR estimé (basé sur les plans actifs)
@@ -107,6 +117,10 @@ export class PlatformStatsService {
       totalUsers,
       newTenantsThisMonth,
       mrrEstimate,
+
+      // Établissements de Démo / Test à l'écart
+      demoTenantsCount,
+      demoStudentsCount,
 
       // Répartition par plan
       tenantsByPlan: tenantsByPlan.map((p) => ({

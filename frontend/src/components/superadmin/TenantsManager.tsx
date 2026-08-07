@@ -158,10 +158,11 @@ export const TenantsManager: React.FC = () => {
                 <td style={{ padding: '16px 12px' }}>
                   <span style={{ 
                     padding: '4px 10px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600,
-                    backgroundColor: t.plan === 'Premium' ? 'rgba(139, 92, 246, 0.2)' : t.plan === 'Pro' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)',
-                    color: t.plan === 'Premium' ? '#c084fc' : t.plan === 'Pro' ? '#60a5fa' : '#94a3b8'
+                    backgroundColor: t.plan === 'DEMO' ? 'rgba(168, 85, 247, 0.2)' : t.plan === 'Premium' ? 'rgba(139, 92, 246, 0.2)' : t.plan === 'Pro' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)',
+                    color: t.plan === 'DEMO' ? '#c084fc' : t.plan === 'Premium' ? '#c084fc' : t.plan === 'Pro' ? '#60a5fa' : '#94a3b8',
+                    border: t.plan === 'DEMO' ? '1px solid rgba(168, 85, 247, 0.4)' : 'none'
                   }}>
-                    {t.plan}
+                    {t.plan === 'DEMO' ? '🧪 DEMO' : t.plan}
                   </span>
                 </td>
                 <td style={{ padding: '16px 12px', fontFamily: 'var(--font-data)' }}>{t.studentsCount}</td>
