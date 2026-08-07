@@ -7,8 +7,9 @@ export class PlatformAuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() body: { email: string; pass: string }) {
-    return this.authService.login(body.email, body.pass);
+  async login(@Body() body: { email: string; password?: string; pass?: string }) {
+    const userPassword = body.password || body.pass || '';
+    return this.authService.login(body.email, userPassword);
   }
 
   @Post('verify-otp')

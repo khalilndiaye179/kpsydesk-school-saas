@@ -29,7 +29,7 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({ onSuccess, onRequire
 
       if (isPlatformAccount) {
         // Flux SuperAdmin / Platform
-        const res = await api.post('/platform/auth/login', { email: cleanInput, pass: password });
+        const res = await api.post('/platform/auth/login', { email: cleanInput, password, pass: password });
         const resData = res.data;
 
         if (resData.status === 'mfa_enrollment_required' && resData.enroll_token) {
